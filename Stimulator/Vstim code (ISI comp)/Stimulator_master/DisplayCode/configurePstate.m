@@ -13,5 +13,7 @@ switch modID
         configurePstate_Mapper
     case 'CM'
         configurePstate_cohMotion
+    case 'IB'
+        configurePstate_ImageBlock
         
 end     
