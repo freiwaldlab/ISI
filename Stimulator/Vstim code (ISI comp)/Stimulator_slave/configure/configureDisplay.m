@@ -1,7 +1,10 @@
 function configureDisplay(varargin)
     close all
 
-    Priority(5);  %Make sure priority is set to "real-time"  
+    % %Make sure priority is set to "real-time"  
+    %Priority(5);
+    % Set priority to 2 for now, because it appears to work
+    Priority(2);
 
     %priorityLevel=MaxPriority(w);
     %Priority(priorityLevel);
