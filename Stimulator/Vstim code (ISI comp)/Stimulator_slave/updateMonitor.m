@@ -43,8 +43,8 @@ switch Mstate.monitor
         
     case 'LIN'   %load a linear table
         
-        Mstate.screenXcm = 32.5;
-        Mstate.screenYcm = 24;        
+        Mstate.screenXcm = 33.8;
+        Mstate.screenYcm = 27.2;
         
         bufLUT = (0:255)/255;
         bufLUT = bufLUT'*[1 1 1];

@@ -9,7 +9,7 @@ Mstate.expt = '000';
 Mstate.hemi = 'left';
 Mstate.screenDist = 80;
 
-Mstate.monitor = 'TEL';  %This should match the default at the master. Otherwise, they will differ, but only at startup
+Mstate.monitor = 'LIN';  %This should match the default at the master. Otherwise, they will differ, but only at startup
 
 %'updateMonitor.m' happens in 'screenconfig.m' at startup
 
