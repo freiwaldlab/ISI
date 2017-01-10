@@ -111,11 +111,12 @@ try
             Screen(screenPTR, 'Flip');
            
         case 'S'  %Move shutter
-            eye = str2num(paramstring(delims(1)+1:delims(2)-1)); %setting of LE shutter
-            pos = str2num(paramstring(delims(2)+1:delims(3)-1)); %setting of RE shutter
-            moveShutter(eye,pos);
-            
+            % Commented 170109 mmf, no slave Daq or shutter
+            %eye = str2num(paramstring(delims(1)+1:delims(2)-1)); %setting of LE shutter
+            %pos = str2num(paramstring(delims(2)+1:delims(3)-1)); %setting of RE shutter
+            %moveShutter(eye,pos);
             %pause(2)
+            disp('Mastercb WARNING: slave asked to move shutter, but slave shutter capability disabled')
             
     end
     

@@ -1,22 +1,18 @@
 function configureDisplay(varargin)
+    close all
 
-close all
+    Priority(5);  %Make sure priority is set to "real-time"  
 
-%clear all;
+    %priorityLevel=MaxPriority(w);
+    %Priority(priorityLevel);
 
-Priority(5);  %Make sure priority is set to "real-time"  
+    configurePstate('PG') %Use grater as the default when opening
+    configureMstate
 
-% priorityLevel=MaxPriority(w);
-% Priority(priorityLevel);
+    configCom(varargin);
 
-configurePstate('PG') %Use grater as the default when opening
-configureMstate
+    % Commented 170109 mmf, no slave Daq or shutter
+    %configSync;
+    %configShutter;
 
-configCom(varargin);
-
-configSync;
-
-configShutter;
-
-screenconfig;
-
+    screenconfig;
