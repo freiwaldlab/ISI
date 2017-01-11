@@ -4,17 +4,17 @@ function playimageblock
     global Stxtr %created in makeSyncTexture
     
     Pstruct = getParamStruct;
-    screenRes = Screen('Resolutison',screenNum);
-    pixpercmX = screenRes.width/Mstate.screenXcm;
-    pixpercmY = screenRes.height/Mstate.screenYcm;
-    syncWX = round(pixpercmX*Mstate.syncSize);
-    syncWY = round(pixpercmY*Mstate.syncSize);
+    screenRes = Screen('Resolutison', screenNum);
+    pixpercmX = screenRes.width / Mstate.screenXcm;
+    pixpercmY = screenRes.height / Mstate.screenYcm;
+    syncWX = round(pixpercmX * Mstate.syncSize);
+    syncWY = round(pixpercmY * Mstate.syncSize);
     white = WhiteIndex(screenPTR); % pixel value for white
     black = BlackIndex(screenPTR); % pixel value for black
-    gray = (white+black)/2;
-    amp = white-gray;
+    gray = (white + black) / 2;
+    amp = white - gray;
 
-    if strcmp(Pstruct.altazimuth,'none')
+    if strcmp(Pstruct.altazimuth, 'none')
         %assumes the screen is curved
         xcm = 2*pi*Mstate.screenDist*Pstruct.x_size/360;  %stimulus width in cm
         xN = round(xcm*pixpercmX);  %stimulus width in pixels

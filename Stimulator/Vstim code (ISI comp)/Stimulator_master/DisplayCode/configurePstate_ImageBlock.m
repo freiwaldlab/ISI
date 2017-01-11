@@ -11,8 +11,8 @@ function configurePstate_ImageBlock
     Pstate.param{sh(Pstate.param)+1} = {'ori', 'int', 0, 0, 'deg'};
     Pstate.param{sh(Pstate.param)+1} = {'x_pos', 'int', 600, 0, ' pixels'};
     Pstate.param{sh(Pstate.param)+1} = {'y_pos', 'int', 400, 0, ' pixels'};
-    Pstate.param{sh(Pstate.param)+1} = {'x_size', 'float', 3, 1, ' deg'};
-    Pstate.param{sh(Pstate.param)+1} = {'y_size', 'float', 3, 1, ' deg'};
+    Pstate.param{sh(Pstate.param)+1} = {'width', 'float', 3, 1, ' deg'};
+    Pstate.param{sh(Pstate.param)+1} = {'height', 'float', 3, 1, ' deg'};
     Pstate.param{sh(Pstate.param)+1} = {'x_zoom', 'int', 1, 0, ' x'};
     Pstate.param{sh(Pstate.param)+1} = {'y_zoom', 'int', 1, 0, ' x'};
     Pstate.param{sh(Pstate.param)+1} = {'interval', 'int', 1, 0, ' msec'};

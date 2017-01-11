@@ -16,5 +16,6 @@ switch modID
         modID = 'MP';
     case 6
         modID = 'CM';
-
+    case 7
+        modID = 'IB';
 end

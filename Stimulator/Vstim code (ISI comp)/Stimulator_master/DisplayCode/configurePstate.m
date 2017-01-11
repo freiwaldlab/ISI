@@ -15,5 +15,4 @@ switch modID
         configurePstate_cohMotion
     case 'IB'
         configurePstate_ImageBlock
-        
 end     
