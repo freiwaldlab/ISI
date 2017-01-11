@@ -9,8 +9,6 @@ global DcomState Mstate
 %close all open udp port objects on the same port and remove
 %the relevant object form the workspace
 port = instrfindall('RemoteHost',Mstate.stimulusIDP);
-%port = instrfindall('RemoteHost','10.1.50.224');
-%port = '10.1.50.224';
 if length(port) > 0; 
     fclose(port); 
     delete(port);
@@ -19,7 +17,6 @@ end
 
 % make udp object named 'stim'
 DcomState.serialPortHandle = udp(Mstate.stimulusIDP,'RemotePort',8866,'LocalPort',8844);
-%DcomState.serialPortHandle = udp('10.1.50.224','RemotePort',8866,'LocalPort',8844);
 
 set(DcomState.serialPortHandle, 'OutputBufferSize', 1024)
 set(DcomState.serialPortHandle, 'InputBufferSize', 1024)
