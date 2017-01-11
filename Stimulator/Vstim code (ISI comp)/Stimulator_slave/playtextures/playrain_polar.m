@@ -40,8 +40,8 @@ Npostframes = ceil(P.postdelay*screenRes.hz);
 Screen(screenPTR, 'FillRect', P.background)
 
 % Commented 170109 mmf, no slave Daq
-% %do this at the beginning because it improves timing on the first call to daq below
 % %Wake up the daq:
+% %do this at the beginning because it improves timing on the first call to daq below
 %DaqDOut(daq, 0, 0);
 
 %%%Play predelay %%%%
