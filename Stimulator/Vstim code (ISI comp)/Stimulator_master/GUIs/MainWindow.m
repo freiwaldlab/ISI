@@ -282,8 +282,9 @@ if ~Mstate.running
         sendtoImager(sprintf(['I %2.3f' 13],total_time))
         
         %Make sure analog in is not running
-        stop(analogIN)
-        flushdata(analogIN)        
+        % Updated for MATLAB compatibility, 170109 mmf
+        analogIN.stop;
+        clearvars -global analogIN
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    

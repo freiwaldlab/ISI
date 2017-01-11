@@ -1,6 +1,6 @@
 function run2
 
-global GUIhandles Pstate Mstate trialno syncInfo analogIN
+global GUIhandles Pstate Mstate trialno syncInfo analogIN analogINdata
 
 if Mstate.running %otherwise 'getnotrials' won't be defined for play sample
     nt = getnotrials;
@@ -17,7 +17,10 @@ if Mstate.running && trialno<=nt  %'trialno<nt' may be redundant.
     [c r] = getcondrep(trialno);  %get cond and rep for this trialno
 
     if ISIbit
-        start(analogIN)  %Start sampling acquistion and stimulus syncs
+        % Updated for MATLAB compatibility, 170104 mmf
+        fid1 = fopen('log.bin','w');
+        lh = addlistener(analogIN,'DataAvailable',@(src, event)logData(src, event, fid1));
+        analogIN.startBackground;
     end
     
     %%%Update ScanImage with Trial/Cond/Rep
@@ -48,7 +51,18 @@ if Mstate.running && trialno<=nt  %'trialno<nt' may be redundant.
         
         %%%Timing is not crucial for this last portion of the loop (both display and frame grabber/saving is inactive)...
         
-        stop(analogIN)  %Stop sampling acquistion and stimulus syncs
+        % Updated for MATLAB compatibility, 170104 mmf
+        fclose(fid1);
+        analogIN.stop;
+        delete(lh);
+        fid2 = fopen('log.bin','r');
+        %analogINdata is a 3 x samples matrix where...
+        %(1,:) is the time each sample is acquired from the start of acquisition
+        %(1,:) is the time each sample is acquired from the start of acquisition
+        %(2,:) is the voltage on analog input 0: photodiode from display
+        %(3,:) is the voltage on analog input 1: audio port from master
+        [analogINdata,count] = fread(fid2,[3,inf],'double');
+        fclose(fid2);
 
         [syncInfo.dispSyncs syncInfo.acqSyncs syncInfo.dSyncswave] = getSyncTimes;   
         syncInfo.dSyncswave = [];  %Just empty it for now
