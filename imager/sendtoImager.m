@@ -31,7 +31,7 @@ switch(cmd(1))
         trial = str2num(cmd(3:end));
 
         global nframes maxframes ...
-            T imagerhandles fname running NBUF parport;
+            T imagerhandles fname running NBUF;
 
 
         animal = get(findobj('Tag','animaltxt'),'String');
@@ -55,8 +55,8 @@ switch(cmd(1))
         drawnow;
         %h.mildig.Image = h.buf{1};
 
-
-        h = GrabSaveLoop(h,fname,parport);
+        % Removed unnecessary parport, 170109 mmf
+        h = GrabSaveLoop(h, fname);
 
         set(1,'Name','imager');
         drawnow;

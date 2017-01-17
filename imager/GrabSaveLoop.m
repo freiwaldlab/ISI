@@ -1,4 +1,5 @@
-function [h] = GrabSaveLoop(h,fname,parport)
+function [h] = GrabSaveLoop(h, fname)
+% Deleted 170110 mmf, parport removed from function inputs
 
 global Tens ROIcrop IMGSIZE GUIhandles FPS
 
@@ -23,7 +24,9 @@ if get(GUIhandles.main.streamFlag,'value')
         h.mildig.Grab;
 
         %TTL pulse
-        putvalue(parport,1); putvalue(parport,0);
+        % Updated for MATLAB compatibility, 170109 mmf
+        %putvalue(parport,1); putvalue(parport,0);
+        playblocking(h.blip);
 
         %Pull into Matlab workspace and save to disk
         im = h.buf{2-bitand(n,1)}.Get(zz,IMGSIZE^2,-1,ROIcrop(1),ROIcrop(2),ROIcrop(3),ROIcrop(4));
@@ -51,7 +54,9 @@ else
         h.mildig.Grab;
 
         %TTL pulse
-        putvalue(parport,1); putvalue(parport,0);
+        % Updated for MATLAB compatibility, 170109 mmf
+        %putvalue(parport,1); putvalue(parport,0);
+        playblocking(h.blip);
 
         %Pull into Matlab workspace (but wait to save it)
         Tens(:,:,n) = h.buf{2-bitand(n,1)}.Get(zz,IMGSIZE^2,-1,ROIcrop(1),ROIcrop(2),ROIcrop(3),ROIcrop(4));
