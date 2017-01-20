@@ -51,7 +51,7 @@ function imager_OpeningFcn(hObject, eventdata, handles, varargin)
 
 %% Settings
 global IMGSIZE FPS;
-FPS = 10; % frames per second
+%FPS = 10; % We can't set this here. see below mmf
 
 % Data directory, unit, and tag settings
 handles.datatxt = 'c:\imager_data\xx0';
@@ -65,16 +65,20 @@ handles
 % https://www.mathworks.com/help/imaq/basic-image-acquisition-procedure.html
 
 %%% DEBUG XXX *** is this necessary now?
-delete(instrfind)
+%delete(instrfind) %don't think so. 
 
 % Establish connection with PointGrey camera and set mode
-vid = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
-vid.TriggerRepeat = Inf;
-vid.FrameGrabInterval = 2;
+handles.vid = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
+handles.vid.TriggerRepeat = Inf;
+handles.vid.FramesPerTrigger = Inf;
+%vid.FrameGrabInterval = 2; % Dependent on the mode selected & memory
+%available.  Will try without setting this, but if need be, we can select
+%only every nth frame. mmf
 
 % Define video source
-src = getselectedsource(vid);
-src.Tag = 'ISI';
+handles.src = getselectedsource(handles.vid);
+handles.src.Tag = 'ISI';
+FPS = handles.src.FrameRate;
 
 %% Establish illumination control
 % NOTE: If we want to control the illumination ring led on/off through
@@ -101,6 +105,13 @@ handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 32)), 30000);
 % handles.milsys = handles.activex27;
 % handles.milsys.Allocate;  % Allocate MIL system
 
+%mmf testing
+handles.milapp = {};
+handles.mildig = {};
+handles.mildisp = {};
+handles.milimg = {};
+handles.milsys = {};
+
 % From miltest.m, for reference:
 % milapp = actxcontrol('MIL.Application');
 % milsys = actxcontrol('MIL.System');
@@ -111,58 +122,67 @@ handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 32)), 30000);
 %% Set up display of video
 
 %%% XXX *** needs to be set up
+% mmf... this is not right, but testing for fun.
 % https://www.mathworks.com/matlabcentral/answers/96242-how-can-i-insert-live-video-into-a-matlab-gui-using-image-acquisition-toolbox
-%handles.mildisp.set('OwnerSystem',handles.milsys,...
+% handles.mildisp.set('OwnerSystem',handles.milsys,...
 %    'DisplayType','dispActiveMILWindow');
 %handles.mildisp.Allocate
+% handles.mildisp.OwnerSystem = handles.milsys; %these are currently empty
+% handles.mildisp.DisplayType = 'dispActiveMILWindow';
 %
 %handles.mildig.set('OwnerSystem',handles.milsys,'GrabFrameEndEvent',0,...
 %    'GrabFrameStartEvent',0,'GrabStartEvent',0,'GrabEndEvent',0,...
 %    'GrabMode','digAsynchronousQueue');
+%not sure we need any of these either... mmf
+% handles.mildig.OwnerSystem = handles.milsys;
+
 
 %% Ian code...
 global ROIcrop
 
 %%% XXX *** should already be configured via videoinput
+%mmf therefore don't need
 % handles.mildig.set('Format','C:\imager\2x2bin_dlr.dcf');  %Preset the binning to 2x2
 % y = clsend('sbm 2 2');
 % handles.mildig.Allocate;
 
 % Get size and initialize ROI to full size
-IMGSIZE = vid.VideoResolution;
+IMGSIZE = handles.vid.VideoResolution;
 Xpx = IMGSIZE(1);
 Ypx = IMGSIZE(2);
 ROIcrop = [0 0 Xpx Ypx];
 
-%%% XXX *** needs to be set up
-%handles.milimg.set('CanGrab',1,'CanDisplay',1,'CanProcess',0, ...
+%%% XXX *** needs to be set up 
+% mmf - we might not even need this: it's all saved in vid/src
+% handles.milimg.set('CanGrab',1,'CanDisplay',1,'CanProcess',0, ...
 %    'SizeX',Xpx,'SizeY',Ypx,'DataDepth',16,'NumberOfBands',1, ...
 %    'OwnerSystem',handles.milsys);
-%handles.milimg.Allocate;
-%handles.mildig.set('Image',handles.milimg);
-%handles.mildisp.set('Image',handles.milimg,'ViewMode',...
+% handles.milimg.Allocate;
+% handles.mildig.set('Image',handles.milimg);
+% handles.mildisp.set('Image',handles.milimg,'ViewMode',...
 %    'dispBitShift','ViewBitShift',4);
 
 %% Set up buffers
 global NBUF;
 NBUF = 2;
 
-%%% XXX *** needs to be set up
-for i = 1:NBUF
-%    handles.buf{i} = actxcontrol('MIL.Image',[0 0 1 1]);
-%    handles.buf{i}.set('CanGrab',1,'CanDisplay',0,'CanProcess',0, ...
-%        'SizeX',Xpx,'SizeY',Ypx,'DataDepth',16,'NumberOfBands',1, ...
-%        'FileFormat','imRaw','OwnerSystem',handles.milsys);
-%    
-%        % The child images
-%        handles.child{i} = actxcontrol('MIL.Image',[0 0 1 1]);
-%        set(handles.child{i},'ParentImage',handles.buf{i},'AutomaticAllocation',1);
-%        set(handles.child{i}.ChildRegion,'OffsetX',256);
-%        set(handles.child{i}.ChildRegion,'OffsetY',256);
-%        set(handles.child{i}.ChildRegion,'SizeX',128);
-%        set(handles.child{i}.ChildRegion,'SizeY',128);
-%        handles.buf{i}.Allocate;
-end
+%%% XXX *** needs to be set up 
+%do we need this? mmf
+% for i = 1:NBUF
+% %    handles.buf{i} = actxcontrol('MIL.Image',[0 0 1 1]);
+% %    handles.buf{i}.set('CanGrab',1,'CanDisplay',0,'CanProcess',0, ...
+% %        'SizeX',Xpx,'SizeY',Ypx,'DataDepth',16,'NumberOfBands',1, ...
+% %        'FileFormat','imRaw','OwnerSystem',handles.milsys);
+% %    
+% %        % The child images
+% %        handles.child{i} = actxcontrol('MIL.Image',[0 0 1 1]);
+% %        set(handles.child{i},'ParentImage',handles.buf{i},'AutomaticAllocation',1);
+% %        set(handles.child{i}.ChildRegion,'OffsetX',256);
+% %        set(handles.child{i}.ChildRegion,'OffsetY',256);
+% %        set(handles.child{i}.ChildRegion,'SizeX',128);
+% %        set(handles.child{i}.ChildRegion,'SizeY',128);
+% %        handles.buf{i}.Allocate;
+% end
 
 %% Construct a timer
 
@@ -170,7 +190,7 @@ handles.timer = timer;
 set(handles.timer, 'Period', 0.5, 'BusyMode', 'drop', 'ExecutionMode', ...
     'fixedSpacing', 'TimerFcn', @timerhandler)
 
-%% Set up either display or something else
+%% Set up either display or something else - mmf: i think this is just for the heatmap?? 
 
 global imagerhandles;
 
@@ -215,10 +235,13 @@ function pany_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-px = get(handles.panx,'Value');
-py = get(handles.pany,'Value');
+% mmf. this is a mystery.  commented it out for now.
+% px = get(handles.panx,'Value');
+% py = get(handles.pany,'Value');
 %%% DEBUG XXX *** how to do this with videoinput?
-%handles.mildisp.Pan(px,-py);
+% handles.mildisp.Pan(px,-py);
+
+
 
 %% --- Executes during object creation, after setting all properties.
 function pany_CreateFcn(hObject, eventdata, handles)
@@ -244,8 +267,9 @@ function panx_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
-px = get(handles.panx,'Value');
-py = get(handles.pany,'Value');
+% mmf. yeah.
+% px = get(handles.panx,'Value');
+% py = get(handles.pany,'Value');
 %%% DEBUG XXX *** how to do this with videoinput?
 %handles.mildisp.Pan(px,-py);
 
@@ -339,6 +363,8 @@ function autoscale_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of autoscale
+
+% mmf do we even need this function anymore?
 if(get(hObject,'Value'))
     %%% XXX *** do this with videoinput
     %handles.mildisp.set('ViewMode','dispAutoScale')
@@ -368,7 +394,7 @@ Ypx = IMGSIZE(2);
 
 %%% XXX *** do this with videoinput
 h = imagerhandles;
-h.mildig.Grab;
+%h.mildig.Grab;
 
 % set(h.temptxt,'String',sprintf('Digitizer: %sC  Sensor: %sC',t1,t2));
 
@@ -385,7 +411,8 @@ if (get(h.histbox, 'Value')) % Analyze?
     zz = zeros(Xpx,Ypx,'uint16');
     
     %%% XXX *** do this with videoinput ... probably snapshot
-    h.mildig.GrabWait(3); % wait...
+    getsnapshot(h.vid);
+    %h.mildig.GrabWait(3); % wait...
     % from mil.h
     % #define M_GRAB_NEXT_FRAME                             1L
     % #define M_GRAB_NEXT_FIELD                             2L
@@ -402,9 +429,11 @@ if (get(h.histbox, 'Value')) % Analyze?
     imagerhandles.roiI = I;
     
     %%% XXX *** do this with videoinput ... probably snapshot
-    img = h.milimg.Get(zz,IMGSIZE^2,-1,0,0,IMGSIZE,IMGSIZE);
+    %img = h.milimg.Get(zz,IMGSIZE^2,-1,0,0,IMGSIZE,IMGSIZE);
     %%% XXX *** pull bitdepth from ptgrey
+    img = getsnapshot(h.vid);
     image((double(img)' / 4096) * 64);
+    %image(img);
     axis ij;
     hold on;
     plot([xmin xmax xmax xmin xmin], [ymin ymin ymax ymax ymin], ...
@@ -429,12 +458,13 @@ if (get(h.histbox, 'Value')) % Analyze?
 
     axes(h.histaxes); cla;
     %%% XXX *** pull bitdepth from ptgrey
-    hist(img(I),32:64:4096);
+    %hist(img(I),32:64:4096);
+    imhist(img)   
     box off;
-    set(gca,'ytick',[],'xtick',[0:1024:4096],'xlim',[0 4096],'fontsize',8);
+    %set(gca,'ytick',[],'xtick',[0:1024:4096],'xlim',[0 4096],'fontsize',8);
     
     %%% XXX *** pull bitdepth from ptgrey
-    set(h.focustxt,'String',sprintf('Focus: %.2f',100*focval(img)));
+    %set(h.focustxt,'String',sprintf('Focus: %.2f',100*focval(img)));
 end
 
 %% Send to camera over serial com
@@ -474,6 +504,7 @@ disp(str)
 % end
 
 %%% XXX *** remove if no longer used
+%mmf mystery.
 function r = parsepr(y)
 tail = y;
 [head,tail] = strtok(tail,[10 13]);
@@ -1118,23 +1149,23 @@ r = questdlg('Do you want to save it?','Single Grab','Yes','No','Yes');
 if(strcmp(r,'Yes'))
     grab.comment = inputdlg('Please enter description:','Image Grab',1,{'No description'},'on');
     animal = get(findobj('Tag','animaltxt'),'String');
-    unit   = get(findobj('Tag','unittxt'),'String');
-    expt   = get(findobj('Tag','expttxt'),'String');
-    datadir= get(findobj('Tag','datatxt'),'String');
-    tag    = get(findobj('Tag','tagtxt'),'String');
+    unit = get(findobj('Tag','unittxt'),'String');
+    expt = get(findobj('Tag','expttxt'),'String');
+    datadir = get(findobj('Tag','datatxt'),'String');
+    tag = get(findobj('Tag','tagtxt'),'String');
 
-    dd = strcat(datadir, filsep, animal, filesep, 'grabs', filesep);
-    if(~exist(dd, 'dir'))
+    dd = strcat(datadir, filesep, animal, filesep, 'grabs', filesep);
+    if ~exist(dd, 'dir')
         mkdir(dd);
     end
-    fname = strcat(dd, 'grab_', get(imagerhandles.animaltxt,'String'), ...
-        '_', get(imagerhandles.unittxt,'String'), '_', ...
-        get(imagerhandles.expttxt,'String'), '_', datestr(now));
+    fname = strcat(dd, 'grab_', datestr(now, 'yyyymmddtHHMMSSpFFF'), ...
+        get(imagerhandles.animaltxt,'String'), '_', ...
+        get(imagerhandles.unittxt,'String'), '_', ...
+        get(imagerhandles.expttxt,'String'));
     fname = strrep(fname, ' ', '_');
-    fname = strrep(fname, ':', '');
+    fname(3:end) = strrep(fname(3:end), ':', '_');
     fname = strrep(fname, '-', '');
     fname = strcat(fname, '.mat');
-    fname(2) = ':';
     %%% XXX *** update for videoinput
     save(fname,'grab');
 end
