@@ -1,29 +1,27 @@
 function makeImageBlockTexture
     % Make an image presentation block
-    global Mstate screenPTR screenNum
-    global Gtxtr TDim  %'playimageblock' will use these
+    global Mstate screenPTR
+    global Gtxtr TDim % for 'playimageblock'
 
     Gtxtr = []; TDim = [];
     P = getParamStruct;
+    window = screenPTR;
     
     % Settings
-    imPath = 'H:\Freiwald\Stimuli\FullFOB3';
-    imExt = 'bmp';
+    imPath = P.image_path;
+    imExt = P.image_ext;
     
-    % Get screen resolution
-    screenRes = Screen('Resolution', screenNum);
+    % % Get screen resolution
+    % screenRes = Screen('Resolution', screenNum);
     % Get the size of the on screen window
     [screenXpx, screenYpx] = Screen('WindowSize', window);
     % Define black and white
-    white = WhiteIndex(screenPTR);
-    black = BlackIndex(screenPTR);
+    white = WhiteIndex(window);
+    black = BlackIndex(window);
     grey = white / 2;
     inc = white - grey;
-    % Set up alpha-blending for smooth (anti-aliased) lines
-    %Screen('BlendFunction', window, 'GL_SRC_ALPHA', ...
-    %    'GL_ONE_MINUS_SRC_ALPHA');
 
-    % Get information about images.
+    % Get information about images
     imList = dir(strcat(imPath, filesep, '*.', imExt));
     imNum = length(imList);
     imInfo = imfinfo(strcat(imPath, filesep, imList(1).name));
@@ -48,10 +46,14 @@ function makeImageBlockTexture
     end
     
     % Preload all images into a buffer.
+    disp(['makeImageBlockTexture: Loading all stimulus images, this ' ...
+        'may take some time.'])
     if imHpx > screenYpx || imWpx > screenXpx
-        disp('makeImageBlockTexture WARNING: Stimulus image is too big to fit on the screen.');
+        disp(['makeImageBlockTexture WARNING: Stimulus image is too ' ...
+            'big to fit on the screen.']);
         %return;
-        disp('makeImageBlockTexture WARNING:   Resizing image, which is slow and undesireable!');
+        disp(['makeImageBlockTexture WARNING:   Resizing image, which ' ...
+            'is slow and undesireable!']);
         if imHpx > imWpx
             imHpx = screenYpx;
             imWpx = round(imWpx * (imHpx / screenYpx));
@@ -78,16 +80,17 @@ function makeImageBlockTexture
     end
     
     % Calculate width and height in centimeters from degrees
-    %TODO check to make sure specified width/height matches image dimensions
+    %   TODO: Check to make sure specified width/height matches 
+    %   image dimensions.
     if imHpx == imWpx
         Hdeg = P.height;
-        wdeg = P.width;
+        Wdeg = P.width;
     elseif imHpx > imWpx
         Hdeg = P.height;
-        wdeg = round(P.width * (imWpx / imHpx));
+        Wdeg = round(P.width * (imWpx / imHpx));
     elseif imWpx > imHpx
         Hdeg = round(P.height * (imHpx / imWpx));
-        wdeg = P.width;
+        Wdeg = P.width;
     end
     imHcm = 2 * Mstate.screenDist * tan(((Hdeg / 2) * pi) / 180);
     imWcm = 2 * Mstate.screenDist * tan(((Wdeg / 2) * pi) / 180);
@@ -97,6 +100,9 @@ function makeImageBlockTexture
     TDim = [(imHcm * P.y_zoom) (imWcm * P.x_zoom)];
     
     % Convert the images into textures that are ready to be played
-    for in = 1:imNum
-        Gtxtr(in) = Screen('MakeTexture', window, imBuff(:,:,in));
+    for imn = 1:imNum
+        Gtxtr(imn) = Screen('MakeTexture', window, imBuff(:,:,imn));
     end
+    clear imn
+    
+    size(Gtxtr) %%% DEBUG XXX ***
