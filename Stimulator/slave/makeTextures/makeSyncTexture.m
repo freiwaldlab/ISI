@@ -1,22 +1,22 @@
 function makeSyncTexture
+    %write black/white sync to the offscreen
+    global Mstate screenPTR screenNum 
+    global Stxtr
 
-%write black/white sync to the offscreen
+    % Get pixel intensity values for white and black
+    white = WhiteIndex(screenPTR);
+    black = BlackIndex(screenPTR);
 
-global Mstate screenPTR screenNum 
+    screenRes = Screen('Resolution', screenNum);
+    resXpxpercm = screenRes.width / Mstate.screenXcm;
+    resYpxpercm = screenRes.height / Mstate.screenYcm;
 
-global Stxtr %'playgrating' will use these
+    syncWpx = round(resXpxpercm * Mstate.syncSize);
+    syncHpx = round(resYpxpercm * Mstate.syncSize);
 
-white = WhiteIndex(screenPTR); % pixel value for white
-black = BlackIndex(screenPTR); % pixel value for black
-
-screenRes = Screen('Resolution',screenNum);
-
-pixpercmX = screenRes.width/Mstate.screenXcm;
-pixpercmY = screenRes.height/Mstate.screenYcm;
-
-syncWX = round(pixpercmX*Mstate.syncSize);
-syncWY = round(pixpercmY*Mstate.syncSize);
-
-Stxtr(1) = Screen(screenPTR, 'MakeTexture', white*ones(syncWY,syncWX)); % "hi"
-Stxtr(2) = Screen(screenPTR, 'MakeTexture', black*ones(syncWY,syncWX)); % "low"
-
+    % "high" state
+    Stxtr(1) = Screen(screenPTR, 'MakeTexture', ...
+        (white * ones(syncHpx, syncWpx)));
+    % "low" state
+    Stxtr(2) = Screen(screenPTR, 'MakeTexture', ...
+        (black * ones(syncHpx, syncWpx)));
