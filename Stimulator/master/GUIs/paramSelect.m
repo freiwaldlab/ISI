@@ -70,6 +70,7 @@ modStrings{3} = 'Rain Dropper';
 modStrings{4} = 'Filtered Noise';
 modStrings{5} = 'Manual Mapper';
 modStrings{6} = 'Coherent Motion';
+modStrings{7} = 'Image Block';
 
 set(handles.module,'string',modStrings)
 
@@ -156,7 +157,7 @@ function loadParams_Callback(hObject, eventdata, handles)
 
 global Pstate
 
-[file path] = uigetfile({'*.param';'*.analyzer'},'Load parameter state','C:\Params&Loopers');
+[file, path] = uigetfile({'*.param';'*.analyzer'},'Load parameter state','C:\Params&Loopers');
 
 id = find(file == '.');
 fext = file(id+1:end);
@@ -178,7 +179,6 @@ if file  %if 'cancel' was not pressed
     newPstate(oldPstate);  %Remakes the global
     
     refreshParamView
-    
 end
 
 
@@ -191,7 +191,7 @@ function saveParams_Callback(hObject, eventdata, handles)
 
 global Pstate
 
-[file path] = uiputfile('*.param','Save as');
+[file, path] = uiputfile('*.param','Save as');
 
 if file  %if 'cancel' was not pressed
     file = [path file];

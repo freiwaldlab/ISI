@@ -22,7 +22,7 @@ function varargout = slimImager(varargin)
 
 % Edit the above text to modify the response to help slimImager
 
-% Last Modified by GUIDE v2.5 19-Jan-2017 12:07:25
+% Last Modified by GUIDE v2.5 20-Jan-2017 18:51:58
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -51,6 +51,8 @@ function slimImager_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to slimImager (see VARARGIN)
+
+global IMGSIZE FPS;
 
 % Data directory, unit, and tag settings
 handles.datatxt = 'c:\imager_data\xx0';
@@ -106,6 +108,7 @@ uiwait(handles.slimImager);
 
 
 function timerhandler(varargin)
+
 if ~isempty(gco)
     %% Update handles
     %handles = guidata(gcf);
@@ -223,11 +226,11 @@ axis off;
 % % r = questdlg('Do you want to save it?','Single Grab','Yes','No','Yes');
 % % if(strcmp(r,'Yes'))
 % %     inputdlg('Please enter description:','Image Grab',1,{'No description'},'on');
-% %     animal = get(findobj('Tag','animalEnter'),'String');
-% %     unit   = get(findobj('Tag','unitEnter'),'String');
-% %     expt   = get(findobj('Tag','exptEnter'),'String');
+% %     animal = get(findobj('Tag','animaltxt'),'String');
+% %     unit   = get(findobj('Tag','unittxt'),'String');
+% %     expt   = get(findobj('Tag','expttxt'),'String');
 % %     datadir= get(findobj('Tag','dataEnter'),'String');
-% %     tag    = get(findobj('Tag','tagEnter'),'String');
+% %     tag    = get(findobj('Tag','tagtxt'),'String');
 % % 
 % %     dd = strcat(datadir, filsep, animal, filesep, 'grabs', filesep);
 % %     if(~exist(dd, 'dir'))
@@ -327,18 +330,18 @@ if dir ~= 0
 end
 
 
-function unitEnter_Callback(hObject, eventdata, handles)
-% hObject    handle to unitEnter (see GCBO)
+function unittxt_Callback(hObject, eventdata, handles)
+% hObject    handle to unittxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of unitEnter as text
-%        str2double(get(hObject,'String')) returns contents of unitEnter as a double
+% Hints: get(hObject,'String') returns contents of unittxt as text
+%        str2double(get(hObject,'String')) returns contents of unittxt as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function unitEnter_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to unitEnter (see GCBO)
+function unittxt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to unittxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -349,18 +352,18 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-function tagEnter_Callback(hObject, eventdata, handles)
-% hObject    handle to tagEnter (see GCBO)
+function tagtxt_Callback(hObject, eventdata, handles)
+% hObject    handle to tagtxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of tagEnter as text
-%        str2double(get(hObject,'String')) returns contents of tagEnter as a double
+% Hints: get(hObject,'String') returns contents of tagtxt as text
+%        str2double(get(hObject,'String')) returns contents of tagtxt as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function tagEnter_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to tagEnter (see GCBO)
+function tagtxt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to tagtxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -371,18 +374,18 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-function exptEnter_Callback(hObject, eventdata, handles)
-% hObject    handle to exptEnter (see GCBO)
+function expttxt_Callback(hObject, eventdata, handles)
+% hObject    handle to expttxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of exptEnter as text
-%        str2double(get(hObject,'String')) returns contents of exptEnter as a double
+% Hints: get(hObject,'String') returns contents of expttxt as text
+%        str2double(get(hObject,'String')) returns contents of expttxt as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function exptEnter_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to exptEnter (see GCBO)
+function expttxt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to expttxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -393,18 +396,18 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-function animalEnter_Callback(hObject, eventdata, handles)
-% hObject    handle to animalEnter (see GCBO)
+function animaltxt_Callback(hObject, eventdata, handles)
+% hObject    handle to animaltxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of animalEnter as text
-%        str2double(get(hObject,'String')) returns contents of animalEnter as a double
+% Hints: get(hObject,'String') returns contents of animaltxt as text
+%        str2double(get(hObject,'String')) returns contents of animaltxt as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function animalEnter_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to animalEnter (see GCBO)
+function animaltxt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to animaltxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -415,18 +418,18 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-function timeEnter_Callback(hObject, eventdata, handles)
-% hObject    handle to timeEnter (see GCBO)
+function timetxt_Callback(hObject, eventdata, handles)
+% hObject    handle to timetxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of timeEnter as text
-%        str2double(get(hObject,'String')) returns contents of timeEnter as a double
+% Hints: get(hObject,'String') returns contents of timetxt as text
+%        str2double(get(hObject,'String')) returns contents of timetxt as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function timeEnter_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to timeEnter (see GCBO)
+function timetxt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to timetxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
