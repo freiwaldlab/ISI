@@ -2,14 +2,26 @@ function makeImageBlockTexture
     % Make an image presentation block
     global Mstate screenPTR
     global Gtxtr TDim % for 'playimageblock'
-
-    Gtxtr = []; TDim = [];
+    Gtxtr = []; 
+    TDim = [];
     P = getParamStruct;
     window = screenPTR;
+    
+    % %%% DEBUG XXX ***
+    % % Get the screen numbers
+    % screens = Screen('Screens');
+    % % Draw to the external screen if avaliable
+    % screenNumber = max(screens);
+    % % Open an on screen window
+    % [window, ~] = Screen('OpenWindow', screenNumber, 128, [0 0 500 500]);
     
     % Settings
     imPath = P.image_path;
     imExt = P.image_ext;
+    if ~exist(imPath, 'dir')
+        disp('makeImageBlockTexture ERROR: image_path not found.');
+        return;
+    end
     
     % % Get screen resolution
     % screenRes = Screen('Resolution', screenNum);
@@ -31,23 +43,27 @@ function makeImageBlockTexture
         imfile = strcat(imPath, filesep, imList(imfn).name);
         imInfoTmp = imfinfo(imfile);
         if imInfoTmp.Height ~= imHpx
-            disp('makeImageBlockTexture ERROR: Stimulus images do not all share the same dimensions.');
+            disp(['makeImageBlockTexture ERROR: Stimulus images do ' ...
+                'not all share the same dimensions.']);
             return;
         end
         if imInfoTmp.Width ~= imWpx
-            disp('makeImageBlockTexture ERROR: Stimulus images do not all share the same dimensions.');
+            disp(['makeImageBlockTexture ERROR: Stimulus images do ' ...
+                'not all share the same dimensions.']);
             return;
         end
     end
     clear imfn imfile imInfoTmp
     if imHpx ~= imWpx
 	disp('makeImageBlockTexture WARNING: Stimulus image is not square.');
-        disp('makeImageBlockTexture WARNING:   All calculations will be made based on larger dimension.');
+        disp(['makeImageBlockTexture WARNING:   All calculations will ' ...
+            'be made based on larger dimension.']);
     end
     
-    % Preload all images into a buffer.
-    disp(['makeImageBlockTexture: Loading all stimulus images, this ' ...
+    % Preload all images into a buffer
+    disp(['makeImageBlockTexture: Loading stimulus images, this ' ...
         'may take some time.'])
+    tic
     if imHpx > screenYpx || imWpx > screenXpx
         disp(['makeImageBlockTexture WARNING: Stimulus image is too ' ...
             'big to fit on the screen.']);
@@ -59,7 +75,7 @@ function makeImageBlockTexture
             imWpx = round(imWpx * (imHpx / screenYpx));
         elseif imWpx > imHpx
             imWpx = screenXpx;
-            imYpx = round(imWpx * (imWpx / screenXpx));
+            imHpx = round(imHpx * (imWpx / screenXpx));
         else
             imHpx = screenYpx;
             imWpx = screenXpx;
@@ -67,42 +83,58 @@ function makeImageBlockTexture
         imBuff = zeros(imHpx, imWpx, imNum);
         for imfn = 1:imNum
             imfile = strcat(imPath, filesep, imList(imfn).name);
-            imBuff(:,:,imfn) = imresize(imread(imfile), [imHpx imWpx]);
+            imBuff(:,:,imfn) = imresize(imread_gray(imfile), ...
+                [imHpx imWpx]);
         end
         clear imfn imfile
     else
         imBuff = zeros(imHpx, imWpx, imNum);
         for imfn = 1:imNum
             imfile = strcat(imPath, filesep, imList(imfn).name);
-            imBuff(:,:,imfn) = imread(imfile);
+            imBuff(:,:,imfn) = imread_gray(imfile);
         end
-        clear imfn imfile
+        clear imfn imfile I
     end
+    load_time = toc;
+    disp(['makeImageBlockTexture: Finished loading images (' ...
+        num2str(load_time) ' sec)'])
     
-    % Calculate width and height in centimeters from degrees
-    %   TODO: Check to make sure specified width/height matches 
-    %   image dimensions.
-    if imHpx == imWpx
-        Hdeg = P.height;
-        Wdeg = P.width;
-    elseif imHpx > imWpx
-        Hdeg = P.height;
-        Wdeg = round(P.width * (imWpx / imHpx));
-    elseif imWpx > imHpx
-        Hdeg = round(P.height * (imHpx / imWpx));
-        Wdeg = P.width;
+    % % Calculate width and height in centimeters from degrees
+    % %   TODO: Check to make sure specified width/height matches 
+    % %   image dimensions.
+    % if imHpx == imWpx
+    %     stimHdeg = P.y_size;
+    %     stimWdeg = P.x_size;
+    % elseif imHpx > imWpx
+    %     stimHdeg = P.y_size;
+    %     stimWdeg = round(P.x_size * (imWpx / imHpx));
+    % elseif imWpx > imHpx
+    %     stimHdeg = round(P.y_size * (imHpx / imWpx));
+    %     stimWdeg = P.x_size;
+    % end
+    % stimHcm = 2 * Mstate.screenDist * tan(((stimHdeg / 2) * pi) / 180);
+    % stimWcm = 2 * Mstate.screenDist * tan(((stimWdeg / 2) * pi) / 180);
+    % clear Hdeg Wdeg
+  
+    % Adjust the contast for each image
+    for imn = 1:imNum
+        I = imBuff(:,:,imn);
+        imBuff(:,:,imn) = ((I - median(I(:))) * (P.contrast / 100)) + grey;
     end
-    imHcm = 2 * Mstate.screenDist * tan(((Hdeg / 2) * pi) / 180);
-    imWcm = 2 * Mstate.screenDist * tan(((Wdeg / 2) * pi) / 180);
-    clear Hdeg Wdeg
-
-    imBuff = imBuff * (P.contrast / 100);
-    TDim = [(imHcm * P.y_zoom) (imWcm * P.x_zoom)];
+    clear imn I
     
     % Convert the images into textures that are ready to be played
+    Gtxtr = zeros(1, imNum);
     for imn = 1:imNum
         Gtxtr(imn) = Screen('MakeTexture', window, imBuff(:,:,imn));
     end
     clear imn
     
-    size(Gtxtr) %%% DEBUG XXX ***
+    % Save image dimensions
+    TDim = [imWpx imHpx];
+    
+function I = imread_gray(file_path)
+    I = imread(file_path);
+    if size(I, 3) > 1
+        I = rgb2gray(I);
+    end

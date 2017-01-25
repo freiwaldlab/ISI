@@ -44,7 +44,6 @@ end
 % End initialization code - DO NOT EDIT
 
 
-
 % --- Executes just before paramSelect is made visible.
 function paramSelect_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
@@ -72,13 +71,14 @@ modStrings{5} = 'Manual Mapper';
 modStrings{6} = 'Coherent Motion';
 modStrings{7} = 'Image Block';
 
-set(handles.module,'string',modStrings)
-
+% Populate pop-up menu with module names
+set(handles.module, 'string', modStrings)
+% Default to Image Block module (number 7)
+set(handles.module, 'Value', 7);
 GUIhandles.param = handles;
-
 refreshParamView
-
 playSampleFlag = 0;
+
 
 % --- Outputs from this function are returned to the command line.
 function varargout = paramSelect_OutputFcn(hObject, eventdata, handles) 
@@ -97,15 +97,12 @@ function parameterList_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = get(hObject,'String') returns parameterList contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from parameterList
-
 global Pstate
 
 idx = get(handles.parameterList,'value');
-
 set(handles.paramEditVal,'string',num2str(Pstate.param{idx}{3}));
 set(handles.paramEdit,'string',Pstate.param{idx}{1});
+
 
 % --- Executes during object creation, after setting all properties.
 function parameterList_CreateFcn(hObject, eventdata, handles)
@@ -113,12 +110,9 @@ function parameterList_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 
 function paramEditVal_Callback(hObject, eventdata, handles)
@@ -126,13 +120,10 @@ function paramEditVal_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of paramEditVal as text
-%        str2double(get(hObject,'String')) returns contents of paramEditVal as a double
-
 pval = get(handles.paramEditVal,'string');
 psymbol = get(handles.paramEdit,'string');
 
-updatePstate(psymbol,pval)
+updatePstate(psymbol, pval)
 refreshParamView
 
 
@@ -142,8 +133,6 @@ function paramEditVal_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -156,9 +145,7 @@ function loadParams_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global Pstate
-
-[file, path] = uigetfile({'*.param';'*.analyzer'},'Load parameter state','C:\Params&Loopers');
-
+[file, path] = uigetfile({'*.param';'*.analyzer'},'Load parameter state','C:\');
 id = find(file == '.');
 fext = file(id+1:end);
 
@@ -182,7 +169,6 @@ if file  %if 'cancel' was not pressed
 end
 
 
-
 % --- Executes on button press in saveParams.
 function saveParams_Callback(hObject, eventdata, handles)
 % hObject    handle to saveParams (see GCBO)
@@ -192,7 +178,6 @@ function saveParams_Callback(hObject, eventdata, handles)
 global Pstate
 
 [file, path] = uiputfile('*.param','Save as');
-
 if file  %if 'cancel' was not pressed
     file = [path file];
     save(file,'Pstate')
@@ -205,12 +190,10 @@ function module_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = get(hObject,'String') returns module contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from module
-
 mod = getmoduleID;  %return 2 element string
 configurePstate(mod) 
 refreshParamView
+
 
 % --- Executes during object creation, after setting all properties.
 function module_CreateFcn(hObject, eventdata, handles)
@@ -218,8 +201,6 @@ function module_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -232,11 +213,8 @@ function send_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global DcomState Mstate
-
 set(handles.playSample,'enable','off')
-
 Mstate.running = 0; %I don't think this is necessary, but doing it just in case for when I do 'sendMinfo'
-
 updateMstate %this is only necessary for screendistance
 
 %%%%Send parameters to display
@@ -244,7 +222,6 @@ sendPinfo
 waitforDisplayResp
 sendMinfo
 waitforDisplayResp
-%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%Tell it to buffer the stimulus
 mod = getmoduleID;
@@ -253,9 +230,9 @@ mod = getmoduleID;
 msg = ['B;' mod ';-1;~'];  
 fwrite(DcomState.serialPortHandle,msg);  %Tell it to buffer images
 waitforDisplayResp
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 set(handles.playSample,'enable','on')
+
 
 % --- Executes on button press in playSample.
 function playSample_Callback(hObject, eventdata, handles)
@@ -263,10 +240,5 @@ function playSample_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%runSample
-
-global Mstate
-
 startStimulus      %Tell Display to show its buffered images. 
 %waitforDisplayResp   %Wait for serial port to respond from display at end of trial
-

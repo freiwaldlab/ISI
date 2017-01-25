@@ -1,32 +1,18 @@
 function configurePstate(modID)
 
-
-switch modID
-    
-    case 'PG'
-        
-        configPstate_perGrater
-        
-    case 'FG'
-      
-        configPstate_flashGrater
-        
-    case 'RD'
-        
-        configPstate_Rain
-        
-    case 'FN'
-        
-        configPstate_Noise
-        
-    case 'MP'
-        
-        configPstate_Mapper
-        
-     case 'CM'
-        
-        configPstate_cohMotion
-
-        
-end
-
+    switch modID
+        case 'PG'
+            confPstate_perGrater
+        case 'FG'
+            confPstate_flashGrater
+        case 'RD'
+            confPstate_Rain
+        case 'FN'
+            confPstate_Noise
+        case 'MP'
+            confPstate_Mapper
+        case 'CM'
+            confPstate_cohMotion
+        case 'IB'
+            confPstate_ImageBlock
+    end

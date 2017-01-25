@@ -9,7 +9,9 @@ function configureDisplay(varargin)
     %priorityLevel=MaxPriority(w);
     %Priority(priorityLevel);
 
-    configurePstate('PG') %Use grater as the default when opening
+    % Initialize stimulus parameter structures,
+    % defaulting to Image Block mode
+    configurePstate('IB')
     configureMstate
 
     configCom(varargin);

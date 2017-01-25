@@ -6,7 +6,7 @@ global Mstate screenPTR screenNum %movieBlock
 
 global Gtxtr TDim  %'playgrating' will use these
 
-Screen('Close')  %First clean up: Get rid of all textures/offscreen windows
+%Screen('Close')  %First clean up: Get rid of all textures/offscreen windows
 
 Gtxtr = []; TDim = [];  %reset
 

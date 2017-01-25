@@ -1,5 +1,5 @@
 function Mastercb(obj, event)
-% master callback function 'Stimulator' PC
+% master callback function
 global comState screenPTR loopTrial
 global Mstate
 
@@ -15,7 +15,7 @@ try
     
     % Remove terminator and display
     inString = inString(1:end-1);
-    fprintf('configureDisplay: received "%s"\n', inString);
+    fprintf('COM: received from master "%s"\n', inString);
     
     delims = find(inString == ';');
     msgID = inString(1:delims(1)-1);  %Tells what button was pressed at master
@@ -47,7 +47,7 @@ try
                 id = find(dumstr == '=');
                 psymbol = dumstr(1:id-1);
                 pval = dumstr(id+1:end);
-                updatePstate(psymbol,pval)
+                updatePstate(psymbol, pval)
             end
         case 'B'  %Build stimulus; update looper info and buffer to video card.
             for i = 1:length(delims)-1

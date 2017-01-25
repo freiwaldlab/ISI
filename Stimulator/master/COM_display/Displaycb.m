@@ -12,7 +12,7 @@ function Displaycb(obj, event)
 
     % Remove terminator and display
     inString = inString(1:end-1);
-    fprintf('configureDisplay: received "%s"\n', inString);
+    fprintf('COM: received from slave "%s"\n', inString);
 
     %'nextT' is the string sent after stimulus is played
     %If it just played a stimulus, and scanimage is not acquiring, then run

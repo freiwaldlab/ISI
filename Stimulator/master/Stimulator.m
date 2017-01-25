@@ -1,19 +1,19 @@
 function Stimulator
+    % Initialize stimulus parameter structures, 
+    % defaulting to Image Block mode
+    configurePstate('IB')
+    configureMstate
+    configureLstate
 
-%Initialize stimulus parameter structures
-configurePstate('PG')
-configureMstate
-configureLstate
+    % Set up master-slave communication
+    configDisplayCom
 
-%Host-Host communication
-configDisplayCom    %stimulus computer
+    % NI USB input for ISI acquisition timing from frame grabber
+    configSyncInput  
 
-%NI USB input for ISI acquisition timing from frame grabber
-configSyncInput  
+    %configEyeShutter
 
-%configEyeShutter
-
-%Open GUIs
-MainWindow
-Looper 
-paramSelect
+    % Open GUIs
+    MainWindow
+    Looper 
+    paramSelect

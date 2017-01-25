@@ -2,17 +2,17 @@ function configurePstate(modID)
 
 switch modID
     case 'PG'
-        configurePstate_perGrater
+        confPstate_perGrater
     case 'FG'
-        configurePstate_flashGrater
+        confPstate_flashGrater
     case 'RD'
-        configurePstate_Rain
+        confPstate_Rain
     case 'FN'
-        configurePstate_Noise
+        confPstate_Noise
     case 'MP'
-        configurePstate_Mapper
+        confPstate_Mapper
     case 'CM'
-        configurePstate_cohMotion
+        confPstate_cohMotion
     case 'IB'
-        configurePstate_ImageBlock
+        confPstate_ImageBlock
 end     
