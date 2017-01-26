@@ -62,7 +62,7 @@ guidata(hObject, handles);
 % uiwait(handles.figure1);
 
 
-global GUIhandles Mstate shutterState
+global GUIhandles Mstate %shutterState
 
 Mstate.running = 0;
 
@@ -79,9 +79,9 @@ set(handles.stimulusIDP,'string',Mstate.stimulusIDP)
 
 GUIhandles.main = handles;
 
-%initialize eye shutter settings
-shutterState.use=0;
-shutterState.ini=0;
+%initialize eye shutter settings %comment mmf
+% shutterState.use=0;
+% shutterState.ini=0;
 
 
 % --- Outputs from this function are returned to the command line.
@@ -420,9 +420,10 @@ function REflag_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of REflag
 
-REbit = get(handles.REflag,'value');
-moveShutter(2,REbit)
-waitforDisplayResp
+%mmf
+% REbit = get(handles.REflag,'value');
+% moveShutter(2,REbit)
+% waitforDisplayResp
 
 
 
@@ -434,9 +435,10 @@ function LEflag_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of LEflag
 
-LEbit = get(handles.LEflag,'value');
-moveShutter(1,LEbit)
-waitforDisplayResp
+%mmf
+% LEbit = get(handles.LEflag,'value');
+% moveShutter(1,LEbit)
+% waitforDisplayResp
 
 
 

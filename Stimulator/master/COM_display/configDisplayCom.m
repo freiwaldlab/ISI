@@ -18,8 +18,9 @@ end
 % make udp object named 'stim'
 DcomState.serialPortHandle = udp(Mstate.stimulusIDP,'RemotePort',8866,'LocalPort',8844);
 
-set(DcomState.serialPortHandle, 'OutputBufferSize', 1024)
-set(DcomState.serialPortHandle, 'InputBufferSize', 1024)
+%mmf comment out next 2 lines
+% set(DcomState.serialPortHandle, 'OutputBufferSize', 1024)
+% set(DcomState.serialPortHandle, 'InputBufferSize', 1024)
 set(DcomState.serialPortHandle, 'Datagramterminatemode', 'off')
 
 %Establish serial port event callback criterion  

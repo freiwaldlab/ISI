@@ -47,18 +47,21 @@ switch(cmd(1))
 
         nframes = 1;
 
+        
+        %mmf - I don't think we need anything other than h = imagerhandles;
+        %and h = GrabSaveLoop
         h = imagerhandles;
-        h.mildig.set('GrabFrameEndEvent',0,'GrabEndEvent',...
-            0,'GrabStartEvent',0);
-
-        set(1,'Name','imager :: Sampling ::');
-        drawnow;
-        %h.mildig.Image = h.buf{1};
+%         h.mildig.set('GrabFrameEndEvent',0,'GrabEndEvent',...
+%             0,'GrabStartEvent',0);
+% 
+%         set(1,'Name','imager :: Sampling ::');
+%         drawnow;
+        %%h.mildig.Image = h.buf{1};
 
         % Removed unnecessary parport, 170109 mmf
         h = GrabSaveLoop(h, fname);
-
-        set(1,'Name','imager');
-        drawnow;
+% 
+%         set(1,'Name','imager');
+%         drawnow;
 
 end
