@@ -1,58 +1,168 @@
-function [h] = GrabSaveLoop(h, fname)
-% Deleted 170110 mmf, parport removed from function inputs
-global Tens ROIcrop IMGSIZE GUIhandles FPS effectiveFrameRate
-
-total_time =  str2double(get(findobj('Tag','timetxt'),'String'));
-N = ceil(total_time*FPS);
-
-% Keep in mind that using getsnapshot the effectiveFrameRate will be lower
-% than the camera FPS.  Therefore, each recording will have a few extra
-% frames at the end.  Can possibly get around this by using triggered
-% aquisition of set number of frames; however we would lose the ability to
-% record the blips on every frame aquisition.
-
-% In order to save time, I have the 'sync pulse' being sent over play
-% rather than playblocking.  playblocking was too slow.
-
-if get(GUIhandles.main.streamFlag,'value')
+function GrabSaveLoop(fname)
+    global imagerhandles GUIhandles FPS frameN Tens effectiveFrameRate
+    h = imagerhandles;
     
-    %Pull into matlab and stream directly to disk.  
-    tic;
-    for i = 1:N
-        play(handles.blip)
-        im = getsnapshot(handles.video);
-        var = ['f' num2str(i)];
-        fnamedum = [fname '_' var];
-        save(fnamedum,'im')
+    % Set whether debugging output should be displayed
+    debugToggle = 0;
+
+    % Fetch the total set acquisition time
+    total_time = str2double(get(findobj('Tag', 'timetxt'), 'String'));
+    %%% TODO automatically infer this this from stimulus parameters?
+
+    % Acquire and either save to disk after each frame else buffer and then
+    % save all frames at once
+    if ~get(GUIhandles.main.streamFlag, 'value')
+        % Stream image data to memory buffer
+        % Start acquisition
+        if h.video.FramesAcquired == 0
+            trigger(h.video);
+            disp('GrabSaveLoop: Acquisition triggered.')
+        else
+            disp('GrabSaveLoop WARNING: Frames acquired prior to trigger.')
+            trigger(h.video);
+            disp('GrabSaveLoop: Acquisition triggered.')
+        end
+        tic;
+        frameNleft = frameN;
+        frameNrecd = 0;
+        while islogging(h.video) || ...
+                (h.video.FramesAvailable > 0)
+            % Only continue if a new frame exists
+            if h.video.FramesAcquired > frameNrecd
+                frameNcurr = frameNrecd + 1;
+            else
+                continue
+            end
+            % Play audio blip for synchronization
+            tblip = tic;
+            play(h.blip)
+            blipTsec = toc(tblip);
+            if debugToggle
+                disp(['GrabSaveLoop: Audio blip time ' ...
+                    num2str(blipTsec) ' sec.'])
+            end
+            % Get next frame data from camera
+            tget = tic;
+            Tens(:,:,frameNcurr) = permute(getdata(h.video, 1), [2 1]);
+            getTsec = toc(tget);
+            if debugToggle
+                disp(['GrabSaveLoop: Frame ' num2str(frameNcurr) ...
+                    ' transfer time ' num2str(getTsec) ' sec.'])
+            end
+            % Track frames
+            frameNleft = frameNleft - 1;
+            frameNrecd = frameNcurr;
+            if frameN ~= (frameNleft + frameNrecd)
+                if debugToggle
+                    disp(['GrabSaveLoop ERROR: Frames received ' ...
+                        'and remaining do not add up to total.'])
+                end
+            end
+        end
+        if (frameNleft > 0) || ...
+                (h.video.FramesAcquired < frameN)
+            disp(['GrabSaveLoop ERROR: Fewer frames acquired than ' ...
+                'expected.'])
+        end
+        totalT = toc;
+        frameTsec = totalT / frameN;
+        effectiveFrameRate = 1 / frameTsec;
+        disp(['GrabSaveLoop: Total acquisition time was ' ...
+            num2str(totalT) ' sec, ' num2str(total_time) ...
+            ' sec expected.'])
+        disp(['GrabSaveLoop: Acquisition time per frame ' ...
+            num2str(frameTsec) ' sec, ' num2str(effectiveFrameRate) ...
+            ' fps, ' num2str(FPS) ' fps expected.'])
+        stop(h.video)
+        % Save the buffer to disk as individual frames
+        tic;
+        for n = 1:frameN
+            im = Tens(:,:,n);
+            fnamedum = [fname '_' 'f' num2str(n)];
+            save(fnamedum, 'im')          
+        end
+        totalsaveT = toc;
+        disp(['GrabSaveLoop: Total save time was ' ...
+            num2str(totalsaveT) ' sec.'])
+        disp(['GrabSaveLoop: Save time per frame ' ...
+            num2str(totalsaveT / frameN) ' sec.'])
+    else
+        % Stream image data directly to disk
+        % Start acquisition
+        if h.video.FramesAcquired == 0
+            trigger(h.video);
+            disp('GrabSaveLoop: Acquisition triggered.')
+        else
+            disp('GrabSaveLoop WARNING: Frames acquired prior to trigger.')
+            trigger(h.video);
+            disp('GrabSaveLoop: Acquisition triggered.')
+        end
+        tic;
+        frameNleft = frameN;
+        frameNrecd = 0;
+        while islogging(h.video) || ...
+                (h.video.FramesAvailable > 0)
+            % Only continue if a new frame exists
+            if h.video.FramesAcquired > frameNrecd
+                frameNcurr = frameNrecd + 1;
+            else
+                continue
+            end
+            % Play audio blip for synchronization
+            tblip = tic;
+            play(h.blip)
+            blipTsec = toc(tblip);
+            if debugToggle
+                disp(['GrabSaveLoop: Audio blip time ' ...
+                    num2str(blipTsec) ' sec.'])
+            end
+            % Get next frame data from camera
+            tget = tic;
+            im = permute(getdata(h.video, 1), [2 1]);
+            getTsec = toc(tget);
+            if debugToggle
+                disp(['GrabSaveLoop: Frame ' num2str(frameNcurr) ...
+                    ' transfer time ' num2str(getTsec) ' sec.'])
+            end
+            % Save the frame to disk
+            tsave = tic;
+            fnamedum = [fname '_' 'f' num2str(frameNcurr)];
+            save(fnamedum, 'im')
+            saveTsec = toc(tsave);
+            if debugToggle
+                disp(['GrabSaveLoop: Frame ' num2str(frameNcurr) ...
+                    ' transfer time ' num2str(saveTsec) ' sec.'])
+            end
+            % Track frames
+            frameNleft = frameNleft - 1;
+            frameNrecd = frameNcurr;
+            if frameN ~= (frameNleft + frameNrecd)
+                if debugToggle
+                    disp(['GrabSaveLoop ERROR: Frames received ' ...
+                        'and remaining do not add up to total.'])
+                end
+            end
+        end        
+        if (frameNleft > 0) || ...
+                (h.video.FramesAcquired < frameN)
+            disp(['GrabSaveLoop ERROR: Fewer frames acquired than ' ...
+                'expected.'])
+        end
+        totalT = toc;
+        frameTsec = totalT / frameN;
+        effectiveFrameRate = 1 / frameTsec;
+        disp(['GrabSaveLoop: Total acquisition and save time was ' ...
+            num2str(totalT) ' sec, ' num2str(total_time) ' sec expected.'])
+        disp(['GrabSaveLoop: Acquisition and save time per frame ' ...
+            num2str(frameTsec) ' sec, ' num2str(effectiveFrameRate) ...
+            ' fps, ' num2str(FPS) ' fps expected.'])
+        stop(h.video)
     end
-    elapsedTime = toc;
-    timePerFrame = elapsedTime/20;
-    effectiveFrameRate = 1/timePerFrame;
-    stop(handles.video)
     
-else
-    
-    %Pull into matlab workspace but wait to save it
-    tic;
-    for n = 1:N
-        play(handles.blip)
-        Tens(:,:,n) = getsnapshot(handles.video);
-    end
-    elapsedTime = toc;
-    timePerFrame = elapsedTime/20;
-    effectiveFrameRate = 1/timePerFrame;
-    stop(handles.video)
-    
-    for n = 1:N
-        im = Tens(:,:,n);
-        var = ['f' num2str(n)];
-        fnamedum = [fname '_' var];
-        save(fnamedum,'im')
-    end
-    
-end
-
-delete(imaqfind)
+    % Remove video object and clean up 
+    delete(h.video);
+    clear h.video
+    imagerhandles = h;
 
 % % if get(GUIhandles.main.streamFlag,'value')
 % %     Xpx = IMGSIZE(1);

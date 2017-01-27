@@ -52,10 +52,10 @@ function slimImager_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to slimImager (see VARARGIN)
 
-global IMGSIZE FPS;
+global imagerhandles IMGSIZE FPS;
 
 % Data directory, unit, and tag settings
-handles.datatxt = 'c:\imager_data\xx0';
+handles.datatxt = 'c:\imager_data\';
 handles.unit = 'u000_000';
 handles.time_tag = 0;
 
@@ -74,7 +74,8 @@ handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 32)), 30000);
 handles.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
 set(handles.video, 'TimerPeriod', 0.05, 'TimerFcn', @timerhandler);
 triggerconfig(handles.video, 'manual');
-handles.video.FramesPerTrigger = Inf; % Capture frames until we manually stop it
+% Capture frames until manually stopped
+handles.video.FramesPerTrigger = Inf;
 handles.video.TriggerRepeat = Inf;
 %handles.video.FrameGrabInterval = 2; % Dependent on the mode selected & memory
 %available.  Will try without setting this, but if need be, we can select
@@ -100,6 +101,8 @@ camImHpx = camImPos(4);
 handles.cameraImage = imshow(uint16(zeros(camImHpx, camImWpx, camImBands)), ...
     'Parent', handles.cameraAxes);
 
+imagerhandles = handles;
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -108,18 +111,18 @@ uiwait(handles.slimImager);
 
 
 function timerhandler(varargin)
-
-if ~isempty(gco)
-    %% Update handles
-    %handles = guidata(gcf);
-    %% Get picture using GETSNAPSHOT and put it into axes using IMAGE
-    %I = getsnapshot(handles.video);
-    %handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
-    guiUpdate;
-else
-    % Clean up - delete any image acquisition objects
-    delete(imaqfind);
-end
+    if ~isempty(gco)
+        % % Update handles
+        %handles = guidata(gcf);
+        % % Get picture using GETSNAPSHOT and put it into axes using IMAGE
+        %I = getsnapshot(handles.video);
+        %handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
+        guiUpdate;
+    else
+        % Delete any preview image acquisition objects
+        delete(handles.video)
+        clear handles.video
+    end
 
 
 % --- Outputs from this function are returned to the command line.
@@ -138,13 +141,12 @@ function slimImager_CloseRequestFcn(hObject, eventdata, handles)
 % hObject    handle to slimImager (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Make sure video is stopped
-%%% XXX *** doesn't always work... make function to check status and close?
-%stop(handles.video);
-% Close GUI
-delete(hObject);
-delete(imaqfind);
+    % Make sure video objects are closed and deleted
+    delete(handles.video);
+    clear handles.video
+    delete(imaqfind);
+    % Close GUI
+    delete(hObject);
 
 
 % --- Executes on button press in cameraToggle.
@@ -170,10 +172,7 @@ end
 
 % --- Executes on button press in captureImage.
 function captureImage_Callback(hObject, eventdata, handles)
-% hObject    handle to captureImage (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-guiUpdate;
+    guiUpdate
 
 
 function guiUpdate(varargin)
@@ -181,6 +180,7 @@ function guiUpdate(varargin)
 handles = guidata(gcf);
 
 % Plot image snapshot in large panel
+% NOTE: Using slow getsnapshot here to update the GUI
 axes(handles.cameraAxes);
 %set(handles.cameraAxes, 'YTick', [], 'XTick', []);
 I = getsnapshot(handles.video);
@@ -192,7 +192,7 @@ axes(handles.histAxes);
 %set(handles.histAxes, 'YTick', []);
 %%% XXX *** might want to set up 'BinEdges',edges,'BinCounts',counts
 handles.histPlot = histogram(handles.histAxes, I);
-BinLims = handles.histPlot.BinLimits;
+%BinLims = handles.histPlot.BinLimits;
 % set(handles.histAxes, 'YTick', [] , 'XTick', BinLims, ...
 %     'XTickLabel', {num2str(BinLims(1)), num2str(BinLims(2))}, ...
 %     'XLim', [0 (2^16 - 1)], 'TickDir', 'out');
@@ -200,7 +200,6 @@ set(handles.histAxes, 'TickDir', 'out', 'XGrid', 'on', ...
     'YTick', [], 'YTickLabel', {}, ...
     'XTick', [0 (2^16 - 1)], 'XTickLabel', {0, (2^16 - 1)}, ...
     'XLim', [0 (2^16 - 1)]);
-hA = get(handles.histAxes); %%% DEBUG
 axis off;
 
 % Plot jet verson of snapshot to show image saturation
@@ -221,34 +220,6 @@ handles.jetMap = image(handles.jetMapAxes, 1:64);
 axis off;
 
 
-% save('testframe.mat', 'frame');
-% disp('Frame saved to file ''testframe.mat''');
-% % r = questdlg('Do you want to save it?','Single Grab','Yes','No','Yes');
-% % if(strcmp(r,'Yes'))
-% %     inputdlg('Please enter description:','Image Grab',1,{'No description'},'on');
-% %     animal = get(findobj('Tag','animaltxt'),'String');
-% %     unit   = get(findobj('Tag','unittxt'),'String');
-% %     expt   = get(findobj('Tag','expttxt'),'String');
-% %     datadir= get(findobj('Tag','dataEnter'),'String');
-% %     tag    = get(findobj('Tag','tagtxt'),'String');
-% % 
-% %     dd = strcat(datadir, filsep, animal, filesep, 'grabs', filesep);
-% %     if(~exist(dd, 'dir'))
-% %         mkdir(dd);
-% %     end
-% %     fname = strcat(dd, 'grab_', animal, ...
-% %         '_', unit, '_', ...
-% %         expt, '_', datestr(now));
-% %     fname = strrep(fname, ' ', '_');
-% %     fname = strrep(fname, ':', '');
-% %     fname = strrep(fname, '-', '');
-% %     fname = strcat(fname, '.mat');
-% %     fname(2) = ':';
-% %     %%% XXX *** update for videoinput
-% %     save(fname,'frame');
-% % end
-
-
 % --- Executes during object creation, after setting all properties.
 function cameraAxes_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to cameraAxes (see GCBO)
@@ -262,9 +233,9 @@ function startAcquisition_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Start/Stop acquisition
-if strcmp(get(handles.startAcquisition,'String'),'Start Acquisition')
+if strcmp(get(handles.startAcquisition, 'String'), 'Start Acquisition')
       % Camera is not acquiring. Change button string and start acquisition.
-      set(handles.startAcquisition,'String','Stop Acquisition');
+      set(handles.startAcquisition, 'String', 'Stop Acquisition');
       trigger(handles.video);
 else
       % Camera is acquiring. Stop acquisition, save video data,
@@ -274,8 +245,9 @@ else
       videodata = getdata(handles.video);
       save('testvideo.mat', 'videodata');
       disp('Video saved to file ''testvideo.mat''');
-      start(handles.video); % Restart the camera
-      set(handles.startAcquisition,'String','Start Acquisition');
+      % Restart the camera
+      start(handles.video);
+      set(handles.startAcquisition, 'String', 'Start Acquisition');
 end
 
 

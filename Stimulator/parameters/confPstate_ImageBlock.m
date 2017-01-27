@@ -5,11 +5,15 @@ function confPstate_ImageBlock
     
     Pstate = struct;
     Pstate.type = 'IB';
-    Pstate.param{1} =  {'delay_pre', 'float', 2, 0, ' sec'};
-    Pstate.param{sh(Pstate.param)+1} = {'delay_post', 'float', 2, 0, ...
+    Pstate.param{1} = {'predelay', 'float', 2, 0, ' sec'};
+    Pstate.param{sh(Pstate.param)+1} = {'postdelay', 'float', 2, 0, ...
         ' sec'};
-    Pstate.param{sh(Pstate.param)+1} = {'image_duration', 'float', 1, 0, ' sec'};
-    Pstate.param{sh(Pstate.param)+1} = {'interval_duration', 'float', 1, 0, ' sec'};
+    Pstate.param{sh(Pstate.param)+1} = {'stim_time', 'float', 44, 0, ...
+        ' sec'}; 
+    Pstate.param{sh(Pstate.param)+1} = {'image_duration', 'float', ...
+        0.2, 0, ' sec'};
+    Pstate.param{sh(Pstate.param)+1} = {'interval_duration', 'float', ...
+        0.1, 0, ' sec'};
     Pstate.param{sh(Pstate.param)+1} = {'ori', 'int', 0, 0, 'deg'};
     Pstate.param{sh(Pstate.param)+1} = {'x_pos', 'int', 600, 0, ' px'};
     Pstate.param{sh(Pstate.param)+1} = {'y_pos', 'int', 600, 0, ' px'};

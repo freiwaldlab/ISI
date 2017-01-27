@@ -1130,9 +1130,9 @@ function grabimage_Callback(hObject, eventdata, handles)
 % hObject    handle to grabimage (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global imagerhandles ROIcrop;
+global imagerhandles ROIcrop
 
-img = zeros(ROIcrop(3),ROIcrop(4),'uint16');
+img = zeros(ROIcrop(3), ROIcrop(4), 'uint16');
 %%% XXX *** update for videoinput
 %img = imagerhandles.milimg.Get(zz,IMGSIZE^2,-1,ROIcrop(1),ROIcrop(2),ROIcrop(3),ROIcrop(4));
 
@@ -1145,29 +1145,31 @@ imagesc(grab.img')
 axis off
 colormap gray
 truesize
-r = questdlg('Do you want to save it?','Single Grab','Yes','No','Yes');
+r = questdlg('Do you want to save it?', ...
+    'Single Grab', 'Yes', 'No', 'Yes');
 if(strcmp(r,'Yes'))
-    grab.comment = inputdlg('Please enter description:','Image Grab',1,{'No description'},'on');
-    animal = get(findobj('Tag','animaltxt'),'String');
-    unit = get(findobj('Tag','unittxt'),'String');
-    expt = get(findobj('Tag','expttxt'),'String');
-    datadir = get(findobj('Tag','datatxt'),'String');
-    tag = get(findobj('Tag','tagtxt'),'String');
+    grab.comment = inputdlg('Please enter description:', ...
+        'Image Grab', 1, {'No description'}, 'on');
+    animal = get(findobj('Tag', 'animaltxt'), 'String');
+    unit = get(findobj('Tag', 'unittxt'), 'String');
+    expt = get(findobj('Tag', 'expttxt'), 'String');
+    datadir = get(findobj('Tag', 'datatxt'), 'String');
+    tag = get(findobj('Tag', 'tagtxt'), 'String');
 
     dd = strcat(datadir, filesep, animal, filesep, 'grabs', filesep);
     if ~exist(dd, 'dir')
         mkdir(dd);
     end
     fname = strcat(dd, 'grab_', datestr(now, 'yyyymmddtHHMMSSpFFF'), ...
-        get(imagerhandles.animaltxt,'String'), '_', ...
-        get(imagerhandles.unittxt,'String'), '_', ...
-        get(imagerhandles.expttxt,'String'));
+        get(imagerhandles.animaltxt, 'String'), '_', ...
+        get(imagerhandles.unittxt, 'String'), '_', ...
+        get(imagerhandles.expttxt, 'String'));
     fname = strrep(fname, ' ', '_');
     fname(3:end) = strrep(fname(3:end), ':', '_');
     fname = strrep(fname, '-', '');
     fname = strcat(fname, '.mat');
     %%% XXX *** update for videoinput
-    save(fname,'grab');
+    save(fname, 'grab');
 end
 delete(10);
 

@@ -1,14 +1,26 @@
 function configSyncInput
-
 global analogIN
 
-% Session based interface. 
-% Updated for MATLAB compatibility, 170109 mmf
-analogIN = daq.createSession('ni'); 
-addAnalogInputChannel(analogIN,'Dev1',0:1,'Voltage');
-analogIN.Rate = 5000; %rate is determined by maximum on device/number of channels
-actualInputRate = analogIN.Rate; %to account for rounding done by system
-analogIN.IsContinuous = true;
+% Session based interface 
+have_ni = 0;
+devs = daq.getDevices;
+for dn = 1:length(devs)
+    if strcmp(devs(dn).Vendor.ID, 'ni')
+        have_ni = 1;
+    end
+end
+if have_ni
+    analogIN = daq.createSession('ni');
+    addAnalogInputChannel(analogIN, 'Dev1', 0:1, 'Voltage');
+    %rate is determined by maximum on device/number of channels
+    analogIN.Rate = 5000;
+    %actualInputRate = analogIN.Rate; %to account for rounding done by system
+    analogIN.IsContinuous = true;
+    disp('configSyncInput: Configured Daq analogIN.')
+end
+if ~have_ni || isempty(analogIN)
+    disp('configSyncInput ERROR: Could not find NI device.')
+end
 
 %legacy code. no longer supported by matlab. mmf
 % analogIN = analoginput('nidaq','Dev1');

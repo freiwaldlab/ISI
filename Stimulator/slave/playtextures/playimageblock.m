@@ -85,7 +85,7 @@ function playimageblock
     % Draw "low" sync state during rest of pre-delay
     Screen('DrawTexture', window, Stxtr(2), syncPiece, syncPos);
     Screen('Flip', window);
-    WaitSecs(P.delay_pre);
+    WaitSecs(P.predelay);
     
     % Play stimulus by drawing pre-generated textures to the screen
     for imn = imList
@@ -115,4 +115,4 @@ function playimageblock
     % Draw "low" sync state for duration of post-delay block
     Screen('DrawTexture', window, Stxtr(2), syncPiece, syncPos);
     Screen('Flip', window);
-    WaitSecs(P.delay_post);
+    WaitSecs(P.postdelay);

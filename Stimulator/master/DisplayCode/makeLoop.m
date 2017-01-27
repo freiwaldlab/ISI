@@ -1,9 +1,9 @@
 function makeLoop
+    global Lstate GUIhandles looperInfo
 
-global Lstate GUIhandles looperInfo
+looperInfo = struct;
 
-looperInfo = struct;  %reset 
-
+Lstate.param
 Nparam = length(Lstate.param); %number of looper parameters
 
 %Produces a cell array 'd', with each element corresponding to a different

@@ -100,10 +100,6 @@ function animal_Callback(hObject, eventdata, handles)
 % hObject    handle to animal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of animal as text
-%        str2double(get(hObject,'String')) returns contents of animal as a double
-
 global Mstate
 
 Mstate.anim = get(handles.animal,'string');
@@ -145,8 +141,6 @@ function animal_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -214,7 +208,8 @@ function runbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to runbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global Mstate GUIhandles Pstate trialno analogIN
+global Mstate GUIhandles trialno analogIN
+%global Pstate
 
 %Run it!
 if ~Mstate.running
@@ -233,7 +228,7 @@ if ~Mstate.running
     
     %Check if this data file already exists!
     if get(GUIhandles.main.intrinsicflag,'value')
-        [Oflag dd] = checkforOverwrite;
+        [Oflag, dd] = checkforOverwrite;
         if Oflag
             return
         else
@@ -250,14 +245,6 @@ if ~Mstate.running
     updateMstate    
     
     makeLoop;  %makes 'looperInfo'.  This must be done before saving the analyzer file.
-    
-%     if strcmp('RD',getmoduleID) %if raindropper
-%         if getParamVal('randseed_bit') %if random seed bit is set
-%             rval = round(rand(1)*1000)/1000;
-%             updatePstate('rseed',rval)
-%         end
-%     end
-
     saveExptParams  %Save .analyzer. Do this before running... in case something crashes
 
     set(handles.runbutton,'string','Abort')    
@@ -270,21 +257,21 @@ if ~Mstate.running
     %%%%%%%%%%%%%%%%%%%%%%%%%%
 
     %%%Get the 2photon Acquisition ready:
-    if get(GUIhandles.main.twophotonflag,'value');  %Flag for the link with scanimage
+    if get(GUIhandles.main.twophotonflag, 'value')  %Flag for the link with scanimage
         prepACQ
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     
     %%%Send inital parameters to ISI imager GUI
     P = getParamStruct;
-    if get(GUIhandles.main.intrinsicflag,'value')
-        total_time = P.predelay+P.postdelay+P.stim_time;
-        sendtoImager(sprintf(['I %2.3f' 13],total_time))
+    if get(GUIhandles.main.intrinsicflag, 'value')
+        total_time = P.predelay + P.postdelay + P.stim_time;
+        sendtoImager(sprintf(['I %2.3f' 13], total_time))
         
         %Make sure analog in is not running
         % Updated for MATLAB compatibility, 170109 mmf
         analogIN.stop;
-        clearvars -global analogIN
+        %clearvars -global analogIN
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    
@@ -294,18 +281,6 @@ if ~Mstate.running
     %after each trial... 
     %In 'endAcquisition' (2ph), below (intrinsic), or 'Displaycb' (no acquisition)
     run2  
-    
-    %%%%What the hell was I doing here before?
-%     while trialno<=getnotrials
-%         run2
-%     end
-%     Mstate.running = 0;
-%     set(GUIhandles.main.runbutton,'string','Run')
-%     
-%     if get(GUIhandles.main.intrinsicflag,'value')        
-%         %set(GUIhandles.param.playSample,'enable','off')
-%         saveOnlineAnalysis
-%     end
     
     %We don't want anything significant to happen after 'run2', so that
     %scanimage will be ready to accept TTL
@@ -357,9 +332,7 @@ function closeDisplay_Callback(hObject, eventdata, handles)
 % hObject    handle to closeDisplay (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 global DcomState
-
 fwrite(DcomState.serialPortHandle,'C;~')
 
 
