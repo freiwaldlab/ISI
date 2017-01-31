@@ -2,8 +2,6 @@ function makeLoop
     global Lstate GUIhandles looperInfo
 
 looperInfo = struct;
-
-Lstate.param
 Nparam = length(Lstate.param); %number of looper parameters
 
 %Produces a cell array 'd', with each element corresponding to a different
@@ -33,14 +31,14 @@ if Nparam == 1
     d{1} = d{1}(1,:);
 end
 
-nr = str2num(get(GUIhandles.looper.repeats,'string'));                      
+nr = str2double(get(GUIhandles.looper.repeats, 'string'));                      
 
 
 %Create random sequence across conditions, for each repeat
 for rep = 1:nr
     
     if get(GUIhandles.looper.randomflag,'value')
-        [dum seq{rep}] = sort(rand(1,nc));  %make random sequence
+        [dum, seq{rep}] = sort(rand(1,nc));  %make random sequence
     else                          
         seq{rep} = 1:nc;                                   
     end
@@ -78,7 +76,7 @@ looperInfoDum = looperInfo;
 blankcounter = 0;
 if bflag
     for t = 1:nr*nc
-        [c r] = getcr(t,looperInfoDum,nc);
+        [c, r] = getcr(t,looperInfoDum,nc);
 
         if rem(t-1,bPer)==0 && t~=1
             blankcounter = blankcounter+1;
@@ -102,18 +100,16 @@ end
 looperInfo.formula = get(GUIhandles.looper.formula,'string');
 
 
-function [c r] = getcr(t,looperInfo,nc)
+function [c, r] = getcr(t,looperInfo,nc)
 
 %need to input nc so that it is always the number of conditions w/o blanks
 
 nr = length(looperInfo.conds{1}.repeats);
 
 for c = 1:nc
-    for r = 1:nr        
-        
+    for r = 1:nr
         if t == looperInfo.conds{c}.repeats{r}.trialno
             return
         end
-        
     end
 end
