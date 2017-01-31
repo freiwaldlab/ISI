@@ -1,17 +1,16 @@
 function [dispSynctimes, acqSynctimes, dsyncwave] = getSyncTimes
-
 global analogIN syncs analogINdata
 
 % Updated for MATLAB compatibility, 170109 mmf
-samples = length(analogINdata);
+%samples = length(analogINdata);
 Fs = analogIN.Rate;
 syncs = analogINdata(2:3,:)';
 
-figure(69)
-hold on
-plot(syncs(1:1:end,1),'r')
-plot(syncs(1:1:end,2),'k')
-hold off
+% figure(69)
+% hold on
+% plot(syncs(1:1:end,1),'r')
+% plot(syncs(1:1:end,2),'k')
+% hold off
 
 %First channel should be from display
 dispSynctimes = processLCDSyncs(syncs(:,1),Fs);
