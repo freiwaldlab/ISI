@@ -1,6 +1,5 @@
 function preallocateTensor
     global imagerhandles GUIhandles FPS Tens IMGSIZE frameN
-
     h = imagerhandles;
     
     % Set whether debugging output should be displayed
@@ -31,12 +30,14 @@ function preallocateTensor
     end
     h.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
     triggerconfig(h.video, 'manual');
-    h.video.TriggerRepeat = Inf;
-    h.video.FramesPerTrigger = frameN;
+    % If in manual trigger mode and relying on GETSNAPSHOT, 
+    %h.video.TriggerRepeat = Inf;
+    h.video.FramesPerTrigger = 1; %frameN;
+    %h.video.FrameRate
     setupTime = toc;
     if debugToggle
         disp(['preallocateTensor: Time to setup video input was ' ...
-            num2str(setupTime) ' sec'])
+            num2str(setupTime) ' sec.'])
     end
     % Start, because actual acquisition won't start until manually
     % triggered
@@ -45,7 +46,7 @@ function preallocateTensor
     startTime = toc;
     if debugToggle
         disp(['preallocateTensor: Time to start video pre-trigger was ' ...
-            num2str(startTime) ' sec'])
+            num2str(startTime) ' sec.'])
     end
     
     imagerhandles = h;
