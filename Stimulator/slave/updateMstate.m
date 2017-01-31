@@ -1,10 +1,8 @@
-function updateMstate(pname,pval)
+function updateMstate(pname, pval)
+    global Mstate
 
-global Mstate
-
-if strcmp(pname,'screenDist') || strcmp(pname,'running')   
-    eval(['Mstate.' pname ' = str2num(pval);']);
-else
-    eval(['Mstate.' pname ' = pval;']);
-end
-
+    if strcmp(pname, 'screenDist') || strcmp(pname, 'running')   
+        eval(['Mstate.' pname ' = str2num(pval);']);
+    else
+        eval(['Mstate.' pname ' = pval;']);
+    end
