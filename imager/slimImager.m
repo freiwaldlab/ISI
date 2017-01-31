@@ -22,7 +22,7 @@ function varargout = slimImager(varargin)
 
 % Edit the above text to modify the response to help slimImager
 
-% Last Modified by GUIDE v2.5 20-Jan-2017 18:51:58
+% Last Modified by GUIDE v2.5 28-Jan-2017 16:55:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -51,20 +51,42 @@ function slimImager_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to slimImager (see VARARGIN)
-
-global imagerhandles IMGSIZE FPS;
+global imagerhandles IMGSIZE FPS imagerWinOffYpx DataPath
 
 % Data directory, unit, and tag settings
-handles.datatxt = 'c:\imager_data\';
+handles.datatxt = 'C:\Data';
 handles.unit = 'u000_000';
 handles.time_tag = 0;
+set(findobj('Tag', 'datatxt'), 'string', handles.datatxt);
+%trial = str2double(cmd(3:end));
+animal = get(findobj('Tag', 'animaltxt'), 'string');
+unit = get(findobj('Tag', 'unittxt'), 'string');
+expt = get(findobj('Tag', 'expttxt'), 'string');
+datadir = get(findobj('Tag', 'datatxt'), 'string');
+tag = get(findobj('Tag', 'tagtxt'), 'string');
+DataPath = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+
+% Get screen information for window positioning
+scpx = get(0, 'ScreenSize');
+% Set window position
+siw = gcf;
+sipx = getpixelposition(siw);
+setpixelposition(siw, [scpx(1) ...
+    (scpx(4) - sipx(4) - imagerWinOffYpx) ...
+    sipx(3) sipx(4)]);
 
 % Turn off UI buttons that are not accessible
 set(handles.startAcquisition, 'Enable', 'off');
 set(handles.captureImage, 'Enable', 'off');
 
 % Set up audio output for tracking master-slave communication
-handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 32)), 30000);
+% NOTE: Not currently used anywhere other than GrabSaveLoop, so moved
+% there for now. Eventually may want to move back to have a manual TTL.
+%handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 32)), 30000);
+%handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 5)), 5000);
+% should correspond to an 1/90 or ~11 msec play to match the expected max 
+% camera fps
+%handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 5000*(1/90))), 5000);
 
 % Create video object
 %   Putting the object into manual trigger mode and then
@@ -131,8 +153,7 @@ function varargout = slimImager_OutputFcn(hObject, eventdata, handles)
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Return an empty string, GUI needs no output.
+% Return an empty string, GUI needs no output
 varargout{1} = ''; %handles.output;
 
 
@@ -164,7 +185,10 @@ if strcmp(get(handles.cameraToggle, 'String'), 'Start Camera')
 else
       % Camera is on. Stop camera and change button string.
       set(handles.cameraToggle, 'String', 'Start Camera');
+      % Delete any preview image acquisition objects
       stop(handles.video);
+      delete(handles.video)
+      clear handles.video
       set(handles.startAcquisition, 'Enable', 'off');
       set(handles.captureImage, 'Enable', 'off');
 end
@@ -257,8 +281,6 @@ function illuminationEnable_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of illuminationEnable
-
 
 % --- Executes on button press in illuminationROI.
 function illuminationROI_Callback(hObject, eventdata, handles)
@@ -266,23 +288,29 @@ function illuminationROI_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-function pathName_Callback(hObject, eventdata, handles)
-% hObject    handle to pathName (see GCBO)
+
+function datatxt_Callback(hObject, eventdata, handles)
+% hObject    handle to datatxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of pathName as text
-%        str2double(get(hObject,'String')) returns contents of pathName as a double
+global imagerhandles DataPath
+dir = get(findobj('Tag', 'datatxt'), 'string');
+set(findobj('Tag', 'datatxt'), 'string', dir);
+trial = str2double(cmd(3:end));
+animal = get(findobj('Tag', 'animaltxt'), 'string');
+unit = get(findobj('Tag', 'unittxt'), 'string');
+expt = get(findobj('Tag', 'expttxt'), 'string');
+datadir = get(findobj('Tag', 'datatxt'), 'string');
+tag = get(findobj('Tag', 'tagtxt'), 'string');
+DataPath = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+imagerhandles = handles;
 
 
 % --- Executes during object creation, after setting all properties.
-function pathName_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to pathName (see GCBO)
+function datatxt_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to datatxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -293,13 +321,20 @@ function directory_Callback(hObject, eventdata, handles)
 % hObject    handle to directory (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-%global imagerhandles;
-dir = uigetdir('', 'Select data directory');
-if dir ~= 0
-    %imagerhandles.datadir = dir;
-    handles.datadir = dir;
-    set(findobj('Tag', 'datatxt'), 'String', dir);
-end
+    global imagerhandles DataPath
+    dir = uigetdir(get(findobj('Tag', 'datatxt'), 'string'), ...
+        'Select Data Path');
+    if dir ~= 0
+        set(findobj('Tag', 'datatxt'), 'string', dir);
+        %trial = str2double(cmd(3:end));
+        animal = get(findobj('Tag', 'animaltxt'), 'string');
+        unit = get(findobj('Tag', 'unittxt'), 'string');
+        expt = get(findobj('Tag', 'expttxt'), 'string');
+        datadir = get(findobj('Tag', 'datatxt'), 'string');
+        tag = get(findobj('Tag', 'tagtxt'), 'string');
+        DataPath = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+    end
+    imagerhandles = handles;
 
 
 function unittxt_Callback(hObject, eventdata, handles)
@@ -307,18 +342,12 @@ function unittxt_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of unittxt as text
-%        str2double(get(hObject,'String')) returns contents of unittxt as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function unittxt_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to unittxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -329,18 +358,12 @@ function tagtxt_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of tagtxt as text
-%        str2double(get(hObject,'String')) returns contents of tagtxt as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function tagtxt_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to tagtxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -350,9 +373,6 @@ function expttxt_Callback(hObject, eventdata, handles)
 % hObject    handle to expttxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of expttxt as text
-%        str2double(get(hObject,'String')) returns contents of expttxt as a double
 
 
 % --- Executes during object creation, after setting all properties.

@@ -20,10 +20,6 @@ function varargout = MainWindow(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help MainWindow
-
-% Last Modified by GUIDE v2.5 17-Sep-2013 15:26:17
-
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -61,25 +57,27 @@ guidata(hObject, handles);
 % UIWAIT makes MainWindow wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
-
 global GUIhandles Mstate %shutterState
-
 Mstate.running = 0;
 
-%Set GUI to the default established in configureMstate
-set(handles.screendistance,'string',num2str(Mstate.screenDist))
-set(handles.analyzerRoots,'string',Mstate.analyzerRoot)
-set(handles.animal,'string',Mstate.anim)
-set(handles.unitcb,'string',Mstate.unit)
-set(handles.exptcb,'string',Mstate.expt)
-set(handles.hemisphere,'string',Mstate.hemi)
-set(handles.screendistance,'string',Mstate.screenDist)
-set(handles.monitor,'string',Mstate.monitor)
-set(handles.stimulusIDP,'string',Mstate.stimulusIDP)
+% Set GUI fields to the default Mstate values
+set(handles.intrinsicTog, 'value', 1);
+set(handles.intrinsicflag, 'value', 1)
+set(handles.twophotonTog, 'value', 0);
+set(handles.twophotonflag, 'value', 0)
+set(handles.screendistance, 'string', num2str(Mstate.screenDist))
+set(handles.analyzerRoots, 'string', Mstate.analyzerRoot)
+set(handles.animal, 'string', Mstate.anim)
+set(handles.unitcb, 'string', Mstate.unit)
+set(handles.exptcb, 'string', Mstate.expt)
+set(handles.hemisphere, 'string', Mstate.hemi)
+set(handles.screendistance, 'string', Mstate.screenDist)
+set(handles.monitor, 'string', Mstate.monitor)
+set(handles.stimulusIDP, 'string', Mstate.stimulusIDP)
 
 GUIhandles.main = handles;
 
-%initialize eye shutter settings %comment mmf
+% Currently, no eye shutter is supposed.
 % shutterState.use=0;
 % shutterState.ini=0;
 
@@ -91,9 +89,10 @@ function varargout = MainWindow_OutputFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get default command line output from handles structure
-varargout{1} = handles.output;
-
+% % Get default command line output from handles structure
+%varargout{1} = handles.output;
+% Annoying workaround for window positioning
+varargout{1} = gcf;
 
 
 function animal_Callback(hObject, eventdata, handles)
@@ -102,37 +101,34 @@ function animal_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global Mstate
 
-Mstate.anim = get(handles.animal,'string');
-
-anaroot = get(handles.analyzerRoots,'string');
+Mstate.anim = get(handles.animal, 'string');
+anaroot = get(handles.analyzerRoots, 'string');
 Mstate.analyzerRoot = anaroot;
+roots = parseString(Mstate.analyzerRoot, ';');
+%Use the first root path for the logic below
+dirinfo = dir([roots{1} '\' Mstate.anim]);
 
-roots = parseString(Mstate.analyzerRoot,';');
-
-dirinfo = dir([roots{1} '\' Mstate.anim]); %Use the first root path for the logic below
-
-if length(dirinfo) > 2 %If the animal folder exists and there are files in it
-    
+%If the animal folder exists and there are files in it
+if length(dirinfo) > 2 
     lastunit = dirinfo(end).name(6:8);
     lastexpt = dirinfo(end).name(10:12);
-
     newunit = lastunit; 
-    newexpt = sprintf('%03d',str2num(lastexpt)+1); %Go to next experiment number
-    
-else  %if animal folder does not exist or there aren't any files.  The new folder will
-        %be created when you hit the 'run' button
-    
+    %Go to next experiment number
+    newexpt = sprintf('%03d', str2double(lastexpt) + 1);
+else
+    %If animal folder does not exist or there aren't any files.
+    %The new folder will be created when you hit the 'run' button
     newunit = '000';
     newexpt = '000';
-
 end
 
 Mstate.unit = newunit;
 Mstate.expt = newexpt;
-set(handles.exptcb,'string',newexpt)
-set(handles.unitcb,'string',newunit)
+set(handles.exptcb, 'string', newexpt)
+set(handles.unitcb, 'string', newunit)
 
-UpdateACQExptName   %Send expt info to acquisition
+%Send expt info to acquisition
+UpdateACQExptName
 
 
 % --- Executes during object creation, after setting all properties.
@@ -140,54 +136,41 @@ function animal_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to animal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 
 function hemisphere_Callback(hObject, eventdata, handles)
 % hObject    handle to hemisphere (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of hemisphere as text
-%        str2double(get(hObject,'String')) returns contents of hemisphere as a double
-
 global Mstate
 
 %This is not actually necessary since updateMstate is always called prior
 %to showing stimuli...
 Mstate.hemi = get(handles.hemisphere,'string');
 
+
 % --- Executes during object creation, after setting all properties.
 function hemisphere_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to hemisphere (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 
 function screendistance_Callback(hObject, eventdata, handles)
 % hObject    handle to screendistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of screendistance as text
-%        str2double(get(hObject,'String')) returns contents of screendistance as a double
-
 global Mstate
 
 %This is not actually necessary since updateMstate is always called prior
 %to showing stimuli...  
-Mstate.screenDist = str2num(get(handles.screendistance,'string'));
+Mstate.screenDist = str2double(get(handles.screendistance,'string'));
 
 
 % --- Executes during object creation, after setting all properties.
@@ -195,9 +178,6 @@ function screendistance_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to screendistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -208,31 +188,29 @@ function runbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to runbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global Mstate GUIhandles trialno analogIN
+global Mstate GUIhandles trialno analogIN DataPath
 %global Pstate
 
-%Run it!
+% Run experiment
 if ~Mstate.running
-    
-    %Check if this analyzer file already exists!
-    roots = parseString(Mstate.analyzerRoot,';');    
-    for i = 1:length(roots)  %loop through each root
-        title = [Mstate.anim '_' sprintf('u%s',Mstate.unit) '_' Mstate.expt];
-        dd = [roots{i} '\' Mstate.anim '\' title '.analyzer'];
-        
-        if(exist(dd))
-            warndlg('Directory exists!!!  Please advance experiment before running')
+    % Check if an analyzer file already exists
+    roots = parseString(Mstate.analyzerRoot, ';');    
+    for i = 1:length(roots)
+        title = [Mstate.anim '_' sprintf('u%s', Mstate.unit) '_' ...
+            Mstate.expt];
+        dd = [roots{i} filesep Mstate.anim filesep title '.analyzer'];
+        if(exist(dd, 'dir'))
+            warndlg('Directory exists! Please advance experiment before running.')
             return
         end
     end
     
-    %Check if this data file already exists!
-    if get(GUIhandles.main.intrinsicflag,'value')
+    % Check if this data file already exists
+    if get(GUIhandles.main.intrinsicflag, 'value')
         [Oflag, dd] = checkforOverwrite;
         if Oflag
             return
         else
-            dd
             mkdir(dd)
         end
     end
@@ -244,8 +222,10 @@ if ~Mstate.running
     updateLstate
     updateMstate    
     
-    makeLoop;  %makes 'looperInfo'.  This must be done before saving the analyzer file.
-    saveExptParams  %Save .analyzer. Do this before running... in case something crashes
+    %makes 'looperInfo'.  This must be done before saving the analyzer file.
+    makeLoop
+    %Save .analyzer. Do this before running... in case something crashes
+    saveExptParams
 
     set(handles.runbutton,'string','Abort')    
     
@@ -254,13 +234,12 @@ if ~Mstate.running
     waitforDisplayResp
     sendMinfo
     waitforDisplayResp
-    %%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    %%%Get the 2photon Acquisition ready:
-    if get(GUIhandles.main.twophotonflag, 'value')  %Flag for the link with scanimage
+    %%%Get the 2photon acquisition ready:
+    %Flag for the link with scanimage
+    if get(GUIhandles.main.twophotonflag, 'value')
         prepACQ
-    end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+    end  
     
     %%%Send inital parameters to ISI imager GUI
     P = getParamStruct;
@@ -273,7 +252,6 @@ if ~Mstate.running
         analogIN.stop;
         %clearvars -global analogIN
     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    
     trialno = 1;
     
@@ -285,8 +263,13 @@ if ~Mstate.running
     %We don't want anything significant to happen after 'run2', so that
     %scanimage will be ready to accept TTL
     
+    % Remove video object and clean up after all trials
+    if get(GUIhandles.main.intrinsicflag, 'value')
+        sendtoImager('C')
+    end
 else
-    Mstate.running = 0;  %Global flag for interrupt in real-time loop ('Abort')    
+    %Global flag for interrupt in real-time loop ('Abort')   
+    Mstate.running = 0; 
     set(handles.runbutton,'string','Run')    
 end
 
@@ -301,30 +284,26 @@ function unitcb_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global Mstate
-
-newunit = sprintf('%03d',str2num(Mstate.unit)+1);
+newunit = sprintf('%03d', str2double(Mstate.unit) + 1);
 Mstate.unit = newunit;
-set(handles.unitcb,'string',newunit)
-
+set(handles.unitcb, 'string', newunit)
 newexpt = '000';
 Mstate.expt = newexpt;
-set(handles.exptcb,'string',newexpt)
-
+set(handles.exptcb, 'string', newexpt)
 UpdateACQExptName   %Send expt info to acquisition
+
 
 % --- Executes on button press in exptcb.
 function exptcb_Callback(hObject, eventdata, handles)
 % hObject    handle to exptcb (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 global Mstate
-
-newexpt = sprintf('%03d',str2num(Mstate.expt)+1);
+newexpt = sprintf('%03d', str2double(Mstate.expt) + 1);
 Mstate.expt = newexpt;
-set(handles.exptcb,'string',newexpt)
-
-UpdateACQExptName   %Send expt info to acquisition
+set(handles.exptcb, 'string', newexpt)
+% Send expt info to acquisition
+UpdateACQExptName
 
 
 % --- Executes on button press in closeDisplay.
@@ -333,27 +312,7 @@ function closeDisplay_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global DcomState
-fwrite(DcomState.serialPortHandle,'C;~')
-
-
-% --- Executes on button press in twophotonflag.
-function twophotonflag_Callback(hObject, eventdata, handles)
-% hObject    handle to twophotonflag (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of twophotonflag
-
-global GUIhandles
-
-flag = get(handles.twophotonflag,'value');
-set(GUIhandles.main.twophotonflag,'value',flag)
-
-% if flag
-%     set(handles.intrinsicflag,'value',0);
-%     set(GUIhandles.main.intrinsicflag,'value',0)
-% end
-
+fwrite(DcomState.serialPortHandle, 'C;~')
 
 
 function analyzerRoots_Callback(hObject, eventdata, handles)
@@ -361,13 +320,10 @@ function analyzerRoots_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of analyzerRoots as text
-%        str2double(get(hObject,'String')) returns contents of analyzerRoots as a double
-
-
 %This is not actually necessary since updateMstate is always called prior
 %to showing stimuli...
-Mstate.analyzerRoot = get(handles.analyzerRoots,'string');
+Mstate.analyzerRoot = get(handles.analyzerRoots, 'string');
+
 
 % --- Executes during object creation, after setting all properties.
 function analyzerRoots_CreateFcn(hObject, eventdata, handles)
@@ -375,14 +331,9 @@ function analyzerRoots_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-
 
 
 % --- Executes on button press in REflag.
@@ -391,13 +342,10 @@ function REflag_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of REflag
-
 %mmf
 % REbit = get(handles.REflag,'value');
 % moveShutter(2,REbit)
 % waitforDisplayResp
-
 
 
 % --- Executes on button press in LEflag.
@@ -406,29 +354,21 @@ function LEflag_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of LEflag
-
 %mmf
 % LEbit = get(handles.LEflag,'value');
 % moveShutter(1,LEbit)
 % waitforDisplayResp
 
 
-
 function monitor_Callback(hObject, eventdata, handles)
 % hObject    handle to monitor (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+    global Mstate
+    Mstate.monitor = get(handles.monitor, 'string');
+    updateMonitorValues
+    sendMonitor
 
-% Hints: get(hObject,'String') returns contents of monitor as text
-%        str2double(get(hObject,'String')) returns contents of monitor as a double
-
-global Mstate
-
-Mstate.monitor = get(handles.monitor,'string');
-
-updateMonitorValues
-sendMonitor
 
 % --- Executes during object creation, after setting all properties.
 function monitor_CreateFcn(hObject, eventdata, handles)
@@ -436,8 +376,6 @@ function monitor_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -448,9 +386,6 @@ function stimulusIDP_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of stimulusIDP as text
-%        str2double(get(hObject,'String')) returns contents of stimulusIDP as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function stimulusIDP_CreateFcn(hObject, eventdata, handles)
@@ -458,76 +393,118 @@ function stimulusIDP_CreateFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 
-% --- Executes on button press in intrinsicflag.
-function intrinsicflag_Callback(hObject, eventdata, handles)
-% hObject    handle to intrinsicflag (see GCBO)
+% --- Executes on button press in behavior.
+function behavior_Callback(hObject, eventdata, handles)
+% hObject    handle to behavior (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of intrinsicflag
+
+% --- Executes on button press in twophotonTog.
+function twophotonTog_Callback(hObject, eventdata, handles)
+% hObject    handle to twophotonTog (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    global GUIhandles
+    flag = get(handles.twophotonTog, 'value');
+    set(GUIhandles.main.twophotonflag, 'value', flag)
+    if flag
+        set(handles.intrinsicTog, 'value', 0);
+        set(GUIhandles.main.intrinsicflag, 'value', 0)
+    end
+
+% % --- Executes on button press in twophotonflag.
+% function twophotonflag_Callback(hObject, eventdata, handles)
+% % hObject    handle to twophotonflag (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% global GUIhandles
+% flag = get(handles.twophotonflag,'value');
+% set(GUIhandles.main.twophotonflag,'value',flag)
+% % if flag
+% %     set(handles.intrinsicflag,'value',0);
+% %     set(GUIhandles.main.intrinsicflag,'value',0)
+% % end
 
 
-global GUIhandles
+% --- Executes on button press in intrinsicTog.
+function intrinsicTog_Callback(hObject, eventdata, handles)
+% hObject    handle to intrinsicTog (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% --- Executes on button press in intrinsicflag.
+    global GUIhandles
+    flag = get(handles.intrinsicTog, 'value');
+    set(GUIhandles.main.intrinsicflag, 'value', flag)
+    if flag
+        set(handles.twophotonTog, 'value', 0);
+        set(GUIhandles.main.twophotonflag, 'value', 0)
+    end
 
-flag = get(handles.intrinsicflag,'value');
-set(GUIhandles.main.intrinsicflag,'value',flag)
+% function intrinsicflag_Callback(hObject, eventdata, handles)
+% % hObject    handle to intrinsicflag (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+%     global GUIhandles
+%     flag = get(handles.intrinsicflag, 'value');
+%     set(GUIhandles.main.intrinsicflag, 'value', flag)
+%     if flag
+%         set(handles.twophotonflag, 'value', 0);
+%         set(GUIhandles.main.twophotonflag, 'value', 0)
+%     end
 
-if flag
-    set(handles.twophotonflag,'value',0);
-    set(GUIhandles.main.twophotonflag,'value',0)
-end
+
+% --- Executes on button press in streamTog.
+function streamTog_Callback(hObject, eventdata, handles)
+% hObject    handle to streamTog (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    global GUIhandles
+    flag = get(handles.streamTog, 'value');
+    set(GUIhandles.main.streamFlag, 'value', flag)
+    if flag
+        set(handles.analysisTog, 'value', 0);
+        set(GUIhandles.main.analysisFlag, 'value', 0)
+    end
+
+% % --- Executes on button press in streamFlag.
+% function streamFlag_Callback(hObject, eventdata, handles)
+% % hObject    handle to streamFlag (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% global GUIhandles
+% flag = get(handles.streamFlag,'value');
+% set(GUIhandles.main.streamFlag,'value',flag)
+% if flag
+%     set(handles.analysisFlag,'value',0);
+%     set(GUIhandles.main.analysisFlag,'value',0)
+% end
+
+
+% --- Executes on button press in computef1Tog.
+function computef1Tog_Callback(hObject, eventdata, handles)
+% hObject    handle to computef1Tog (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of computef1Tog
+
 
 % --- Executes on button press in analysisFlag.
 function analysisFlag_Callback(hObject, eventdata, handles)
 % hObject    handle to analysisFlag (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of analysisFlag
-
 global GUIhandles
-
 flag = get(handles.analysisFlag,'value');
-set(GUIhandles.main.analysisFlag,'value',flag)
-
+set(GUIhandles.main.analysisFlag, 'value', flag)
 if flag
-    set(handles.streamFlag,'value',0);
-    set(GUIhandles.main.streamFlag,'value',0)
+    set(handles.analysisFlag, 'value', 0);
+    set(GUIhandles.main.analysisFlag, 'value', 0)
 end
-
-
-% --- Executes on button press in streamFlag.
-function streamFlag_Callback(hObject, eventdata, handles)
-% hObject    handle to streamFlag (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of streamFlag
-
-global GUIhandles
-
-flag = get(handles.streamFlag,'value');
-set(GUIhandles.main.streamFlag,'value',flag)
-
-if flag
-    set(handles.analysisFlag,'value',0);
-    set(GUIhandles.main.analysisFlag,'value',0)
-end
-
-
-% --- Executes on button press in mouseBehavior.
-function mouseBehavior_Callback(hObject, eventdata, handles)
-% hObject    handle to mouseBehavior (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of mouseBehavior
-
 
