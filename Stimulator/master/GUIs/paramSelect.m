@@ -87,8 +87,10 @@ function varargout = paramSelect_OutputFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Get default command line output from handles structure
-varargout{1} = handles.output;
+% % Get default command line output from handles structure
+%varargout{1} = handles.output;
+% Annoying workaround for window positioning
+varargout{1} = gcf;
 
 
 % --- Executes on selection change in parameterList.
