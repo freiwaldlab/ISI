@@ -126,11 +126,17 @@ function makeImageBlockTexture
     % clear Hdeg Wdeg
   
     % Adjust the contast for each image
+    %     f(x) = ?(x?128) + 128 + b
+    %     slope ? controls contrast
+    %         (?>1 means more contrast and 0<?<1 less contrast)
+    %     constant b controls brightness
+    alpha = P.contrast / 100;
+    beta = 0;
     for imn = 1:imNum
         I = imBuff(:,:,imn);
-        imBuff(:,:,imn) = ((I - median(I(:))) * (P.contrast / 100)) + grey;
+        imBuff(:,:,imn) = (alpha * (I - grey)) + grey + beta;
     end
-    clear imn I
+    clear alpha beta imn I
     
     % Convert the images into textures that are ready to be played
     Gtxtr = zeros(1, imNum);
