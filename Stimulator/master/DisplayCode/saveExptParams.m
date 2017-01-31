@@ -1,33 +1,24 @@
 function saveExptParams
+    global Mstate Pstate Lstate looperInfo DataPath
 
-global Mstate Pstate Lstate looperInfo
-
-%Save the analzer file
-
-Analyzer.M = Mstate;
-Analyzer.P = Pstate;
-Analyzer.L = Lstate;
-Analyzer.loops = looperInfo;
-
-
-title = [Mstate.anim '_' sprintf('u%s',Mstate.unit) '_' Mstate.expt];
-
-roots = parseString(Mstate.analyzerRoot,';');
-
-%Save each root:
-for i = 1:length(roots)
-
-    dd = [roots{i} '\' Mstate.anim];
-dd
-    if(~exist(dd))
-        mkdir(dd);  %if there is a new animal
-    end
-
-    dd = [dd '\' title '.analyzer'];
-
-    ['Saving analyzer file at location:  ' dd]
-
-    save(dd ,'Analyzer')
+    % Populate Analyzer construct with settings
+    Analyzer.M = Mstate;
+    Analyzer.P = Pstate;
+    Analyzer.L = Lstate;
+    Analyzer.loops = looperInfo;
+    title = [Mstate.anim '_' sprintf('u%s', Mstate.unit) '_' Mstate.expt];
     
-end
-
+    % Make sure destination directory exists and save the analyzer file
+    roots = DataPath; %parseString(Mstate.analyzerRoot,';');
+    disp(['saveExptParams DEBUG: Saving analyzer file to main experiment ' ...
+        'directory rather than analyzerRoot.'])
+    for i = 1:length(roots)
+        %dd = [roots{i} filesep Mstate.anim];
+        % Check if directory exists in case this is a new animal
+        if(~exist(dd, 'dir'))
+            mkdir(dd);
+        end
+        file_name = [dd filesep title '.analyzer'];
+        disp(['saveExptParams: Saving analyzer file (' file_name ').'])
+        save(file_name, 'Analyzer')
+    end
