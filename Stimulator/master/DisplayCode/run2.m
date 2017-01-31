@@ -1,9 +1,8 @@
 function run2
 global GUIhandles Mstate trialno syncInfo analogIN analogINdata
+global DataPath LogFile
 
-
-%%% XXX *** LOOKS UNUSED, SO REMOVED... LET US SEE WHAT BREAKS
-%global Pstate
+LogFile = [DataPath filesep 'log.bin'];
 
 %otherwise 'getnotrials' won't be defined for play sample
 if Mstate.running
@@ -15,7 +14,7 @@ ScanImageBit = get(GUIhandles.main.twophotonflag, 'value');
 ISIbit = get(GUIhandles.main.intrinsicflag, 'value');
 
 %'trialno<nt' may be redundant.
-if Mstate.running && trialno<=nt
+if Mstate.running && (trialno <= nt)
     set(GUIhandles.main.showTrial, 'string', ...
         ['Trial ' num2str(trialno) ' of ' num2str(nt)] );
     drawnow
@@ -24,10 +23,11 @@ if Mstate.running && trialno<=nt
     [c, r] = getcondrep(trialno);
 
     if ISIbit
-        fid1 = fopen('log.bin', 'w');
+        fid1 = fopen(LogFile, 'w');
         lh = addlistener(analogIN, ...
             'DataAvailable', @(src, event)logData(src, event, fid1));
         analogIN.startBackground;
+        disp(['run2: Log file opened (' LogFile ').'])
     end
     
     %%%Update ScanImage with Trial/Cond/Rep
@@ -57,13 +57,23 @@ if Mstate.running && trialno<=nt
         fclose(fid1);
         analogIN.stop;
         delete(lh);
-        fid2 = fopen('log.bin', 'r');
+        disp(['run2: Opening log file (' LogFile ').']);
+        fid2 = fopen(LogFile, 'r');
         %analogINdata is a 3 x samples matrix where...
         %(1,:) is the time each sample is acquired from the start of acquisition
         %(2,:) is the voltage on analog input 0: photodiode from display
         %(3,:) is the voltage on analog input 1: audio port from master
         [analogINdata,~] = fread(fid2, [3,inf], 'double');
         fclose(fid2);
+        
+        %%% DEBUG XXX ***
+        figure(68); clf
+        hold on
+        samples = length(analogINdata);
+        %plot(analogINdata(1,1:1:samplesst)','k') % acquisition time
+        plot(analogINdata(2,1:1:samples)','r') % photodiode
+        plot(analogINdata(3,1:1:samples)','b') % audio
+        hold off
 
         [syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
             getSyncTimes;   
