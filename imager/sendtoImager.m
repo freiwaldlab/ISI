@@ -1,6 +1,5 @@
 function sendtoImager(cmd)
-    global imagerhandles
-    
+    global imagerhandles DataPath
     %%% XXX *** LOOKS UNUSED, SO REMOVED... LET US SEE WHAT BREAKS
     %global fname nframes maxframes T running NBUF
 
@@ -8,7 +7,6 @@ function sendtoImager(cmd)
         case 'A'  %% animal
             set(findobj('Tag', 'animaltxt'), ...
                 'String', deblank(cmd(3:end)));
-            deblank(cmd(3:end))
         case 'E' %% expt
             set(findobj('Tag', 'expttxt'),...
                 'String', num2str(deblank(cmd(3:end))));
@@ -31,6 +29,7 @@ function sendtoImager(cmd)
             datadir = get(findobj('Tag', 'datatxt'), 'String');
             tag = get(findobj('Tag', 'tagtxt'), 'String');
             dd = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+            DataPath = dd;
             fname = sprintf('%s%su%s_%s', dd, filesep, unit, expt);
             fname = [fname  '_' sprintf('%03d', trial)];
             
@@ -48,6 +47,11 @@ function sendtoImager(cmd)
             %set(1,'Name','imager');
             %drawnow;
             GrabSaveLoop(fname)
+        case 'C'
+            % Remove video object and clean up
+            delete(imagerhandles.video);
+            clear imagerhandles.video
+            disp('sendtoImager: Closed video object and cleaned up.')
         otherwise
             disp('sendtoImager ERROR: Send command was not understood.');
     end
