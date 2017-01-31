@@ -3,8 +3,6 @@ function onlineAnalysis(c,r,syncInfo)
 global Tens looperInfo F1 GUIhandles
  
 if get(GUIhandles.main.analysisFlag,'value')
-    
-    
     Grabtimes = syncInfo.acqSyncs;
     %Stimulus starts on 2nd sync, and ends on the second to last.  I also
     %get rid of the last bar rotation (dispSyncs(end-1)) in case it is not an integer multiple
@@ -48,7 +46,9 @@ if get(GUIhandles.main.analysisFlag,'value')
 
     nc = length(looperInfo.conds);
     figure(99)
-    subplot(1,nc,c), imagesc(angle(F1{c})), drawnow    
+    subplot(1,nc,c);
+    imagesc(angle(F1{c}));
+    drawnow    
 
 end
 
