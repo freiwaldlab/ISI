@@ -44,8 +44,8 @@ else
 end 
 sprintf('%c',bout)
 
-dom =0:20:255;
-dom = 128
+dom =0:64:255;
+%dom = 128
 clear Y x y
 fid = fopen([root 'luminance'],'w');
 for i=1:3

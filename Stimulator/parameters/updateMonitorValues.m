@@ -32,7 +32,7 @@ function updateMonitorValues
             Mstate.screenYcm = 29.21;
             Mstate.xpixels = 1920;
             Mstate.ypixels = 1080;
-        case 'LIN'
+       case 'LIN'
             Mstate.screenXcm = 52.07;
             Mstate.screenYcm = 29.21;
     end

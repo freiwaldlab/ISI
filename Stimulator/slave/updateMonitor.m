@@ -1,8 +1,9 @@
 function updateMonitor
     global Mstate screenPTR
-
+    
+    cal_path = 'C:\Dropbox\ISI\Stimulator\master\Calibration\170201';
+    
     updateMonitorValues
-    cal_path = '/Matlab_code/calibration_stuff/measurements/';
     
     switch Mstate.monitor
         case 'LCD'
@@ -15,11 +16,11 @@ function updateMonitor
             cal_file = strcat(cal_path, filesep, 'NEWTV 3-15-12/LUT.mat');
         case 'VPX'
             % Generate a linear table until calibration is done %%% TODO
-            % *** XXX
-            bufLUT = (0:255) / 255;
-            bufLUT = bufLUT' * [1 1 1];
-            cal_file = [];
-            %cal_file = strcat(cal_path, filesep, '20170131_ViewPixx_LUT.mat');
+            % *** testing 170203 LUT file
+            %bufLUT = (0:255) / 255;
+            %bufLUT = bufLUT' * [1 1 1];
+            %cal_file = [];
+            cal_file = strcat(cal_path, filesep, '170203t1509_LUT.mat');
         case 'LIN'
             % Generate a linear table
             bufLUT = (0:255) / 255;
@@ -30,8 +31,9 @@ function updateMonitor
     end
     if exist(cal_file, 'file')
         load(cal_file, 'bufLUT')
+        disp('updateMonitor: Loaded gamma correction LUT.')
     elseif ~isempty(cal_file)
-        disp('updateMonitor ERROR: Unable to load calibration file.')
+        disp('updateMonitor ERROR: Unable to load gamma correction LUT.')
     end
         
     % Set gamma LUT
