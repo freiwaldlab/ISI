@@ -468,7 +468,7 @@ function streamTog_Callback(hObject, eventdata, handles)
     flag = get(handles.streamTog, 'value');
     set(GUIhandles.main.streamFlag, 'value', flag)
     if flag
-        set(handles.analysisTog, 'value', 0);
+        set(handles.computef1Tog, 'value', 0);
         set(GUIhandles.main.analysisFlag, 'value', 0)
     end
 
@@ -491,8 +491,6 @@ function computef1Tog_Callback(hObject, eventdata, handles)
 % hObject    handle to computef1Tog (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of computef1Tog
 
 
 % --- Executes on button press in analysisFlag.

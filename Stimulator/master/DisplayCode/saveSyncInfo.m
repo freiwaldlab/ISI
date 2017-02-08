@@ -2,7 +2,7 @@ function saveSyncInfo(syncInfo)
     global Mstate trialno DataPath
 
     eval(['syncInfo' num2str(trialno) '=syncInfo;'])
-    clear syncInfo
+    %%clear syncInfo commented 170205
 
     % Make sure destination directory exists and save the analyzer file
     title = [Mstate.anim '_' sprintf('u%s',Mstate.unit) '_' Mstate.expt];

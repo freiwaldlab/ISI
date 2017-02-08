@@ -2,7 +2,7 @@ function run2
 global GUIhandles Mstate trialno syncInfo analogIN analogINdata
 global DataPath LogFile
 
-LogFile = [DataPath filesep 'log.bin'];
+LogFile = [DataPath filesep 'run_log.bin'];
 
 %otherwise 'getnotrials' won't be defined for play sample
 if Mstate.running
@@ -59,21 +59,41 @@ if Mstate.running && (trialno <= nt)
         delete(lh);
         disp(['run2: Opening log file (' LogFile ').']);
         fid2 = fopen(LogFile, 'r');
-        %analogINdata is a 3 x samples matrix where...
-        %(1,:) is the time each sample is acquired from the start of acquisition
-        %(2,:) is the voltage on analog input 0: photodiode from display
-        %(3,:) is the voltage on analog input 1: audio port from master
+        % analogINdata is a 3 x samples matrix where...
+        %   (1,:) is the time each sample is taken from start
+        %   (2,:) is the voltage on analog input 0: photodiode from display
+        %   (3,:) is the voltage on analog input 1: TTL from camera
         [analogINdata,~] = fread(fid2, [3,inf], 'double');
         fclose(fid2);
         
-        %%% DEBUG XXX ***
-        figure(68); clf
-        hold on
         samples = length(analogINdata);
-        %plot(analogINdata(1,1:1:samplesst)','k') % acquisition time
-        plot(analogINdata(2,1:1:samples)','r') % photodiode
-        plot(analogINdata(3,1:1:samples)','b') % audio
+        timevals = analogINdata(1,:)';
+        %%% DEBUG XXX ***
+        figure; clf
+        hold on
+        %plot(timevals, analogINdata(1,1:1:samples)', 'k') % time
+        plot(timevals, analogINdata(2,1:1:samples)', 'r') % photodiode
+        plot(timevals, analogINdata(3,1:1:samples)', 'b') % camera
         hold off
+        %axis equal
+        %legend('Time', 'Stimulus', 'Camera')
+        legend('Stimulus', 'Camera')
+        xlim([0 timevals(samples)])
+        xlabel('Time')
+        ylabel('Voltage')
+        
+        figure; clf
+        hold on
+        %plot(analogINdata(1,1:1:samples)', 'k') % time
+        plot(analogINdata(2,1:1:samples)', 'r') % photodiode
+        plot(analogINdata(3,1:1:samples)', 'b') % camera
+        hold off
+        %axis equal
+        %legend('Time', 'Stimulus', 'Camera')
+        legend('Stimulus', 'Camera')
+        xlim([0 samples])
+        xlabel('Time')
+        ylabel('Voltage')
 
         [syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
             getSyncTimes;   
