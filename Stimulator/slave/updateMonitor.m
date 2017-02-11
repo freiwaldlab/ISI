@@ -1,7 +1,7 @@
 function updateMonitor
     global Mstate screenPTR
     
-    cal_path = 'C:\Dropbox\ISI\Stimulator\master\Calibration\170201';
+    cal_path = 'C:\Dropbox\ISI\Stimulator\calibration\corrections';
     
     updateMonitorValues
     
@@ -15,14 +15,11 @@ function updateMonitor
         case '40in'
             cal_file = strcat(cal_path, filesep, 'NEWTV 3-15-12/LUT.mat');
         case 'VPX'
-            % Generate a linear table until calibration is done %%% TODO
-            % *** testing 170203 LUT file
-            %bufLUT = (0:255) / 255;
-            %bufLUT = bufLUT' * [1 1 1];
-            %cal_file = [];
-            cal_file = strcat(cal_path, filesep, '170203t1509_LUT.mat');
+            cal_file = strcat(cal_path, filesep, ...
+                '170210t1122_ViewPixx_LUT.mat');
         case 'LIN'
-            % Generate a linear table
+            % Generate a linear table for calibration (or if the monitor
+            % just happens to be perfect)
             bufLUT = (0:255) / 255;
             bufLUT = bufLUT' * [1 1 1];
             cal_file = [];
