@@ -249,7 +249,7 @@ if ~Mstate.running
         
         %Make sure analog in is not running
         % Updated for MATLAB compatibility, 170109 mmf
-        analogIN.stop;
+        analogIN.stop; 
         %clearvars -global analogIN
     end
    
