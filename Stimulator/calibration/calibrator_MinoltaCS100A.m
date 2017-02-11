@@ -1,8 +1,15 @@
 %% Settings
 global DcomState Mstate
-CalPath = 'C:\Dropbox\ISI\Stimulator\master\Calibration\170201';
-OutFile = [CalPath filesep '170206t1930_calvals'];
-OutFileCLUT = [CalPath filesep '170206t1930_clutvals'];
+CalPath = 'C:\Dropbox\ISI\Stimulator\calibration\data';
+OutFile = [CalPath filesep '170210t1620_calvals'];
+OutFileCLUT = [CalPath filesep '170210t1620_clutvals'];
+MonitorCode = 'VPX';
+
+% Toggle between initial measurements and checking after applying 
+% a calibration
+CalibrationApplied = true;
+
+% Set how long to pause for meter
 RespPause = 2;
 
 %% Close any previously opened ports
@@ -23,7 +30,11 @@ CS100A.Terminator = 'CR/LF';
 
 % Configure monitor and make sure linear LUT is selected
 configureMstate
-Mstate.monitor = 'LIN';
+if CalibrationApplied
+    Mstate.monitor = MonitorCode;
+else
+    Mstate.monitor = 'LIN';
+end
 updateMonitorValues
 configDisplayCom
 
@@ -136,199 +147,57 @@ save(OutFile, 'Y', 'x', 'y', 'stat', 'dom', 'colorcode')
 fwrite(DcomState.serialPortHandle, 'C;~')
 clear Y y x Ydev ydev xdev stat colorcode dom dispRGB
 
-% % % % %% Perform cLUT measurements 
-% % % % 
-% % % % % Clear the serial buffer
-% % % % flushinput(CS100A);
-% % % % 
-% % % % % Settings and allocations
-% % % % chans = 'RGB';
-% % % % dom = 0:8:256;
-% % % % dom(end) = 255;
-% % % % combos = nchoosekwr(dom, length(chans));
-% % % % Y = [];
-% % % % x = [];
-% % % % y = [];
-% % % % stat = cell(1);
-% % % % colorcode = cell(1);
-% % % % % Record and reformat measurements
-% % % % tmeas = tic;
-% % % % for e = 1:length(combos)
-% % % %     % Format luminance string to send to slave
-% % % %     dispRGB = sprintf('%03d%03d%03d', combos(e,1), combos(e,2), ...
-% % % %         combos(e,3));
-% % % %     % Send display command to slave and wait for response
-% % % %     fwrite(DcomState.serialPortHandle, ['Q;RGB;' dispRGB ';~']);
-% % % %     waitforDisplayResp
-% % % %     disp(['calibrator: Measuring average luminance ' ...
-% % % %         'at ' dispRGB '.'])
-% % % %     % Clear serial buffer directly before command
-% % % %     flushinput(CS100A);
-% % % %     % Send measurement command and wait
-% % % %     fprintf(CS100A, 'MES');
-% % % %     pause(RespPause)
-% % % %     % Fetch measurements
-% % % %     [Y(e),x(e),y(e),status] = fetchmeas(CS100A);
-% % % %     % Store CIE values
-% % % %     stat{e} = status;
-% % % %     colorcode{e} = dispRGB;
-% % % %     disp(['calibrator: ' stat{e} '; Y = ' sprintf('%06.4f', Y(e)) ...
-% % % %         '; x = ' sprintf('%06.4f', x(e)) ...
-% % % %         '; y = ' sprintf('%06.4f', y(e))])
-% % % % end
-% % % % measure_time = toc(tmeas);
-% % % % disp(['calibrator: Measurements took a combined total of ' ...
-% % % %     num2str(measure_time) ' sec.'])
-% % % % save(OutFileCLUT, 'Y', 'x', 'y', 'stat', 'dom', 'colorcode')
-% % % % fwrite(DcomState.serialPortHandle, 'C;~')
-%%
+% %% Perform cLUT measurements 
 % 
-% fprintf(CS100A,'S,,,,,3000,0,1,0,0,0')
-% n = get(CS100A,'BytesAvailable');
-% if n > 0
-%     bout = fread(CS100A, n); 
-% end %clear buffer
-% pause(1)
+% % Clear the serial buffer
+% flushinput(CS100A);
 % 
-% %%
-% 
-% fwrite(DcomState.serialPortHandle,['Q;RGB;240000000;~']); %Give display command
-% waitforDisplayResp
-% 
-% nreps = 3;
-% clear dom Iall
-% for rep = 1:nreps
-%     fwrite(CS100A, ['M5' 13]);
-%     pause(2)
-% 
-%     n = 0;
-%     while n == 0
-%         n = get(CS100A,'BytesAvailable');
-%     end
-%     pause(10) %let it get the rest of the string
-% 
-%     n = get(CS100A,'BytesAvailable');
-%     if n > 0
-%         bout = fread(CS100A,n);
-%     end
-% 
-%     %Convert bout into usable Matlab variable
-%     bout = [13; bout; 13];
-%     id = find(bout == 13);
-%     nstring = median(diff(id));
-%     k = 1;
-%     for i = 1:length(id)-1
-%         strpc = bout(id(i)+1:id(i+1)-1);
-%         length(strpc)
-%         if length(strpc) == nstring-1
-%             dum = sprintf('%c',strpc);
-%             delim = find(dum == ',');
-%             Iall(k,rep) = str2double(dum(delim+1:end));
-%             dom(k) = str2double(dum(1:delim-1));
-%             k = k+1;
-%         end
-%     end
+% % Settings and allocations
+% chans = 'RGB';
+% dom = 0:8:256;
+% dom(end) = 255;
+% combos = nchoosekwr(dom, length(chans));
+% Y = [];
+% x = [];
+% y = [];
+% stat = cell(1);
+% colorcode = cell(1);
+% % Record and reformat measurements
+% tmeas = tic;
+% for e = 1:length(combos)
+%     % Format luminance string to send to slave
+%     dispRGB = sprintf('%03d%03d%03d', combos(e,1), combos(e,2), ...
+%         combos(e,3));
+%     % Send display command to slave and wait for response
+%     fwrite(DcomState.serialPortHandle, ['Q;RGB;' dispRGB ';~']);
+%     waitforDisplayResp
+%     disp(['calibrator: Measuring average luminance ' ...
+%         'at ' dispRGB '.'])
+%     % Clear serial buffer directly before command
+%     flushinput(CS100A);
+%     % Send measurement command and wait
+%     fprintf(CS100A, 'MES');
+%     pause(RespPause)
+%     % Fetch measurements
+%     [Y(e),x(e),y(e),status] = fetchmeas(CS100A);
+%     % Store CIE values
+%     stat{e} = status;
+%     colorcode{e} = dispRGB;
+%     disp(['calibrator: ' stat{e} '; Y = ' sprintf('%06.4f', Y(e)) ...
+%         '; x = ' sprintf('%06.4f', x(e)) ...
+%         '; y = ' sprintf('%06.4f', y(e))])
 % end
-% 
-% I = mean(Iall');
-% 
-% save([CalPath 'spectrum_red240.mat'],'I','dom')
-% fwrite(DcomState.serialPortHandle,'C;~')
-% 
-% %%
-% 
-% fwrite(DcomState.serialPortHandle,['Q;RGB;000240000;~']); %Give display command
-% waitforDisplayResp
-% 
-% nreps = 3;
-% clear dom Iall
-% for rep = 1:nreps
-%     fwrite(CS100A, ['M5' 13]);
-%     pause(2)
-% 
-%     n = 0;
-%     while n == 0
-%         n = get(CS100A,'BytesAvailable');
-%     end
-%     pause(10) %let it get the rest of the string
-% 
-%     n = get(CS100A,'BytesAvailable');
-%     if n > 0
-%         bout = fread(CS100A,n);
-%     end
-% 
-%     %Convert bout into usable Matlab variable
-%     bout = [13; bout; 13];
-%     id = find(bout == 13);
-%     nstring = median(diff(id));
-%     k = 1;
-%     for i = 1:length(id)-1
-%         strpc = bout(id(i)+1:id(i+1)-1);
-%         length(strpc)
-%         if length(strpc) == nstring-1
-%             dum = sprintf('%c',strpc);
-%             delim = find(dum == ',');
-%             Iall(k,rep) = str2double(dum(delim+1:end));
-%             dom(k) = str2double(dum(1:delim-1));
-%             k = k+1;
-%         end
-%     end
-% end
-% 
-% I = mean(Iall');
-% save([CalPath 'spectrum_green240.mat'],'I','dom')
-% fwrite(DcomState.serialPortHandle,'C;~')
-% 
-% %%
-% 
-% fwrite(DcomState.serialPortHandle,['Q;RGB;000000240;~']); %Give display command
-% waitforDisplayResp
-% 
-% nreps = 10;
-% clear dom Iall
-% for rep = 1:nreps
-%     fwrite(CS100A, ['M5' 13]);
-%     pause(2)
-% 
-%     n = 0;
-%     while n == 0
-%         n = get(CS100A,'BytesAvailable');
-%     end
-%     pause(10) %let it get the rest of the string
-% 
-%     n = get(CS100A,'BytesAvailable');
-%     if n > 0
-%         bout = fread(CS100A,n);
-%     end
-% 
-%     %Convert bout into usable Matlab variable
-%     bout = [13; bout; 13];
-%     id = find(bout == 13);
-%     nstring = median(diff(id));
-%     k = 1;
-%     for i = 1:length(id)-1
-%         strpc = bout(id(i)+1:id(i+1)-1);
-%         length(strpc)
-%         if length(strpc) == nstring-1
-%             dum = sprintf('%c',strpc);
-%             delim = find(dum == ',');
-%             Iall(k,rep) = str2double(dum(delim+1:end));
-%             dom(k) = str2double(dum(1:delim-1));
-%             k = k+1;
-%         end
-%     end
-% end
-% 
-% I = mean(Iall');
-% 
-% save([CalPath 'spectrum_blue240.mat'],'I','dom')
-% fwrite(DcomState.serialPortHandle,'C;~')
-% 
+% measure_time = toc(tmeas);
+% disp(['calibrator: Measurements took a combined total of ' ...
+%     num2str(measure_time) ' sec.'])
+% save(OutFileCLUT, 'Y', 'x', 'y', 'stat', 'dom', 'colorcode')
+% fwrite(DcomState.serialPortHandle, 'C;~')
+
 
 %% Close connections and clean up
 fclose(CS100A);
 
-%%
+%% Define functions
 function errbool = iserror(mess)
     mess = regexprep(mess, '\r\n', '');
     if isempty(mess)
