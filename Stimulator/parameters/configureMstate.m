@@ -1,7 +1,7 @@
 function configureMstate
     global Mstate
 
-    Mstate.anim = 'xx0';
+    Mstate.anim = 'aa0';
     Mstate.unit = '000';
     Mstate.expt = '000';
     Mstate.hemi = 'left';
@@ -11,7 +11,7 @@ function configureMstate
     % Set distance of animal from screen (in cm)
     Mstate.screenDist = 25;
     % Set size of the screen sync (in cm)
-    Mstate.syncSize = 4;
+    Mstate.syncSize = 2.0;
 
     % Set path for saving experimental parameters
     Mstate.analyzerRoot = 'C:\Data\AnalyzerFiles';
