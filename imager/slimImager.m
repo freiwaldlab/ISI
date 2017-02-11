@@ -22,7 +22,7 @@ function varargout = slimImager(varargin)
 
 % Edit the above text to modify the response to help slimImager
 
-% Last Modified by GUIDE v2.5 28-Jan-2017 16:55:39
+% Last Modified by GUIDE v2.5 09-Feb-2017 15:22:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -93,21 +93,19 @@ set(handles.captureImage, 'Enable', 'off');
 %   starting the object will make GETSNAPSHOT return faster
 %   since the connection to the camera will already have
 %   been established.
-handles.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
-set(handles.video, 'TimerPeriod', 0.05, 'TimerFcn', @timerhandler);
-triggerconfig(handles.video, 'manual');
+handles.videopreview = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
+set(handles.videopreview, 'TimerPeriod', 0.05, 'TimerFcn', @timerhandler);
+triggerconfig(handles.videopreview, 'manual');
 % Capture frames until manually stopped
-handles.video.FramesPerTrigger = Inf;
-handles.video.TriggerRepeat = Inf;
-%handles.video.FrameGrabInterval = 2; % Dependent on the mode selected & memory
-%available.  Will try without setting this, but if need be, we can select
-%only every nth frame. mmf
+handles.videopreview.FramesPerTrigger = Inf;
+handles.videopreview.TriggerRepeat = Inf;
 % Define video source
-handles.src = getselectedsource(handles.video);
+handles.src = getselectedsource(handles.videopreview);
 handles.src.Tag = 'ISI';
+handles.vidprev.Strobe1 = 'Off';
 FPS = handles.src.FrameRate;
-IMGSIZE = handles.video.VideoResolution;
-camImBands = handles.video.NumberOfBands;
+IMGSIZE = handles.videopreview.VideoResolution;
+camImBands = handles.videopreview.NumberOfBands;
 
 % Remove tickmarks and labels that are inserted when using IMAGE
 set(handles.cameraAxes, 'YTick', [], 'XTick', []);
@@ -137,13 +135,13 @@ function timerhandler(varargin)
         % % Update handles
         %handles = guidata(gcf);
         % % Get picture using GETSNAPSHOT and put it into axes using IMAGE
-        %I = getsnapshot(handles.video);
+        %I = getsnapshot(handles.videopreview);
         %handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
         guiUpdate;
     else
         % Delete any preview image acquisition objects
-        delete(handles.video)
-        clear handles.video
+        delete(handles.videopreview)
+        clear handles.videopreview
     end
 
 
@@ -163,8 +161,8 @@ function slimImager_CloseRequestFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
     % Make sure video objects are closed and deleted
-    delete(handles.video);
-    clear handles.video
+    delete(handles.videopreview);
+    clear handles.videopreview
     delete(imaqfind);
     % Close GUI
     delete(hObject);
@@ -179,16 +177,16 @@ function cameraToggle_Callback(hObject, eventdata, handles)
 if strcmp(get(handles.cameraToggle, 'String'), 'Start Camera')
       % Camera is off. Change button string and start camera.
       set(handles.cameraToggle, 'String', 'Stop Camera');
-      start(handles.video);
+      start(handles.videopreview);
       set(handles.startAcquisition, 'Enable', 'on');
       set(handles.captureImage, 'Enable', 'on');
 else
       % Camera is on. Stop camera and change button string.
       set(handles.cameraToggle, 'String', 'Start Camera');
       % Delete any preview image acquisition objects
-      stop(handles.video);
-      delete(handles.video)
-      clear handles.video
+      stop(handles.videopreview);
+      delete(handles.videopreview)
+      clear handles.videopreview
       set(handles.startAcquisition, 'Enable', 'off');
       set(handles.captureImage, 'Enable', 'off');
 end
@@ -207,7 +205,7 @@ handles = guidata(gcf);
 % NOTE: Using slow getsnapshot here to update the GUI
 axes(handles.cameraAxes);
 %set(handles.cameraAxes, 'YTick', [], 'XTick', []);
-I = getsnapshot(handles.video);
+I = getsnapshot(handles.videopreview);
 handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
 axis off;
 
@@ -260,17 +258,17 @@ function startAcquisition_Callback(hObject, eventdata, handles)
 if strcmp(get(handles.startAcquisition, 'String'), 'Start Acquisition')
       % Camera is not acquiring. Change button string and start acquisition.
       set(handles.startAcquisition, 'String', 'Stop Acquisition');
-      trigger(handles.video);
+      trigger(handles.videopreview);
 else
       % Camera is acquiring. Stop acquisition, save video data,
       % and change button string.
-      stop(handles.video);
+      stop(handles.videopreview);
       disp('Saving captured video...');
-      videodata = getdata(handles.video);
+      videodata = getdata(handles.videopreview);
       save('testvideo.mat', 'videodata');
       disp('Video saved to file ''testvideo.mat''');
       % Restart the camera
-      start(handles.video);
+      start(handles.videopreview);
       set(handles.startAcquisition, 'String', 'Start Acquisition');
 end
 
@@ -437,5 +435,3 @@ function streamMemory_Callback(hObject, eventdata, handles)
 % hObject    handle to streamMemory (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of streamMemory
