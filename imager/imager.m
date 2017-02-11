@@ -51,36 +51,30 @@ function imager_OpeningFcn(hObject, eventdata, handles, varargin)
 
 %% Settings
 global IMGSIZE FPS;
-%FPS = 10; % We can't set this here. see below mmf
 
 % Data directory, unit, and tag settings
 handles.datatxt = 'c:\imager_data\xx0';
 handles.unit = 'u000_000';
 handles.time_tag = 0;
 
-%%% DEBUG XXX ***
-handles
-
 %%  Camera communication
 % https://www.mathworks.com/help/imaq/basic-image-acquisition-procedure.html
 
-%%% DEBUG XXX *** is this necessary now?
-%delete(instrfind) %don't think so. 
-
 % Establish connection with PointGrey camera and set mode
-handles.vid = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
-handles.vid.TriggerRepeat = Inf;
-handles.vid.FramesPerTrigger = Inf;
+handles.vidprev = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
+handles.vidprev.TriggerRepeat = Inf;
+handles.vidprev.FramesPerTrigger = Inf;
 %vid.FrameGrabInterval = 2; % Dependent on the mode selected & memory
 %available.  Will try without setting this, but if need be, we can select
 %only every nth frame. mmf
 
 % Define video source
-handles.src = getselectedsource(handles.vid);
-handles.src.Tag = 'ISI';
-FPS = handles.src.FrameRate;
+handles.srcprev = getselectedsource(handles.vidprev);
+handles.srcprev.Tag = 'ISI';
+handles.srcprev.Strobe1 = 'Off';
+FPS = handles.srcprev.FrameRate;
 
-%% Establish illumination control
+% % Establish illumination control
 % NOTE: If we want to control the illumination ring led on/off through
 % MATLAB, need to have another USB Daq to run this. Otherwise, we cannot
 % simultaneously run clocked operations
@@ -91,107 +85,25 @@ FPS = handles.src.FrameRate;
 % fopen(sit);
 % handles.sit = sit;
 
-%% Set up audio output for tracking master-slave communication
-
-handles.blip = audioplayer(10 * sin(linspace(0, 2 * pi, 32)), 30000);
-
-%% Set up ActiveX handles
-% NOTE: Disabled in transition to new MATLAB and away from MIL.
-
-% handles.milapp = handles.activex25;
-% handles.mildig = handles.activex24;
-% handles.mildisp = handles.activex23;
-% handles.milimg = handles.activex26;
-% handles.milsys = handles.activex27;
-% handles.milsys.Allocate;  % Allocate MIL system
-
-%mmf testing
-handles.milapp = {};
-handles.mildig = {};
-handles.mildisp = {};
-handles.milimg = {};
-handles.milsys = {};
-
-% From miltest.m, for reference:
-% milapp = actxcontrol('MIL.Application');
-% milsys = actxcontrol('MIL.System');
-% mildisp = actxcontrol('MIL.Display',[10 10 800 800]);
-% mildig = actxcontrol('MIL.Digitizer');
-% milimg = actxcontrol('MIL.Image');
-
-%% Set up display of video
-
-%%% XXX *** needs to be set up
-% mmf... this is not right, but testing for fun.
-% https://www.mathworks.com/matlabcentral/answers/96242-how-can-i-insert-live-video-into-a-matlab-gui-using-image-acquisition-toolbox
-% handles.mildisp.set('OwnerSystem',handles.milsys,...
-%    'DisplayType','dispActiveMILWindow');
-%handles.mildisp.Allocate
-% handles.mildisp.OwnerSystem = handles.milsys; %these are currently empty
-% handles.mildisp.DisplayType = 'dispActiveMILWindow';
-%
-%handles.mildig.set('OwnerSystem',handles.milsys,'GrabFrameEndEvent',0,...
-%    'GrabFrameStartEvent',0,'GrabStartEvent',0,'GrabEndEvent',0,...
-%    'GrabMode','digAsynchronousQueue');
-%not sure we need any of these either... mmf
-% handles.mildig.OwnerSystem = handles.milsys;
-
-
 %% Ian code...
 global ROIcrop
 
-%%% XXX *** should already be configured via videoinput
-%mmf therefore don't need
-% handles.mildig.set('Format','C:\imager\2x2bin_dlr.dcf');  %Preset the binning to 2x2
-% y = clsend('sbm 2 2');
-% handles.mildig.Allocate;
-
 % Get size and initialize ROI to full size
-IMGSIZE = handles.vid.VideoResolution;
+IMGSIZE = handles.vidprev.VideoResolution;
 Xpx = IMGSIZE(1);
 Ypx = IMGSIZE(2);
 ROIcrop = [0 0 Xpx Ypx];
-
-%%% XXX *** needs to be set up 
-% mmf - we might not even need this: it's all saved in vid/src
-% handles.milimg.set('CanGrab',1,'CanDisplay',1,'CanProcess',0, ...
-%    'SizeX',Xpx,'SizeY',Ypx,'DataDepth',16,'NumberOfBands',1, ...
-%    'OwnerSystem',handles.milsys);
-% handles.milimg.Allocate;
-% handles.mildig.set('Image',handles.milimg);
-% handles.mildisp.set('Image',handles.milimg,'ViewMode',...
-%    'dispBitShift','ViewBitShift',4);
 
 %% Set up buffers
 global NBUF;
 NBUF = 2;
 
-%%% XXX *** needs to be set up 
-%do we need this? mmf
-% for i = 1:NBUF
-% %    handles.buf{i} = actxcontrol('MIL.Image',[0 0 1 1]);
-% %    handles.buf{i}.set('CanGrab',1,'CanDisplay',0,'CanProcess',0, ...
-% %        'SizeX',Xpx,'SizeY',Ypx,'DataDepth',16,'NumberOfBands',1, ...
-% %        'FileFormat','imRaw','OwnerSystem',handles.milsys);
-% %    
-% %        % The child images
-% %        handles.child{i} = actxcontrol('MIL.Image',[0 0 1 1]);
-% %        set(handles.child{i},'ParentImage',handles.buf{i},'AutomaticAllocation',1);
-% %        set(handles.child{i}.ChildRegion,'OffsetX',256);
-% %        set(handles.child{i}.ChildRegion,'OffsetY',256);
-% %        set(handles.child{i}.ChildRegion,'SizeX',128);
-% %        set(handles.child{i}.ChildRegion,'SizeY',128);
-% %        handles.buf{i}.Allocate;
-% end
-
 %% Construct a timer
-
 handles.timer = timer;
 set(handles.timer, 'Period', 0.5, 'BusyMode', 'drop', 'ExecutionMode', ...
     'fixedSpacing', 'TimerFcn', @timerhandler)
 
 %% Set up either display or something else - mmf: i think this is just for the heatmap?? 
-
 global imagerhandles;
 
 %%% DEBUG XXX *** not sure what is happening here
@@ -207,6 +119,7 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
+
 %% --- Outputs from this function are returned to the command line.
 function varargout = imager_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -216,6 +129,7 @@ function varargout = imager_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+
 
 %% --- Executes on button press in Grab.
 function Grab_Callback(hObject, eventdata, handles)
@@ -240,7 +154,6 @@ function pany_Callback(hObject, eventdata, handles)
 % py = get(handles.pany,'Value');
 %%% DEBUG XXX *** how to do this with videoinput?
 % handles.mildisp.Pan(px,-py);
-
 
 
 %% --- Executes during object creation, after setting all properties.
