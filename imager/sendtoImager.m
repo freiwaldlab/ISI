@@ -48,6 +48,10 @@ function sendtoImager(cmd)
             %drawnow;
             GrabSaveLoop(fname)
         case 'C'
+            if ~isrunning(imagerhandles.video)
+                % Make sure strobe is off
+                imagerhandles.src.Strobe1 = 'Off';
+            end
             % Remove video object and clean up
             delete(imagerhandles.video);
             clear imagerhandles.video
