@@ -9,7 +9,7 @@ if Mstate.running
     nt = getnotrials;
 end
 
-%Flag for the link with scanimage
+% Determine what to run from GUI toggles
 ScanImageBit = get(GUIhandles.main.twophotonflag, 'value');
 ISIbit = get(GUIhandles.main.intrinsicflag, 'value');
 
@@ -49,15 +49,18 @@ if Mstate.running && (trialno <= nt)
     %scanimage will be ready to accept TTL
     
     if ISIbit
-        %Matlab now enters the frame grabbing loop (I will also save it to disk)
+        %Matlab now enters the frame grabbing loop
         sendtoImager(sprintf(['S %d' 13], trialno - 1))
-        %%%Timing is not crucial for this last portion of the loop (both display and frame grabber/saving is inactive)...
+        %%%Timing is not crucial for this last portion of the loop 
+        %(both display and frame grabber/saving is inactive)...
         
-        % Updated for MATLAB compatibility, 170104 mmf
-        fclose(fid1);
+        % For some reason, pausing is necessary here for log file to save
+        % properly before listener and file closing
+        pause(0.25)
         analogIN.stop;
         delete(lh);
-        disp(['run2: Opening log file (' LogFile ').']);
+        fclose(fid1);
+        disp(['run2: Reading log file (' LogFile ').']);
         fid2 = fopen(LogFile, 'r');
         % analogINdata is a 3 x samples matrix where...
         %   (1,:) is the time each sample is taken from start
@@ -82,18 +85,18 @@ if Mstate.running && (trialno <= nt)
         xlabel('Time')
         ylabel('Voltage')
         
-        figure; clf
-        hold on
-        %plot(analogINdata(1,1:1:samples)', 'k') % time
-        plot(analogINdata(2,1:1:samples)', 'r') % photodiode
-        plot(analogINdata(3,1:1:samples)', 'b') % camera
-        hold off
-        %axis equal
-        %legend('Time', 'Stimulus', 'Camera')
-        legend('Stimulus', 'Camera')
-        xlim([0 samples])
-        xlabel('Time')
-        ylabel('Voltage')
+        %figure; clf
+        %hold on
+        % %plot(analogINdata(1,1:1:samples)', 'k') % time
+        %plot(analogINdata(2,1:1:samples)', 'r') % photodiode
+        %plot(analogINdata(3,1:1:samples)', 'b') % camera
+        %hold off
+        % %axis equal
+        % %legend('Time', 'Stimulus', 'Camera')
+        %legend('Stimulus', 'Camera')
+        %xlim([0 samples])
+        %xlabel('Samples')
+        %ylabel('Voltage')
 
         [syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
             getSyncTimes;   
