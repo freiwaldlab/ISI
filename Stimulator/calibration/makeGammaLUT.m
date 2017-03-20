@@ -1,9 +1,9 @@
 %% Generate inverse look-up-tables to correct for monitor gamma offsets
 
 BasePath = 'C:\Dropbox\ISI\Stimulator';
-%BasePath = 'D:\Dropbox (Personal)\Freiwald\FreiwaldMarmosets\ISI\Stimulator';
 MeasFile = '170209t1915_calvals.mat';
 SaveSuffix = 'LUT.mat';
+SaveToggle = false;
 
 DataPath = strcat(BasePath, filesep, 'calibration', filesep, 'data');
 CorrPath = strcat(BasePath, filesep, 'calibration', filesep, 'corrections');
@@ -68,4 +68,6 @@ legend('R', 'G', 'B')
 
 %% Save inverse look-up-table for use and raw values for reference
 L = Lhat;
-save([CorrPath filesep Prefix SaveSuffix], 'bufLUT', 'L')
+if SaveToggle
+    save([CorrPath filesep Prefix SaveSuffix], 'bufLUT', 'L', 'gamma')
+end
