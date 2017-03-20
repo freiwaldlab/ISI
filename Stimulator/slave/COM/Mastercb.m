@@ -49,56 +49,52 @@ try
                 pval = dumstr(id+1:end);
                 updatePstate(psymbol, pval)
             end
-        case 'B'  %Build stimulus; update looper info and buffer to video card.
+        case 'B'  % Build stimulus: update Looper and buffer to video card.
             for i = 1:length(delims)-1
                 dumstr = paramstring(delims(i)+1:delims(i+1)-1);
                 id = find(dumstr == '=');
                 psymbol = dumstr(1:id-1);
                 pval = dumstr(id+1:end);
-                updatePstate(psymbol,pval)
+                updatePstate(psymbol, pval)
             end
-            
+            makeTexture(modID)
+            makeSyncTexture
+            %Commented because it doesn't
+            %allow me to change parameters for different trials.
+            %loop Trial = -1 signifies 'sample' stimulus, which is
+            %necessary to stop shutter control.
             %'if' statement so that it only builds/buffers the random ensemble
             %on first trial. e.g. we want to reset the looper variables
             %(above) for variables like 'rseed', but not build the ensemble
             %all over again. 
             %if ~strcmp(modID,'FG') || loopTrial == 1 || loopTrial == -1
-                makeTexture(modID)  
+            %    makeTexture(modID)  
             %end
-            makeSyncTexture
-            
-            %The above if statement was commented out because it doesn't
-            %allow me to change parameters for different trials.
-            
-            %loop Trial = -1 signifies 'sample' stimulus, which is
-            %necessary to stop shutter control.
-        case 'G'  %Go Stimulus
+        case 'G'  % Go. Play stimulus and let master know when finished.
             playstimulus(modID)
-            fwrite(comState.serialPortHandle,'nextT~')
-        case 'MON'  %Monitor info
+            fwrite(comState.serialPortHandle, 'nextT~')
+        case 'MON'  % Update monitor info.
             Mstate.monitor = modID;
             updateMonitor
-        case 'C'  %Close Display
+        case 'C'  % Close display.
             Screen('Close')
             Screen('CloseAll');
-            %clear all
-            %close all
             Priority(0);         
-        case 'Q'  %Used by calibration.m at the Master (not part of 'Stimulator')
+        case 'Q'  % Used by calibration.m at the Master (not part of 'Stimulator')
             paramstring = paramstring(2:end);            
             RGB = [str2num(paramstring(1:3)) str2num(paramstring(4:6)) str2num(paramstring(7:9))];
             Screen(screenPTR, 'FillRect', RGB)
             Screen(screenPTR, 'Flip');
-        case 'S'  %Move shutter
+        case 'S'  % Move shutter
             % Commented 170109 mmf, no slave Daq or shutter
             %eye = str2num(paramstring(delims(1)+1:delims(2)-1)); %setting of LE shutter
             %pos = str2num(paramstring(delims(2)+1:delims(3)-1)); %setting of RE shutter
             %moveShutter(eye,pos);
             %pause(2)
-            disp('Mastercb WARNING: slave asked to move shutter, but slave shutter capability disabled')    
+            disp('Mastercb WARNING: master asked to move shutter, but slave shutter capability disabled')    
     end
     if ~strcmp(msgID,'G')
-        fwrite(comState.serialPortHandle,'a')  %dummy so that Master knows it finished
+        fwrite(comState.serialPortHandle, 'a')  %dummy so that Master knows it finished
     end
 catch
     Screen('CloseAll');
