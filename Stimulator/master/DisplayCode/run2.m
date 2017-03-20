@@ -1,5 +1,5 @@
 function run2
-global GUIhandles Mstate trialno syncInfo analogIN analogINdata
+global GUIhandles Mstate trialno syncInfo trialInfo analogIN analogINdata
 global DataPath LogFile
 
 LogFile = [DataPath filesep 'run_log.bin'];
@@ -24,7 +24,7 @@ if Mstate.running && (trialno <= nt)
 
     if ISIbit
         fid1 = fopen(LogFile, 'w');
-        lh = addlistener(analogIN, ...
+        lhIn = addlistener(analogIN, ...
             'DataAvailable', @(src, event)logData(src, event, fid1));
         analogIN.startBackground;
         disp(['run2: Log file opened (' LogFile ').'])
@@ -43,6 +43,7 @@ if Mstate.running && (trialno <= nt)
     waitforDisplayResp
     %Tell Display to show its buffered images. 
     %TTL from stimulus computer "feeds back" to trigger 2ph acquisition
+    
     startStimulus      
     
     %In 2ph mode, we don't want anything significant to happen after startStimulus, so that
@@ -54,55 +55,81 @@ if Mstate.running && (trialno <= nt)
         %%%Timing is not crucial for this last portion of the loop 
         %(both display and frame grabber/saving is inactive)...
         
+        if strcmpi(getmoduleID, 'IB')
+            if ~isempty(trialInfo)
+                saveTrialInfo(trialInfo)
+            else
+                disp('run2 ERROR: Failed to retrieve ImageBlock trialInfo.')
+            end
+        end
+        
         % For some reason, pausing is necessary here for log file to save
         % properly before listener and file closing
-        pause(0.25)
+        pause(1)
         analogIN.stop;
-        delete(lh);
+        delete(lhIn);
         fclose(fid1);
         disp(['run2: Reading log file (' LogFile ').']);
         fid2 = fopen(LogFile, 'r');
-        % analogINdata is a 3 x samples matrix where...
+        % analogINdata is a 6 x samples matrix where...
         %   (1,:) is the time each sample is taken from start
         %   (2,:) is the voltage on analog input 0: photodiode from display
-        %   (3,:) is the voltage on analog input 1: TTL from camera
-        [analogINdata,~] = fread(fid2, [3,inf], 'double');
+        %   (3,:) is the voltage on analog input 1: strobe from camera
+        %   (4,:) is the voltage on analog input 2: trigger copy
+        %   (5,:) is the voltage on analog input 3: audio copy
+        %   (6,:) is the voltage on analog input 4: start/stop ttl copy
+        [analogINdata,~] = fread(fid2, [6,inf], 'double');
         fclose(fid2);
         
         samples = length(analogINdata);
         timevals = analogINdata(1,:)';
-        %%% DEBUG XXX ***
+        Fs = analogIN.Rate;  % 2000;  % sampling frequency in Hz; set in configSyncInput
+        stimsync = analogINdata(2,:)';
+              
+        % Normalize photodiode signal
+        high = max(stimsync);
+        low = median(stimsync);  % median to avoid negative transients
+        thresh = (high + low) / 2;
+        stimsync = sign(stimsync - thresh);
+        stimsync(stimsync == 0) = 1;
+        stimsync = (stimsync - min(stimsync)) / ...
+            (max(stimsync) - min(stimsync));
+        
+        % Filter out down states caused by monitor refresh
+        %Mstate.refresh_rate
+        delta = 120 / Fs;  % window of one monitor refresh period
+        hightimes = timevals(stimsync == 1);
+        stimsq = stimsync;
+        highidx = find(stimsq == 1);
+        for idx = 1:length(highidx)-1
+            if (hightimes(idx+1) - hightimes(idx)) <= delta
+                stimsq(highidx(idx):highidx(idx+1)) = 1;
+            end
+        end
+        
         figure; clf
         hold on
         %plot(timevals, analogINdata(1,1:1:samples)', 'k') % time
-        plot(timevals, analogINdata(2,1:1:samples)', 'r') % photodiode
-        plot(timevals, analogINdata(3,1:1:samples)', 'b') % camera
+        plot(timevals, stimsq, 'r') % photodiode filtered
+        plot(timevals, analogINdata(2,:)', 'm') % photodiode raw
+        plot(timevals, analogINdata(6,:)', 'k') % start/stop ttl camera
+        plot(timevals, analogINdata(4,:)', 'b') % trigger
+        plot(timevals, analogINdata(3,:)', ':b') % strobe
+        plot(timevals, analogINdata(5,:)', 'g') % audio
+        %plot(timevals, high * ones(samples, 1), 'k') % photodiode high
+        %plot(timevals, thresh * ones(samples, 1), 'y') % photodiode thresh
+        %plot(timevals, low * ones(samples, 1), 'k') % photodiode low
         hold off
-        %axis equal
-        %legend('Time', 'Stimulus', 'Camera')
-        legend('Stimulus', 'Camera')
+        legend('StimFilt', 'StimRaw', 'ISIttl', ...
+            'CamTrig', 'CamStrb', 'Audio');
         xlim([0 timevals(samples)])
         xlabel('Time')
         ylabel('Voltage')
-        
-        %figure; clf
-        %hold on
-        % %plot(analogINdata(1,1:1:samples)', 'k') % time
-        %plot(analogINdata(2,1:1:samples)', 'r') % photodiode
-        %plot(analogINdata(3,1:1:samples)', 'b') % camera
-        %hold off
-        % %axis equal
-        % %legend('Time', 'Stimulus', 'Camera')
-        %legend('Stimulus', 'Camera')
-        %xlim([0 samples])
-        %xlabel('Samples')
-        %ylabel('Voltage')
 
         [syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
-            getSyncTimes;   
-        %Just empty it for now
+            getSyncTimes;
         syncInfo.dSyncswave = [];
-        %append .analyzer file
+        % Append to .analyzer file
         saveSyncInfo(syncInfo)
         
         %[looperInfo.conds{c}.repeats{r}.dispSyncs looperInfo.conds{c}.repeats{r}.acqSyncs looperInfo.conds{c}.repeats{r}.dSyncswave] = getSyncTimes;
