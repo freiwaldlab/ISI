@@ -14,10 +14,10 @@ function configureDisplay(varargin)
     configurePstate('IB')
     configureMstate
 
-    configCom(varargin);
+    configCom(varargin)
 
     % Commented 170109 mmf, no slave Daq or shutter
     %configSync;
     %configShutter;
 
-    screenconfig;
+    screenconfig
