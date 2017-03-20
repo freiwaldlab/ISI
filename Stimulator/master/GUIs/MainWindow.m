@@ -199,13 +199,13 @@ if ~Mstate.running
         title = [Mstate.anim '_' sprintf('u%s', Mstate.unit) '_' ...
             Mstate.expt];
         dd = [roots{i} filesep Mstate.anim filesep title '.analyzer'];
-        if(exist(dd, 'dir'))
+        if exist(dd, 'dir')
             warndlg('Directory exists! Please advance experiment before running.')
             return
         end
     end
     
-    % Check if this data file already exists
+    % Check if this data directory already exists
     if get(GUIhandles.main.intrinsicflag, 'value')
         [Oflag, dd] = checkforOverwrite;
         if Oflag
@@ -215,14 +215,13 @@ if ~Mstate.running
         end
     end
     
-    Mstate.running = 1;  %Global flag for interrupt in real-time loop ('Abort')
+    Mstate.running = 1;
     
-    %Update states just in case user has not pressed enter after inputing
-    %fields:
     updateLstate
     updateMstate    
     
-    %makes 'looperInfo'.  This must be done before saving the analyzer file.
+    % Creates 'looperInfo'.
+    % Must be done before saving the analyzer file.
     makeLoop
     %Save .analyzer. Do this before running... in case something crashes
     saveExptParams
@@ -258,7 +257,7 @@ if ~Mstate.running
     %In 2 computer version 'run2' is no longer a loop, but gets recalled
     %after each trial... 
     %In 'endAcquisition' (2ph), below (intrinsic), or 'Displaycb' (no acquisition)
-    run2  
+    run2 
     
     %We don't want anything significant to happen after 'run2', so that
     %scanimage will be ready to accept TTL
@@ -505,4 +504,23 @@ if flag
     set(handles.analysisFlag, 'value', 0);
     set(GUIhandles.main.analysisFlag, 'value', 0)
 end
+
+% --- Executes on button press in LEDtogglebutton.
+function LEDtogglebutton_Callback(hObject, eventdata, handles)
+% hObject    handle to LEDtogglebutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% Hint: get(hObject,'Value') returns toggle state of LEDtogglebutton
+global GUIhandles daqOUTLED
+flag = get(handles.LEDtogglebutton,'value');
+set(GUIhandles.main.LEDtogglebutton,'value',flag)
+if flag
+    outputSingleScan(daqOUTLED, 1)
+    set(GUIhandles.main.LEDtogglebutton,'string','LED ON')
+else
+    outputSingleScan(daqOUTLED, 0)
+    set(GUIhandles.main.LEDtogglebutton,'string','LED OFF')
+end
+
+
 
