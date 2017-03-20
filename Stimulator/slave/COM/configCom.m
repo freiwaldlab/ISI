@@ -7,23 +7,23 @@ global comState
 %comState is not initialized in the .ini file, nor is it saved in the state.headerString
 
 if ~isempty(varargin{1})
-    rip = varargin{1}{1}
+    rip = varargin{1}{1};
 else
-    rip = '129.85.181.149';  %2ph master mmf 
+    rip = '192.168.137.1';  % master mmf 170220
 end
 
 % close all open serial port objects on the same port and remove
 % the relevant object from the workspace
-port=instrfindall('RemoteHost',rip);
+port = instrfindall('RemoteHost', rip);
 %port = '198.202.68.38';
-if length(port) > 0; 
+if ~isempty(port)
     fclose(port); 
     delete(port);
     clear port;
 end
 
 % make udp object named 'stim'
-comState.serialPortHandle = udp(rip,'RemotePort',8844,'LocalPort',8866);
+comState.serialPortHandle = udp(rip, 'RemotePort', 8844, 'LocalPort', 8866);
 
 %For unknown reasons, the output buffer needs to be set to the amount that the input
 %buffer needs to be.  For example, we never exptect to send a packet higher
@@ -31,9 +31,7 @@ comState.serialPortHandle = udp(rip,'RemotePort',8844,'LocalPort',8866);
 %high as well.  Funny things happen if I don't do this.  (For UDP)
 set(comState.serialPortHandle, 'InputBufferSize', 1024)
 set(comState.serialPortHandle, 'OutputBufferSize', 1024)  %This is necessary for UDP!!!
-
 set(comState.serialPortHandle, 'Datagramterminatemode', 'off')  %things are screwed w/o this
-
 
 %Establish serial port event callback criterion
 comState.serialPortHandle.BytesAvailableFcnMode = 'Terminator';
@@ -43,11 +41,9 @@ comState.serialPortHandle.Terminator = '~'; %Magic number to identify request fr
 fopen(comState.serialPortHandle);
 stat=get(comState.serialPortHandle, 'Status');
 if ~strcmp(stat, 'open')
-    disp([' StimConfig: trouble opening port; cannot proceed']);
-    comState.serialPortHandle=[];
-    out=1;
-    return;
+    disp(' StimConfig: trouble opening port; cannot proceed');
+    comState.serialPortHandle = [];
+    return
 end
 
-comState.serialPortHandle.bytesavailablefcn = @Mastercb;  
-
+comState.serialPortHandle.bytesavailablefcn = @Mastercb;
