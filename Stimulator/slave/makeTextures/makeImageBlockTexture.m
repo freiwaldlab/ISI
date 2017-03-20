@@ -1,6 +1,6 @@
 function makeImageBlockTexture
     % Make an image presentation block
-    global Mstate screenPTR
+    global screenPTR %Mstate
     global Gtxtr TDim % for 'playimageblock'
     Gtxtr = []; 
     TDim = [];
@@ -70,13 +70,11 @@ function makeImageBlockTexture
     end
     
     % Preload all images into a buffer
-    disp(['makeImageBlockTexture: Loading stimulus images, this ' ...
-        'may take some time.'])
+    disp('makeImageBlockTexture: Loading stimulus images.')
     tic
     if imHpx > screenYpx || imWpx > screenXpx
         disp(['makeImageBlockTexture WARNING: Stimulus image is too ' ...
             'big to fit on the screen.']);
-        %return;
         disp(['makeImageBlockTexture WARNING:   Resizing image, which ' ...
             'is slow and undesireable!']);
         if imHpx > imWpx
