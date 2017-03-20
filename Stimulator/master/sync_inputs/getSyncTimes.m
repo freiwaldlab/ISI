@@ -1,24 +1,16 @@
 function [dispSynctimes, acqSynctimes, dsyncwave] = getSyncTimes
-global analogIN syncs analogINdata
+    global analogIN analogINdata
 
-% Updated for MATLAB compatibility, 170109 mmf
-%samples = length(analogINdata);
-Fs = analogIN.Rate;
-syncs = analogINdata(2:3,:)';
-
-% figure(69)
-% hold on
-% plot(syncs(1:1:end,1),'r')
-% plot(syncs(1:1:end,2),'k')
-% hold off
-
-%First channel should be from display
-dispSynctimes = processLCDSyncs(syncs(:,1),Fs);
-%dispSynctimes = processDaqSyncs(syncs(:,1),Fs);
-%Second channel should be ttl sent off of audio or parallel port
-acqSynctimes = processGrabSyncs(syncs(:,2),Fs);
-
-dsyncwave = syncs(:,1);
+    Fs = analogIN.Rate;
+    
+    % analogINdata is a 3 x samples matrix where...
+    %   (1,:) is the time each sample is taken from start
+    %   (2,:) is the voltage on analog input 0: photodiode from display
+    %   (3,:) is the voltage on analog input 1: TTL from camera
+    syncs = analogINdata(2:3,:)';
+    dispSynctimes = processLCDSyncs(syncs(:,1), Fs);
+    acqSynctimes = processGrabSyncs(syncs(:,2), Fs);
+    dsyncwave = syncs(:,1);
 
 % 4 lines below are optional to save synctimes. replaces saveSync. however,
 % looks like data is saved in run2 by saveSyncInfo. confirm and then delete
