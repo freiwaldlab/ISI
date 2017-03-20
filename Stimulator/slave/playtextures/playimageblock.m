@@ -1,5 +1,5 @@
 function playimageblock
-    global Mstate screenPTR screenNum
+    global Mstate screenPTR screenNum comState
     global Gtxtr TDim % from makeImageBlockTexture
     global Stxtr % from makeSyncTexture
     syncHigh = Stxtr(1);
@@ -53,19 +53,23 @@ function playimageblock
     imNum = size(Gtxtr, 2);
     imList = (1:imNum)';
     % Determine the order in which images will be presented
-    %%% TODO XXX *** save image ordering information somewhere
     if strcmpi(P.randomize, 'T')
-        disp('playimageblock: Image presentation will be randomly ordered.');
+        disp('playimageblock: Image presentation will be RANDOMLY ordered.');
         imList = imList(randperm(size(imList, 1)))';
     elseif strcmpi(P.randomize, 'F')
-        disp('playimageblock: Image presentation will be serially ordered.');
+        disp('playimageblock: Image presentation will be SERIALLY ordered.');
     else
         disp(['playimageblock WARNING: Setting for randomization ' ...
             'incorrect. Assuming random ordering as default.']);
-        disp('playimageblock: Image presentation will be randomly ordered.');
+        disp('playimageblock: Image presentation will be RANDOMLY ordered.');
         imList = imList(randperm(size(imList, 1)))';
     end
-
+    % Communicate order of image presentation to master
+    imPath = P.image_path;
+    imListStr = strjoin(string(imList), ',');
+    strcat('IBorder;', imPath, ';', imListStr, ';~')
+    fwrite(comState.serialPortHandle, 'x')
+    
     % Pre-delay
     % Draw "high" sync state for first half of pre-delay to indicate 
     % beginning of new block
