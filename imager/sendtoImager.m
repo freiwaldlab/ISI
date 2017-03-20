@@ -32,30 +32,13 @@ function sendtoImager(cmd)
             DataPath = dd;
             fname = sprintf('%s%su%s_%s', dd, filesep, unit, expt);
             fname = [fname  '_' sprintf('%03d', trial)];
-            
-            %%% XXX *** LOOKS UNUSED, SO REMOVED... LET US SEE WHAT BREAKS
-            %nframes = 1;
-
-            %mmf - I don't think we need anything other than h = imagerhandles;
-            %and h = GrabSaveLoop
-            %h = imagerhandles;
-            %h.mildig.set('GrabFrameEndEvent',0,'GrabEndEvent',0,'GrabStartEvent',0);
-            %set(1,'Name','imager :: Sampling ::');
-            %drawnow;
-            %%h.mildig.Image = h.buf{1};
-
-            %set(1,'Name','imager');
-            %drawnow;
             GrabSaveLoop(fname)
         case 'C'
-            if ~isrunning(imagerhandles.video)
-                % Make sure strobe is off
-                imagerhandles.src.Strobe1 = 'Off';
-            end
             % Remove video object and clean up
-            delete(imagerhandles.video);
-            clear imagerhandles.video
-            disp('sendtoImager: Closed video object and cleaned up.')
+            stop(imagerhandles.video);
+            %delete(imagerhandles.video);
+            %clear imagerhandles.video
+            disp('sendtoImager: Stopped video object.')
         otherwise
             disp('sendtoImager ERROR: Send command was not understood.');
     end
