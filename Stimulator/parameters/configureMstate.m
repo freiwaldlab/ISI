@@ -17,7 +17,7 @@ function configureMstate
     Mstate.analyzerRoot = 'C:\Data\AnalyzerFiles';
 
     % Set slave computer IP for communication
-    Mstate.stimulusIDP = '129.85.181.189';
+    Mstate.stimulusIDP = '192.168.137.2'; %'129.85.181.189';
     
     % Set running state
     Mstate.running = 0;
