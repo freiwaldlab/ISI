@@ -1,19 +1,11 @@
 function makeImageBlockTexture
     % Make an image presentation block
-    global screenPTR %Mstate
-    global Gtxtr TDim % for 'playimageblock'
+    global screenPTR
+    global Gtxtr TDim
     Gtxtr = []; 
     TDim = [];
     P = getParamStruct;
     window = screenPTR;
-    
-    % %%% DEBUG XXX ***
-    % % Get the screen numbers
-    % screens = Screen('Screens');
-    % % Draw to the external screen if avaliable
-    % screenNumber = max(screens);
-    % % Open an on screen window
-    % [window, ~] = Screen('OpenWindow', screenNumber, 128, [0 0 500 500]);
     
     % Settings
     imPath = P.image_path;
@@ -23,15 +15,12 @@ function makeImageBlockTexture
         return;
     end
     
-    % % Get screen resolution
-    % screenRes = Screen('Resolution', screenNum);
-    % Get the size of the on screen window
+    %screenRes = Screen('Resolution', screenNum);
     [screenXpx, screenYpx] = Screen('WindowSize', window);
-    % Define black and white
     white = WhiteIndex(window);
-    black = BlackIndex(window);
+    %black = BlackIndex(window);
     grey = white / 2;
-    inc = white - grey;
+    %inc = white - grey;
 
     % Get information about images
     imList = dir(strcat(imPath, filesep, '*.', imExt));
