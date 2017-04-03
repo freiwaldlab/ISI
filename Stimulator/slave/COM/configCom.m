@@ -9,7 +9,7 @@ global comState
 if ~isempty(varargin{1})
     rip = varargin{1}{1};
 else
-    rip = '192.168.137.1';  % master mmf 170220
+    rip = '192.168.1.100';  % master mmf 170220
 end
 
 % close all open serial port objects on the same port and remove
