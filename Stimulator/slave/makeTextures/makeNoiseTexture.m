@@ -3,8 +3,9 @@ function makeNoiseTexture
     global Gtxtr TDim
     Gtxtr = [];
     TDim = [];
-
     P = getParamStruct;
+    window = screenPTR;
+    
     screenRes = Screen('Resolution', screenNum);
     resXpxpercm = screenRes.width / Mstate.screenXcm;
     resYpxpercm = screenRes.height / Mstate.screenYcm;
