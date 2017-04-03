@@ -1,17 +1,23 @@
-function [flag dd] = checkforOverwrite
+function [flag, dd] = checkforOverwrite
+    global Mstate GUIhandles DataPath
+    animal = get(findobj('Tag', 'animaltxt'), 'string');
+    unit = get(findobj('Tag', 'unittxt'), 'string');
+    expt = get(findobj('Tag', 'expttxt'), 'string');
+    datadir = get(findobj('Tag', 'datatxt'), 'string');
 
-global running
+    dd = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
 
-animal = get(findobj('Tag','animaltxt'),'String');
-unit   = get(findobj('Tag','unittxt'),'String');
-expt   = get(findobj('Tag','expttxt'),'String');
-datadir= get(findobj('Tag','datatxt'),'String');
+    flag = 0;
 
-dd = [datadir '\' lower(animal) '\u' unit '_' expt]
-
-flag = 0;
-
-if(exist(dd))
-    warndlg('Directory exists!!!  Make sure you are not overwritting old data!  Please check current animal, unit and expt values.  I will now abort this sampling request.','!!! Warning !!!')
-    flag = 1;
-end
+    % Increment experiment number until no matching data directory exists
+    while exist(dd, 'dir')
+        disp(['checkforOverwrite: Data directory exists, ' ...
+            'incrementing experiment number.'])
+        expt = sprintf('%03d', str2double(expt) + 1);
+        Mstate.expt = expt;
+        set(findobj('Tag', 'expttxt'), 'string', expt)
+        set(GUIhandles.main.exptcb, 'string', expt)
+        UpdateACQExptName
+        
+        dd = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+    end

@@ -106,7 +106,7 @@ anaroot = get(handles.analyzerRoots, 'string');
 Mstate.analyzerRoot = anaroot;
 roots = parseString(Mstate.analyzerRoot, ';');
 %Use the first root path for the logic below
-dirinfo = dir([roots{1} '\' Mstate.anim]);
+dirinfo = dir([roots{1} filesep Mstate.anim]);
 
 %If the animal folder exists and there are files in it
 if length(dirinfo) > 2 
@@ -189,7 +189,7 @@ function runbutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global Mstate GUIhandles trialno analogIN DataPath
-%global Pstate
+global daqOUTtrig daqOUTlist
 
 % Run experiment
 if ~Mstate.running
@@ -199,8 +199,8 @@ if ~Mstate.running
         title = [Mstate.anim '_' sprintf('u%s', Mstate.unit) '_' ...
             Mstate.expt];
         dd = [roots{i} filesep Mstate.anim filesep title '.analyzer'];
-        if exist(dd, 'dir')
-            warndlg('Directory exists! Please advance experiment before running.')
+        if exist(dd, 'file') == 2
+            warndlg('Analyzer file already exists. Please advance experiment before running.')
             return
         end
     end
@@ -208,10 +208,10 @@ if ~Mstate.running
     % Check if this data directory already exists
     if get(GUIhandles.main.intrinsicflag, 'value')
         [Oflag, dd] = checkforOverwrite;
-        if Oflag
-            return
-        else
+        if ~Oflag
             mkdir(dd)
+        else
+            return
         end
     end
     
@@ -226,7 +226,7 @@ if ~Mstate.running
     %Save .analyzer. Do this before running... in case something crashes
     saveExptParams
 
-    set(handles.runbutton,'string','Abort')    
+    set(handles.runbutton, 'string', 'Abort')    
     
     %%%%Send initial parameters to display
     sendPinfo
@@ -247,12 +247,19 @@ if ~Mstate.running
         sendtoImager(sprintf(['I %2.3f' 13], total_time))
         
         %Make sure analog in is not running
-        % Updated for MATLAB compatibility, 170109 mmf
         analogIN.stop; 
-        %clearvars -global analogIN
     end
    
     trialno = 1;
+    
+%     if isvalid(daqOUTtrig)
+%         disp('MainWindow: daqOUTtrig exists, deleting before running.')
+%         stop(daqOUTtrig);
+%     end
+%     if exist('daqOUTlist', 'var')
+%         disp('MainWindow: daqOUTlist exists, deleting before running.')
+%         delete(daqOUTlist);
+%     end
     
     %In 2 computer version 'run2' is no longer a loop, but gets recalled
     %after each trial... 
