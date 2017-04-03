@@ -11,7 +11,7 @@ Nparam = length(Lstate.param); %number of looper parameters
 nc = 1;
 for i = 1:Nparam
     eval(['paramV = ' Lstate.param{i}{2} ';']);
-    nc = nc*length(paramV);
+    nc = nc * length(paramV);
     if i == 1
         istring = ['1:' num2str(length(paramV))]; %input string for 'meshgrid'
         ostring = ['d{' num2str(i) '}'];  %output string for meshgrid
@@ -38,7 +38,7 @@ nr = str2double(get(GUIhandles.looper.repeats, 'string'));
 for rep = 1:nr
     
     if get(GUIhandles.looper.randomflag,'value')
-        [dum, seq{rep}] = sort(rand(1,nc));  %make random sequence
+        [~, seq{rep}] = sort(rand(1,nc));  %make random sequence
     else                          
         seq{rep} = 1:nc;                                   
     end
@@ -97,7 +97,7 @@ if blankcounter > 0  %If the total number of trials is less than the blank perio
 end
 
 %Put the formula in looperInfo
-looperInfo.formula = get(GUIhandles.looper.formula,'string');
+looperInfo.formula = get(GUIhandles.looper.formula, 'string');
 
 
 function [c, r] = getcr(t,looperInfo,nc)
