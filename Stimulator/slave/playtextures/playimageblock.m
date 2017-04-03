@@ -1,6 +1,6 @@
 function playimageblock
     global Mstate screenPTR screenNum comState
-    global Gtxtr TDim % from makeImageBlockTexture
+    global Gtxtr TDim  % from makeImageBlockTexture
     global Stxtr % from makeSyncTexture
     syncHigh = Stxtr(1);
     syncLow = Stxtr(2);
@@ -12,17 +12,11 @@ function playimageblock
     resYpxpercm = screenRes.height / Mstate.screenYcm;
     syncWpx = round(resXpxpercm * Mstate.syncSize);
     syncHpx = round(resYpxpercm * Mstate.syncSize);
-    
-    % % Query the frame duration
     % ifi = Screen('GetFlipInterval', window);
-
-    % Define black and white
     white = WhiteIndex(window);
     black = BlackIndex(window);
-    grey = white / 2;
+    grey = (white + black) / 2;
     inc = white - grey;
-
-    % Calculate stimulus parameters assuming the screen is slightly curved
     if strcmp(P.altazimuth, 'none')
         stimWcm = 2 * pi * Mstate.screenDist * (P.x_size / 360);
         stimWpx = round(resXpxpercm * stimWcm);
@@ -34,16 +28,12 @@ function playimageblock
         stimHcm = 2 * Mstate.screenDist * tan((P.y_size / 2) * (pi / 180));
         stimHpx = round(resYpxpercm * stimHcm);
     end
-    
-    % Calculate the pixel range of the stimulus
-    %   NOTE: Truncating to the screen size messes things up.
     imWpx = TDim(1);
     imHpx = TDim(2);
     rngXpx = [(P.x_pos - floor(stimWpx / 2) + 1) ...
         (P.x_pos + ceil(stimWpx / 2))];
     rngYpx = [(P.y_pos - floor(stimHpx / 2) + 1) ...
         (P.y_pos + ceil(stimHpx / 2))];
-    % Calculate the sync and stimulus location details
     syncPos = [0 0 (syncWpx - 1) (syncHpx - 1)]';
     syncPiece = [0 0 (syncWpx - 1) (syncHpx - 1)]';
     stimPos = [rngXpx(1) rngYpx(1) rngXpx(2) rngYpx(2)]';
@@ -66,9 +56,10 @@ function playimageblock
     end
     % Communicate order of image presentation to master
     imPath = P.image_path;
-    imListStr = strjoin(string(imList), ',');
-    strcat('IBorder;', imPath, ';', imListStr, ';~')
-    fwrite(comState.serialPortHandle, 'x')
+    imListStr = sprintf('%.0f,', imList);
+    imListStr = imListStr(1:end-1);
+    msg = strcat('SO;IB;', imPath, ';', imListStr, ';~');
+    fwrite(comState.serialPortHandle, msg);
     
     % Pre-delay
     % Draw "high" sync state for first half of pre-delay to indicate 
@@ -88,14 +79,9 @@ function playimageblock
         %   full size in the center of the screen
         Screen('DrawTextures', window, [syncHigh Gtxtr(imn)], ...
            [syncPiece stimPiece], [syncPos stimPos], [0 P.ori]);
-        % Flip to the window
         Screen('Flip', window);
-        % Wait for specified per-image duration
         WaitSecs(P.image_duration);
-        % Now simultaneously draw "low sync" and blank the screen 
-        % with the background
-        Screen('DrawTexture', window, syncLow, syncPiece, syncPos);
-        % Flip to the window
+        Screen('DrawTexture', window, syncHigh, syncPiece, syncPos);
         Screen('Flip', window);
         % Wait for specified inter-image interval unless this is the 
         % last image
