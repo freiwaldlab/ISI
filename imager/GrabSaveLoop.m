@@ -2,6 +2,7 @@ function GrabSaveLoop(fname)
     global imagerhandles frameN Tens trigSeq
     global daqOUTtrig daqOUTIOI
     h = imagerhandles;
+    msgpre = 'GrabSaveLoop';
     
     % Set whether debugging output should be displayed
     debugToggle = 0;
@@ -14,7 +15,7 @@ function GrabSaveLoop(fname)
 
     % If in debug mode, display current logging mode setting
     if debugToggle
-        disp(['GrabSaveLoop: Camera logging mode set to ' ...
+        disp([msgpre ': Camera logging mode set to ' ...
             h.video.LoggingMode])
     end
 
@@ -39,7 +40,7 @@ function GrabSaveLoop(fname)
     frameNbase = h.video.FramesAcquired;
     timelastframe = now;
     maxwait = 10;
-    fprintf('GrabSaveLoop: Acquiring %d frames...\n', frameNleft)
+    fprintf('%s: Acquiring %d frames...\n', msgpre, frameNleft)
     while (frameNleft > 0) && (((10^5)*(now - timelastframe)) <= maxwait)
         frameNacqd = h.video.FramesAcquired - frameNbase;
         frameNaval = h.video.FramesAvailable;
@@ -49,7 +50,7 @@ function GrabSaveLoop(fname)
         frameR = (frameNrecd + 1):(frameNrecd + frameNaval);
         frameRnum = length(frameR);
         if debugToggle
-            disp(['GrabSaveLoop DEBUG: ' num2str(frameNacqd) ...
+            disp([msgpre ' DEBUG: ' num2str(frameNacqd) ...
                 ' frames acquired. ' num2str(frameNaval) ...
                 ' remaining on camera.'])
         end
@@ -71,9 +72,9 @@ function GrabSaveLoop(fname)
             totalsaveT = toc(tsave);
             clear n im imlast tsave
             if debugToggle && (frameRnum > 0)
-                disp(['GrabSaveLoop DEBUG: Save time for recent '...
+                disp([msgpre ' DEBUG: Save time for recent '...
                     'fetched frames was ' num2str(totalsaveT) ' sec.'])
-                disp(['GrabSaveLoop DEBUG:           per frame ' ...
+                disp([msgpre ' DEBUG:           per frame ' ...
                     num2str(totalsaveT / frameRnum) ' sec.'])
             end
         end
@@ -83,24 +84,24 @@ function GrabSaveLoop(fname)
     end
     fprintf(' done.\n')
     if (frameNleft > 0) && ((10^5)*(now - timelastframe) > maxwait)
-        disp(['GrabSaveLoop WARNING: Stopped waiting for frames from ' ...
+        disp([msgpre ' WARNING: Stopped waiting for frames from ' ...
             ' camera after ' num2str((10^5)*(now - timelastframe)) ...
             ' sec idle.'])
     end
     frameNacqd = h.video.FramesAcquired - frameNbase;
     if frameNrecd < frameN
-        disp(['GrabSaveLoop WARNING: Received fewer (' ...
+        disp([msgpre ' WARNING: Received fewer (' ...
             num2str(frameNrecd) ') frames than expected (' ...
             num2str(frameN) ').'])
     end
     totalT = toc;
     frameTsec = totalT / frameNrecd;
-    disp(['GrabSaveLoop: Total frames acquired ' ...
+    disp([msgpre ': Total frames acquired ' ...
         num2str(frameNacqd) ', ' num2str(frameN) ' expected.'])
-    disp(['GrabSaveLoop: Total acquisition and pull time was ' ...
+    disp([msgpre ': Total acquisition and pull time was ' ...
         num2str(totalT) ' sec, ' num2str(total_time) ...
         ' sec expected.'])
-    disp(['GrabSaveLoop: Acquisition and pull time per frame ' ...
+    disp([msgpre ': Acquisition and pull time per frame ' ...
         num2str(frameTsec) ' sec, ' num2str(total_time / frameN) ...
         ' sec expected.'])
     % Send pulse to timing DAQ to indicate that acquisition is complete
