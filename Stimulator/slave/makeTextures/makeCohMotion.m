@@ -1,4 +1,7 @@
 function makeCohMotion
+    global Mstate DotFrame screenNum loopTrial
+    P = getParamStruct;
+    
 %this function generates random dots a la Britten et al, 1993
 %on every frame, pixels are randomly assigned to be noise or signal pixels;
 %the noise pixels are randomly relocated, the signal pixels follow the
@@ -7,48 +10,34 @@ function makeCohMotion
 %tested after the dots have been assigned their new locations; dots can have
 %limited lifetime
 
-
-global Mstate DotFrame screenNum loopTrial;
-
-
-%get parameters
-Pstruct = getParamStruct;
-
-%get screen settings
-screenRes = Screen('Resolution',screenNum);
-fps=screenRes.hz;      % frames per second
+screenRes = Screen('Resolution', screenNum);
+fps = screenRes.hz;
 
 %this calculation is based on the assumption that the screen is round
-pxDeg = 2*pi/360*Mstate.screenDist*screenRes.width/Mstate.screenXcm;  % pixels per degree
-
-
-
+pxDeg = 2*pi/360*Mstate.screenDist * screenRes.width/Mstate.screenXcm;  % pixels per degree
 
 %if mask selected, set the stimulus size to fit the
 %radius
-if strcmp(Pstruct.mask_type,'disc')
-    stimSize=[2*Pstruct.mask_radius 2*Pstruct.mask_radius];
-    maskradiusPx=round(Pstruct.mask_radius*pxDeg);
+if strcmp(P.mask_type,'disc')
+    stimSize=[2*P.mask_radius 2*P.mask_radius];
+    maskradiusPx=round(P.mask_radius*pxDeg);
 else %otherwise get preset numbers
-    stimSize=[Pstruct.x_size Pstruct.y_size];
+    stimSize=[P.x_size P.y_size];
 end
 
 %conversion of parameters to pixels
 stimSizePx=round(stimSize*pxDeg);
 
-
 %figure out how many dots
 stimArea=stimSize(1)*stimSize(2);
-nrDots=round(Pstruct.dotDensity*stimArea/fps); %this is the number of dots in each frame
+nrDots=round(P.dotDensity*stimArea/fps); %this is the number of dots in each frame
 
 %figure out how many frames - we use the first and the last frame to be
 %shown in the pre and postdelay, so only stimulus duration matters here
-nrFrames=ceil(Pstruct.stim_time*fps);
-
+nrFrames=ceil(P.stim_time*fps);
 
 %initialize random number generate to time of date
 s = RandStream.create('mrg32k3a','NumStreams',1,'Seed',datenum(date)+loopTrial);
-
 
 %initialize dot positions
 randpos=rand(s,2,nrDots); %this gives numbers between 0 and 1
@@ -56,30 +45,27 @@ randpos(1,:)=(randpos(1,:)-0.5)*stimSizePx(1); %now we have between -stimsize/2 
 randpos(2,:)=(randpos(2,:)-0.5)*stimSizePx(2);
 
 %get displacement vectors per frame
-deltaFrame = Pstruct.speedDots*pxDeg/fps;                            % dot speed (pixels/frame)
-deltaX=deltaFrame*cos(Pstruct.ori*pi/180);
-deltaY=-1*deltaFrame*sin(Pstruct.ori*pi/180);
+deltaFrame = P.speedDots*pxDeg/fps;                            % dot speed (pixels/frame)
+deltaX=deltaFrame*cos(P.ori*pi/180);
+deltaY=-1*deltaFrame*sin(P.ori*pi/180);
 
 %initialize lifetime vector - between 1 and dotLifetimte
-if Pstruct.dotLifetime>0
-    randlife=randi(s,Pstruct.dotLifetime,nrDots,1);
+if P.dotLifetime>0
+    randlife=randi(s,P.dotLifetime,nrDots,1);
     lifetime=randlife;
 end
 
 %initialize signal/noise vector; 1 indicates signal, 0 indicates noise
-nrSignal=round(nrDots*Pstruct.dotCoherence/100);
+nrSignal=round(nrDots*P.dotCoherence/100);
 noisevec=zeros(nrDots,1);
 noisevec(1:nrSignal)=1;
 
-
 xypos=randpos;
-
 DotFrame={};
 
 for i=1:nrFrames
-    
     %check lifetime (unless inf)
-    if Pstruct.dotLifetime>0
+    if P.dotLifetime>0
         idx=find(lifetime==0);
         temppos=rand(s,2,length(idx));
         temppos(1,:)=(temppos(1,:)-0.5)*stimSizePx(1); 
@@ -120,10 +106,9 @@ for i=1:nrFrames
     %a circle dots may be placed outside the boundary and only appear a
     %little later
         
-    
     %get projection of movement vector onto axes
-    xproj=cos(Pstruct.ori*pi/180);
-    yproj=-sin(Pstruct.ori*pi/180);
+    xproj=cos(P.ori*pi/180);
+    yproj=-sin(P.ori*pi/180);
     
     %find out how many dots are out of the stimulus window
     idx=find(abs(xypos(1,:))>stimSizePx(1)/2 | abs(xypos(2,:))>stimSizePx(2)/2);
@@ -143,19 +128,12 @@ for i=1:nrFrames
         end
     end
     
-   
-    
-    
     %if there is a mask, find the dots that are inside its radius
-    if strcmp(Pstruct.mask_type,'disc')
-        [th,rad]=cart2pol(xypos(1,:),xypos(2,:));
+    if strcmp(P.mask_type,'disc')
+        [~,rad]=cart2pol(xypos(1,:),xypos(2,:));
         idx=find(rad<maskradiusPx);
     else
         idx=[1:size(xypos,2)];
     end
-    
-    
     DotFrame{i}=xypos(:,idx);
-    
 end
-    
