@@ -1,6 +1,5 @@
 function UpdateACQExptName
     global GUIhandles Mstate DataPath
-    %global ACQserial
 
     ScanImageBit = get(GUIhandles.main.twophotonflag, 'value');
     ISIBit = get(GUIhandles.main.intrinsicflag, 'value');
@@ -14,9 +13,9 @@ function UpdateACQExptName
         Stimulus_localCallback(msg);
     end
     if ISIBit
-        % Send expt info to imager
-        sendtoImager(['U ' Mstate.unit]);  
-        sendtoImager(['E ' Mstate.expt]); 
+        % Send information to imager
+        sendtoImager(['U ' Mstate.unit]);
+        sendtoImager(['E ' Mstate.expt]);
         sendtoImager(['A ' Mstate.anim]);
     end
     
