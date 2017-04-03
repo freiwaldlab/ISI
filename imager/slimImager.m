@@ -88,6 +88,7 @@ set(handles.jetMapAxes, 'YTick', []);
 % Create image in the same position as GUI camera axes
 handles.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
 handles = configVideoInput(handles, 'manual');
+%handles = configVideoInput(handles, 'hardware');
 camImPos = get(handles.cameraAxes, 'Position');
 camImWpx = camImPos(3);
 camImHpx = camImPos(4);
@@ -131,12 +132,20 @@ function slimImager_CloseRequestFcn(hObject, eventdata, handles)
 % hObject    handle to slimImager (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+    global daqOUTtrig daqOUTlist
     if isfield(handles, 'video')
         if isvalid(handles.video)
             delete(handles.video);
             clear handles.video
             delete(imaqfind);
         end
+    end
+    if isvalid(daqOUTtrig)
+        stop(daqOUTtrig);
+        delete(daqOUTtrig);
+    end
+    if exist('daqOUTlist', 'var')
+        delete(daqOUTlist);
     end
     % Close GUI
     delete(hObject);
@@ -147,17 +156,52 @@ function cameraToggle_Callback(hObject, eventdata, handles)
 % hObject    handle to cameraToggle (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global imagerhandles
+global imagerhandles daqOUTtrig FPS daqOUTlist
 handles = imagerhandles;
 % Start or stop camera
-if strcmp(get(handles.cameraToggle, 'String'), 'Start Camera')
+if strcmp(get(handles.cameraToggle, 'string'), 'Start Camera')
     % Camera is off. Change button string and start camera.
-    set(handles.cameraToggle, 'String', 'Stop Camera');
+    set(handles.cameraToggle, 'string', 'Stop Camera');
+    %mmf 170321 start
+    if isfield(handles, 'video')
+       if isvalid(handles.video)
+           disp(['slimImager WARNING: Video device already in use.' ...
+               ' Closing before trying to open.'])
+           % Delete any preview image acquisition objects
+           delete(handles.video)
+           clear handles.video
+           pause(0.5)
+       end
+    end
+    handles.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
+    handles = configVideoInput(handles, 'manual');
+    disp(['slimImager: New video objected opened.'])
+    %mmf 170321 end
     if isfield(handles, 'video')
         if isvalid(handles.video)
-            handles = configVideoInput(handles, 'manual');
+            msec_per_frame = ceil(1000 / FPS);
+            set(handles.video, 'TimerPeriod', msec_per_frame / 1000, ...
+                'TimerFcn', @timerhandler);
+%             %set(handles.video, 'TimerPeriod', 0.05, 'TimerFcn', @timerhandler);
+%             highV = 5;
+%             dutyCycle = 0.1;
+%             trigSing = zeros(msec_per_frame, 1);
+%             trigSing(end-round(dutyCycle*length(trigSing))-1:end-1) = highV;
+%             outRate = daqOUTtrig.Rate;
+%             cushion = zeros(outRate * ceil(size(trigSing, 1) / outRate) - ...
+%                 size(trigSing, 1), 1);
+%             trigSing = [trigSing; cushion];
+%             trigSeq = repmat(trigSing, [100, 1]);
+%             outRate = daqOUTtrig.Rate;
+%             cushion = zeros(outRate * ceil(size(trigSeq, 1) / outRate) - ...
+%                 size(trigSeq, 1), 1);
+%             trigSeq = [trigSeq; cushion];
+%             queueOutputData(daqOUTtrig, trigSeq);
+%             daqOUTlist = addlistener(daqOUTtrig, 'DataRequired', ...
+%                 @(src,event) src.queueOutputData(trigSeq));
+%             startBackground(daqOUTtrig);
             start(handles.video);
-            set(handles.video, 'TimerPeriod', 0.05, 'TimerFcn', @timerhandler);
+%             %preview(handles.video, handles.cameraImage)
         else
             msgbox('Could not find valid video input.')
         end
@@ -168,17 +212,24 @@ if strcmp(get(handles.cameraToggle, 'String'), 'Start Camera')
     set(handles.captureImage, 'Enable', 'on');
 else
       % Camera is on. Stop camera and change button string.
-      set(handles.cameraToggle, 'String', 'Start Camera');
+      set(handles.cameraToggle, 'string', 'Start Camera');
       % Delete any preview image acquisition objects
       if isfield(handles, 'video')
           if isvalid(handles.video)
-              set(handles.video, 'TimerPeriod', 1, 'TimerFcn', []);
+              set(handles.video, 'TimerPeriod', 0.5, 'TimerFcn', []);
+              stoppreview(handles.video);
               stop(handles.video);
           else
               msgbox('Could not find valid video input.')
           end
       else
           msgbox('Could not find video input.')
+      end
+      if isvalid(daqOUTtrig)
+          stop(daqOUTtrig);
+      end
+      if exist('daqOUTlist', 'var')
+          delete(daqOUTlist);
       end
       set(handles.startAcquisition, 'Enable', 'off');
       set(handles.captureImage, 'Enable', 'off');
@@ -203,6 +254,10 @@ function guiUpdate(varargin)
         if isvalid(handles.video)
             I = getsnapshot(handles.video);
             handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
+            %if handles.video.FramesAvailable > 0
+            %    I = getdata(handles.video, 1);
+            %    handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
+            %end
         else
             I = uint16(zeros(camImHpx, camImWpx, 1));
         end
@@ -210,6 +265,9 @@ function guiUpdate(varargin)
         I = uint16(zeros(camImHpx, camImWpx, 1));
     end
     axis off;
+    %if ~exist('I', 'var')
+    %    I = getimage(handles.cameraImage);
+    %end
 
     % Plot image histogram in middle panel
     axes(handles.histAxes);
@@ -259,7 +317,7 @@ function startAcquisition_Callback(hObject, eventdata, handles)
 % Start/Stop acquisition
 if strcmp(get(handles.startAcquisition, 'String'), 'Start Acquisition')
       % Camera is not acquiring. Change button string and start acquisition.
-      set(handles.startAcquisition, 'String', 'Stop Acquisition');
+      set(handles.startAcquisition, 'string', 'Stop Acquisition');
       trigger(handles.video);
 else
       % Camera is acquiring. Stop acquisition, save video data,
@@ -275,7 +333,7 @@ else
               start(handles.video);
           end
       end
-      set(handles.startAcquisition, 'String', 'Start Acquisition');
+      set(handles.startAcquisition, 'string', 'Start Acquisition');
 end
 
 
@@ -384,9 +442,6 @@ function expttxt_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to expttxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end

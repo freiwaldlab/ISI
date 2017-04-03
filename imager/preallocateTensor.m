@@ -13,6 +13,19 @@ function preallocateTensor
     Ypx = IMGSIZE(2);
     Tens = zeros(Xpx, Ypx, frameN, 'uint16');
 
+    %170321 mmf
+    %calling video for recordings
+    if isfield(h, 'video')
+       if isvalid(h.video)
+           disp(['preallocateTensor WARNING: Video device already in use.' ...
+               ' Closing before trying to open.'])
+           % Delete any preview image acquisition objects
+           delete(h.video)
+           clear h.video
+           pause(1)
+       end
+    end
+    h.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
     h = configVideoInput(h, 'hardware');
 
     %%% Create camera hardware trigger sequence
@@ -33,6 +46,7 @@ function preallocateTensor
     %   @(src,event) src.queueOutputData(trigSeq));
 
     tic;
+    
     start(h.video);
     startTime = toc;
     if debugToggle

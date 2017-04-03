@@ -1,7 +1,5 @@
 function sendtoImager(cmd)
-    global imagerhandles DataPath
-    %%% XXX *** LOOKS UNUSED, SO REMOVED... LET US SEE WHAT BREAKS
-    %global fname nframes maxframes T running NBUF
+    global imagerhandles daqOUTtrig daqOUTlist
 
     switch(cmd(1))
         case 'A'  %% animal
@@ -34,11 +32,13 @@ function sendtoImager(cmd)
             fname = [fname  '_' sprintf('%03d', trial)];
             GrabSaveLoop(fname)
         case 'C'
-            % Remove video object and clean up
+            % Stop video object and clean up
             stop(imagerhandles.video);
-            %delete(imagerhandles.video);
-            %clear imagerhandles.video
-            disp('sendtoImager: Stopped video object.')
+            if isvalid(daqOUTtrig)
+                stop(daqOUTtrig);
+            end
+            delete(daqOUTlist);
+            disp('sendtoImager: Stopped video.')
         otherwise
             disp('sendtoImager ERROR: Send command was not understood.');
     end
