@@ -1,6 +1,7 @@
 function makeTexture(modID)
     global comState
     
+    stimTime = false;
     makeDone = true;
     switch modID
         case 'PG'  %Periodic Grater
@@ -20,12 +21,17 @@ function makeTexture(modID)
         case 'CM'
             makeCohMotion
         case 'IB'
-            makeImageBlockTexture
+            stimTime = makeImageBlockTexture;
         otherwise
             disp('makeTexture ERROR: Unknown module ID.')
             makeDone = false;
     end
     if makeDone
-        fwrite(comState.serialPortHandle, ...
-            strcat('MT;', modID, ';~'))
+        if stimTime
+            fwrite(comState.serialPortHandle, ...
+                strcat('MT;', modID, ';', num2str(stimTime), ';~'))
+        else
+            fwrite(comState.serialPortHandle, ...
+                strcat('MT;', modID, ';-1;~'))
+        end
     end

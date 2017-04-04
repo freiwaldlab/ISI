@@ -2,7 +2,7 @@ function run2
 global GUIhandles Mstate trialno syncInfo trialInfo analogIN analogINdata
 global DataPath LogFile
 
-LogFile = [DataPath filesep 'run_log.bin'];
+mod = getmoduleID;
 
 %otherwise 'getnotrials' won't be defined for play sample
 if Mstate.running
@@ -22,13 +22,15 @@ if Mstate.running && (trialno <= nt)
     %get cond and rep for this trialno
     [c, r] = getcondrep(trialno);
 
-    if ISIbit
-        fid1 = fopen(LogFile, 'w');
-        lhIn = addlistener(analogIN, ...
-            'DataAvailable', @(src, event)logData(src, event, fid1));
-        analogIN.startBackground;
-        disp(['run2: Log file opened (' LogFile ').'])
-    end
+    %if ISIbit
+    %    LogFile = [DataPath filesep 'run_log_' ...
+    %        sprintf('%03d', trialno) '.bin'];
+    %    fid1 = fopen(LogFile, 'w');
+    %    lhIn = addlistener(analogIN, ...
+    %        'DataAvailable', @(src, event)logData(src, event, fid1));
+    %    analogIN.startBackground;
+    %    disp(['run2: Log file opened (' LogFile ').'])
+    %end
     
     %%%Update ScanImage with Trial/Cond/Rep
     %This gets sent before trial starts
@@ -43,6 +45,27 @@ if Mstate.running && (trialno <= nt)
     waitforDisplayResp
     %Tell Display to show its buffered images. 
     %TTL from stimulus computer "feeds back" to trigger 2ph acquisition
+    
+    if ISIbit
+        % moved here from MainWindow so that each trial can have
+        % different total durations and acquired frames
+        P = getParamStruct;
+        if strcmpi(mod, 'IB')
+            tag_time = str2double(get(findobj('tag', 'timetxt'), 'string'));
+            total_time = P.predelay + P.postdelay + tag_time;
+        else
+            total_time = P.predelay + P.postdelay + P.stim_time;
+        end
+        sendtoImager(sprintf(['I %2.3f' 13], total_time))
+        
+        LogFile = [DataPath filesep 'run_log_' ...
+            sprintf('%03d', trialno) '.bin'];
+        fid1 = fopen(LogFile, 'w');
+        lhIn = addlistener(analogIN, ...
+            'DataAvailable', @(src, event)logData(src, event, fid1));
+        analogIN.startBackground;
+        disp(['run2: Log file opened (' LogFile ').'])
+    end
     
     startStimulus      
     
@@ -65,7 +88,7 @@ if Mstate.running && (trialno <= nt)
         
         % For some reason, pausing is necessary here for log file to save
         % properly before listener and file closing
-        pause(1)
+        pause(0.25)
         analogIN.stop;
         delete(lhIn);
         fclose(fid1);
@@ -85,7 +108,7 @@ if Mstate.running && (trialno <= nt)
         timevals = analogINdata(1,:)';
         Fs = analogIN.Rate;  % 2000;  % sampling frequency in Hz; set in configSyncInput
         stimsync = analogINdata(2,:)';
-              
+
         % Normalize photodiode signal
         high = max(stimsync);
         low = median(stimsync);  % median to avoid negative transients

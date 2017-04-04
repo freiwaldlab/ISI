@@ -226,40 +226,41 @@ if ~Mstate.running
     %Save .analyzer. Do this before running... in case something crashes
     saveExptParams
 
-    set(handles.runbutton, 'string', 'Abort')    
-    
-    %%%%Send initial parameters to display
+    set(handles.runbutton, 'string', 'Abort')
+  
+    % Send initial parameters to display
     sendPinfo
     waitforDisplayResp
     sendMinfo
     waitforDisplayResp
-
+    
     %%%Get the 2photon acquisition ready:
     %Flag for the link with scanimage
     if get(GUIhandles.main.twophotonflag, 'value')
         prepACQ
-    end  
+    end
     
-    %%%Send inital parameters to ISI imager GUI
-    P = getParamStruct;
     if get(GUIhandles.main.intrinsicflag, 'value')
-        total_time = P.predelay + P.postdelay + P.stim_time;
-        sendtoImager(sprintf(['I %2.3f' 13], total_time))
+        % sendtoImager 'I' runs preallocateTensor, which depends on
+        % stimulus time, so moved into run2.m
+        %P = getParamStruct;
+        %total_time = P.predelay + P.postdelay + P.stim_time;
+        %sendtoImager(sprintf(['I %2.3f' 13], total_time))
         
         %Make sure analog in is not running
         analogIN.stop; 
+        
+        if isvalid(daqOUTtrig)
+            disp('MainWindow: daqOUTtrig exists, stopping before running.')
+            stop(daqOUTtrig);
+        end
+        if exist('daqOUTlist', 'var')
+            disp('MainWindow: daqOUTlist exists, deleting before running.')
+            delete(daqOUTlist);
+        end
     end
    
     trialno = 1;
-    
-%     if isvalid(daqOUTtrig)
-%         disp('MainWindow: daqOUTtrig exists, deleting before running.')
-%         stop(daqOUTtrig);
-%     end
-%     if exist('daqOUTlist', 'var')
-%         disp('MainWindow: daqOUTlist exists, deleting before running.')
-%         delete(daqOUTlist);
-%     end
     
     %In 2 computer version 'run2' is no longer a loop, but gets recalled
     %after each trial... 

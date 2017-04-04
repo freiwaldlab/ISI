@@ -1,4 +1,4 @@
-function makeImageBlockTexture
+function stimTime = makeImageBlockTexture
     % Make an image presentation block
     global screenPTR
     global Gtxtr TDim
@@ -52,11 +52,12 @@ function makeImageBlockTexture
     %%% TODO throw an error elsewhere, not just on slave
     stimTcalc = (imNum * P.image_duration) + ...
         ((imNum - 1) * P.interval_duration);
-    if stimTcalc ~= P.stim_time
-        disp(['makeImageBlockTexture ERROR: Stimulus time set to ' ...
-            num2str(P.stim_time) ' sec, calculated' ...
-            num2str(stimTcalc) ' sec.'])
-    end
+    stimTime = stimTcalc;
+    %if stimTcalc ~= P.stim_time
+    %    disp(['makeImageBlockTexture WARNING: Stimulus time set to ' ...
+    %        num2str(P.stim_time) ' sec, calculated' ...
+    %        num2str(stimTcalc) ' sec.'])
+    %end
     
     % Preload all images into a buffer
     disp('makeImageBlockTexture: Loading stimulus images.')
