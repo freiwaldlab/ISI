@@ -82,7 +82,8 @@ try
             Priority(0);         
         case 'Q'  % Used by calibration.m at the Master (not part of 'Stimulator')
             paramstring = paramstring(2:end);            
-            RGB = [str2num(paramstring(1:3)) str2num(paramstring(4:6)) str2num(paramstring(7:9))];
+            RGB = [str2double(paramstring(1:3)) str2double(paramstring(4:6)) ...
+                str2double(paramstring(7:9))];
             Screen(screenPTR, 'FillRect', RGB)
             Screen(screenPTR, 'Flip');
         case 'S'  % Move shutter
