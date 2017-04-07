@@ -1,7 +1,6 @@
 function run2
 global GUIhandles Mstate trialno syncInfo trialInfo analogIN analogINdata
 global DataPath LogFile
-
 mod = getmoduleID;
 
 %otherwise 'getnotrials' won't be defined for play sample
@@ -21,16 +20,6 @@ if Mstate.running && (trialno <= nt)
 
     %get cond and rep for this trialno
     [c, r] = getcondrep(trialno);
-
-    %if ISIbit
-    %    LogFile = [DataPath filesep 'run_log_' ...
-    %        sprintf('%03d', trialno) '.bin'];
-    %    fid1 = fopen(LogFile, 'w');
-    %    lhIn = addlistener(analogIN, ...
-    %        'DataAvailable', @(src, event)logData(src, event, fid1));
-    %    analogIN.startBackground;
-    %    disp(['run2: Log file opened (' LogFile ').'])
-    %end
     
     %%%Update ScanImage with Trial/Cond/Rep
     %This gets sent before trial starts
@@ -67,6 +56,7 @@ if Mstate.running && (trialno <= nt)
         disp(['run2: Log file opened (' LogFile ').'])
     end
     
+    pause(0.25)
     startStimulus      
     
     %In 2ph mode, we don't want anything significant to happen after startStimulus, so that
@@ -74,18 +64,20 @@ if Mstate.running && (trialno <= nt)
     
     if ISIbit
         %Matlab now enters the frame grabbing loop
-        sendtoImager(sprintf(['S %d' 13], trialno - 1))
+        sendtoImager(sprintf(['S %d' 13], trialno))
         %%%Timing is not crucial for this last portion of the loop 
         %(both display and frame grabber/saving is inactive)...
-        
-        if strcmpi(getmoduleID, 'IB')
-            if ~isempty(trialInfo)
-                saveTrialInfo(trialInfo)
-            else
-                disp('run2 ERROR: Failed to retrieve ImageBlock trialInfo.')
-            end
+    end
+    
+    if strcmpi(getmoduleID, 'IB')
+        if ~isempty(trialInfo)
+            saveTrialInfo(trialInfo)
+        else
+            disp('run2 ERROR: Failed to retrieve ImageBlock trialInfo.')
         end
-        
+    end
+    
+    if ISIbit
         % For some reason, pausing is necessary here for log file to save
         % properly before listener and file closing
         pause(0.25)
