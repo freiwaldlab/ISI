@@ -215,11 +215,11 @@ function send_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global DcomState Mstate
-set(handles.playSample,'enable','off')
+set(handles.playSample, 'enable', 'off')
 Mstate.running = 0; %I don't think this is necessary, but doing it just in case for when I do 'sendMinfo'
 updateMstate %this is only necessary for screendistance
 
-%%%%Send parameters to display
+% Send parameters to display
 sendPinfo
 waitforDisplayResp
 sendMinfo
