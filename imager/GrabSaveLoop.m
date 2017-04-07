@@ -1,5 +1,5 @@
 function GrabSaveLoop(fname)
-    global imagerhandles frameN Tens trigSeq
+    global imagerhandles frameN Tens
     global daqOUTtrig daqOUTIOI
     h = imagerhandles;
     msgpre = 'GrabSaveLoop';
@@ -10,7 +10,6 @@ function GrabSaveLoop(fname)
     saveToggle = 1;
     
     % Fetch the total set acquisition time
-    %%% TODO XXX *** automatically infer this this from stimulus parameters?
     total_time = str2double(get(findobj('tag', 'timetxt'), 'string'));
 
     % If in debug mode, display current logging mode setting
@@ -29,11 +28,10 @@ function GrabSaveLoop(fname)
     % outputSingleScan(daqOUT2p, 0);
     
     % Start camera (frames will not be acquired until separately triggered)
-    queueOutputData(daqOUTtrig, trigSeq);
     % Send pulse to timing DAQ indicate that acquisition is beginning
     outputSingleScan(daqOUTIOI, 1);
     % Trigger acquisition via hardware (TTL to camera)
-    startBackground(daqOUTtrig); % trigger sequence in preallocateTensor
+    startBackground(daqOUTtrig);  % sequence in preallocateTensor
     tic;
     frameNleft = frameN;
     frameNrecd = 0;

@@ -1,9 +1,9 @@
 function preallocateTensor
-    global imagerhandles FPS Tens IMGSIZE frameN daqOUTtrig trigSeq %GUIhandles
+    global imagerhandles FPS Tens IMGSIZE frameN daqOUTtrig % trigSeq GUIhandles
     h = imagerhandles;
     
     % Set whether debugging output should be displayed
-    debugToggle = 1;
+    %debugToggle = 1;
     
     total_time = str2double(get(findobj('Tag', 'timetxt'), 'String'));
     frameN = ceil(total_time * FPS);
@@ -12,22 +12,17 @@ function preallocateTensor
     Xpx = IMGSIZE(1);
     Ypx = IMGSIZE(2);
     Tens = zeros(Xpx, Ypx, frameN, 'uint16');
-
-    %170321 mmf
-    %calling video for recordings
-    if isfield(h, 'video')
-       if isvalid(h.video)
-           disp(['preallocateTensor WARNING: Video device already in use.' ...
-               ' Closing before trying to open.'])
-           % Delete any preview image acquisition objects
-           delete(h.video)
-           clear h.video
-           pause(1)
-       end
+    
+    if isvalid(daqOUTtrig)
+        stop(daqOUTtrig);
+        if event.hasListener(daqOUTtrig, 'DataRequired')
+            delete(daqOUTlist);
+            clear global daqOUTlist
+        end
+        outputSingleScan(daqOUTtrig, 0);
     end
-    h.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
-    h = configVideoInput(h, 'hardware');
-
+    flushdata(h.video);
+    
     %%% Create camera hardware trigger sequence
     msec_per_frame = ceil(1000 / FPS);
     highV = 5;
@@ -42,16 +37,6 @@ function preallocateTensor
     cushion = zeros(outRate * ceil(size(trigSeq, 1) / outRate) - ...
         size(trigSeq, 1), 1);
     trigSeq = [trigSeq; cushion];
-    %lhOut = addlistener(daqOUTtrig, 'DataRequired', ...
-    %   @(src,event) src.queueOutputData(trigSeq));
-
-    tic;
-    
-    start(h.video);
-    startTime = toc;
-    if debugToggle
-       disp(['preallocateTensor: Time to start video input was ' ...
-           num2str(startTime) ' sec.'])
-    end
+    queueOutputData(daqOUTtrig, trigSeq);
     
     imagerhandles = h;
