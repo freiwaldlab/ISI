@@ -1,6 +1,7 @@
 function sendtoImager(cmd)
-    global imagerhandles daqOUTtrig daqOUTlist
-
+    global daqOUTtrig daqOUTlist DataPath imagerhandles
+    ih = imagerhandles;
+    
     switch(cmd(1))
         case 'A'  %% animal
             set(findobj('Tag', 'animaltxt'), ...
@@ -33,12 +34,20 @@ function sendtoImager(cmd)
             GrabSaveLoop(fname)
         case 'C'
             % Stop video object and clean up
-            stop(imagerhandles.video);
             if isvalid(daqOUTtrig)
+                disp('sendtoImager: daqOUTtrig exists, stopping.')
                 stop(daqOUTtrig);
+                if event.hasListener(daqOUTtrig, 'DataRequired')
+                    disp('sendtoImager: daqOUTlist exists, deleting.')
+                    delete(daqOUTlist);
+                    clear global daqOUTlist
+                end
+                outputSingleScan(daqOUTtrig, 0);
             end
-            delete(daqOUTlist);
-            disp('sendtoImager: Stopped video.')
+            flushdata(ih.video);
+            disp('sendtoImager: Stopped triggering video.')
         otherwise
             disp('sendtoImager ERROR: Send command was not understood.');
     end
+    
+    imagerhandles = ih;

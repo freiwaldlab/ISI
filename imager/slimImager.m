@@ -87,8 +87,12 @@ set(handles.jetMapAxes, 'YTick', []);
 
 % Create image in the same position as GUI camera axes
 handles.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
-handles = configVideoInput(handles, 'manual');
-%handles = configVideoInput(handles, 'hardware');
+% closeopenvid
+%handles = configVideoInput(handles, 'manual');
+% hardwarevid
+handles = configVideoInput(handles, 'hardware');
+start(handles.video);
+
 camImPos = get(handles.cameraAxes, 'Position');
 camImWpx = camImPos(3);
 camImHpx = camImPos(4);
@@ -142,10 +146,11 @@ function slimImager_CloseRequestFcn(hObject, eventdata, handles)
     end
     if isvalid(daqOUTtrig)
         stop(daqOUTtrig);
-        delete(daqOUTtrig);
-    end
-    if exist('daqOUTlist', 'var')
-        delete(daqOUTlist);
+        if event.hasListener(daqOUTtrig, 'DataRequired')
+            delete(daqOUTlist);
+            clear global daqOUTlist
+        end
+        outputSingleScan(daqOUTtrig, 0);
     end
     % Close GUI
     delete(hObject);
@@ -156,83 +161,77 @@ function cameraToggle_Callback(hObject, eventdata, handles)
 % hObject    handle to cameraToggle (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global imagerhandles daqOUTtrig FPS daqOUTlist
+global imagerhandles daqOUTtrig daqOUTlist FPS 
 handles = imagerhandles;
 % Start or stop camera
 if strcmp(get(handles.cameraToggle, 'string'), 'Start Camera')
     % Camera is off. Change button string and start camera.
     set(handles.cameraToggle, 'string', 'Stop Camera');
-    %mmf 170321 start
-    if isfield(handles, 'video')
-       if isvalid(handles.video)
-           disp(['slimImager WARNING: Video device already in use.' ...
-               ' Closing before trying to open.'])
-           % Delete any preview image acquisition objects
-           delete(handles.video)
-           clear handles.video
-           pause(0.5)
-       end
-    end
-    handles.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
-    handles = configVideoInput(handles, 'manual');
-    disp(['slimImager: New video objected opened.'])
-    %mmf 170321 end
+    set(handles.startAcquisition, 'Enable', 'on');
+    set(handles.captureImage, 'Enable', 'on');
     if isfield(handles, 'video')
         if isvalid(handles.video)
-            msec_per_frame = ceil(1000 / FPS);
-            set(handles.video, 'TimerPeriod', msec_per_frame / 1000, ...
+            flushdata(handles.video);
+            set(handles.video, 'TimerPeriod', 0.05, ...
                 'TimerFcn', @timerhandler);
-%             %set(handles.video, 'TimerPeriod', 0.05, 'TimerFcn', @timerhandler);
-%             highV = 5;
-%             dutyCycle = 0.1;
-%             trigSing = zeros(msec_per_frame, 1);
-%             trigSing(end-round(dutyCycle*length(trigSing))-1:end-1) = highV;
-%             outRate = daqOUTtrig.Rate;
-%             cushion = zeros(outRate * ceil(size(trigSing, 1) / outRate) - ...
-%                 size(trigSing, 1), 1);
-%             trigSing = [trigSing; cushion];
-%             trigSeq = repmat(trigSing, [100, 1]);
-%             outRate = daqOUTtrig.Rate;
-%             cushion = zeros(outRate * ceil(size(trigSeq, 1) / outRate) - ...
-%                 size(trigSeq, 1), 1);
-%             trigSeq = [trigSeq; cushion];
-%             queueOutputData(daqOUTtrig, trigSeq);
-%             daqOUTlist = addlistener(daqOUTtrig, 'DataRequired', ...
-%                 @(src,event) src.queueOutputData(trigSeq));
-%             startBackground(daqOUTtrig);
-            start(handles.video);
-%             %preview(handles.video, handles.cameraImage)
+            if isvalid(daqOUTtrig)
+                stop(daqOUTtrig);
+                if event.hasListener(daqOUTtrig, 'DataRequired')
+                    delete(daqOUTlist);
+                    clear global daqOUTlist
+                end
+                outputSingleScan(daqOUTtrig, 0);
+            end
+            msec_per_frame = ceil(1000 / FPS);
+            highV = 5;
+            dutyCycle = 0.1;
+            trigSingle = zeros(msec_per_frame, 1);
+            trigSingle(end-round(dutyCycle*length(trigSingle))-1:end-1) = highV;
+            trigSize = size(trigSingle, 1);
+            % This preview-like triggering should be continuous until 
+            % until stopped, but meet minimum queueable scan number of 500.
+            outRate = 500; %daqOUTtrig.Rate;
+            % Now we have one cycle, use repmat to make copies
+            trigSeq = repmat(trigSingle, [floor(outRate / trigSize), 1]);
+            cushion = zeros(mod(outRate, size(trigSeq, 1)), 1);
+            %trigSeq = trigSingle;
+            %cushion = zeros(mod(outRate, trigSize), 1);
+            trigSeq = [trigSeq; cushion];
+            
+            queueOutputData(daqOUTtrig, trigSeq);
+            daqOUTlist = addlistener(daqOUTtrig, 'DataRequired', ...
+                @(src,event) src.queueOutputData(trigSeq));
+            startBackground(daqOUTtrig);
         else
             msgbox('Could not find valid video input.')
         end
     else
         msgbox('Could not find video input.')
     end
-    set(handles.startAcquisition, 'Enable', 'on');
-    set(handles.captureImage, 'Enable', 'on');
 else
-      % Camera is on. Stop camera and change button string.
-      set(handles.cameraToggle, 'string', 'Start Camera');
-      % Delete any preview image acquisition objects
-      if isfield(handles, 'video')
-          if isvalid(handles.video)
-              set(handles.video, 'TimerPeriod', 0.5, 'TimerFcn', []);
-              stoppreview(handles.video);
-              stop(handles.video);
-          else
-              msgbox('Could not find valid video input.')
-          end
-      else
-          msgbox('Could not find video input.')
-      end
-      if isvalid(daqOUTtrig)
-          stop(daqOUTtrig);
-      end
-      if exist('daqOUTlist', 'var')
-          delete(daqOUTlist);
-      end
-      set(handles.startAcquisition, 'Enable', 'off');
-      set(handles.captureImage, 'Enable', 'off');
+    % Camera is on. Stop camera and change button string.
+    set(handles.cameraToggle, 'string', 'Start Camera');
+    set(handles.startAcquisition, 'Enable', 'off');
+    set(handles.captureImage, 'Enable', 'off');
+    % Delete any preview image acquisition objects
+    if isvalid(daqOUTtrig)
+        stop(daqOUTtrig);
+        if event.hasListener(daqOUTtrig, 'DataRequired')
+            delete(daqOUTlist);
+            clear global daqOUTlist
+        end
+        outputSingleScan(daqOUTtrig, 0);
+    end
+    if isfield(handles, 'video')
+        if isvalid(handles.video)
+            set(handles.video, 'TimerPeriod', 0.05, 'TimerFcn', []);
+            flushdata(handles.video);
+        else
+            msgbox('Could not find valid video input.')
+        end
+    else
+        msgbox('Could not find video input.')
+    end
 end
 
 imagerhandles = handles;
@@ -252,12 +251,10 @@ function guiUpdate(varargin)
     axes(handles.cameraAxes);
     if isfield(handles, 'video')
         if isvalid(handles.video)
-            I = getsnapshot(handles.video);
-            handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
-            %if handles.video.FramesAvailable > 0
-            %    I = getdata(handles.video, 1);
-            %    handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
-            %end
+            if handles.video.FramesAvailable > 0
+                I = getdata(handles.video, 1);
+                handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
+            end
         else
             I = uint16(zeros(camImHpx, camImWpx, 1));
         end
@@ -265,9 +262,12 @@ function guiUpdate(varargin)
         I = uint16(zeros(camImHpx, camImWpx, 1));
     end
     axis off;
-    %if ~exist('I', 'var')
-    %    I = getimage(handles.cameraImage);
-    %end
+    if ~exist('I', 'var')
+        % If no new preview image exists, no need to update the GUI
+        imagerhandles = handles;
+        return
+        %I = getimage(handles.cameraImage);
+    end
 
     % Plot image histogram in middle panel
     axes(handles.histAxes);
@@ -324,13 +324,10 @@ else
       % and change button string.
       if isfield(handles, 'video')
           if isvalid(handles.video)
-              stop(handles.video);
-              disp('Saving captured video...');
+              disp('FIX ME FIX ME FIX ME Saving captured video...');
               videodata = getdata(handles.video);
               save('testvideo.mat', 'videodata');
               disp('Video saved to file ''testvideo.mat''');
-              % Restart the camera
-              start(handles.video);
           end
       end
       set(handles.startAcquisition, 'string', 'Start Acquisition');
