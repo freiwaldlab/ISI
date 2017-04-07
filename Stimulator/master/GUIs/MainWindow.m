@@ -188,11 +188,27 @@ function runbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to runbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global Mstate GUIhandles trialno analogIN DataPath
-global daqOUTtrig daqOUTlist
+global Mstate imagerhandles GUIhandles trialno analogIN DataPath
+global daqOUTtrig daqOUTlist DcomState
+mod = getmoduleID;
 
 % Run experiment
 if ~Mstate.running
+    % If module is of 'mapper' type, send and play but don't run
+    if strcmpi(getmoduleID, 'MP')
+        Mstate.running = 0;
+        updateMstate
+        sendPinfo
+        waitforDisplayResp
+        sendMinfo
+        waitforDisplayResp
+        msg = ['B;' mod ';-1;~'];
+        fwrite(DcomState.serialPortHandle, msg);
+        waitforDisplayResp
+        startStimulus
+        return
+    end
+
     % Check if an analyzer file already exists
     roots = parseString(Mstate.analyzerRoot, ';');    
     for i = 1:length(roots)
@@ -253,10 +269,27 @@ if ~Mstate.running
         if isvalid(daqOUTtrig)
             disp('MainWindow: daqOUTtrig exists, stopping before running.')
             stop(daqOUTtrig);
+            if event.hasListener(daqOUTtrig, 'DataRequired')
+                disp('MainWindow: daqOUTlist exists, deleting before running.')
+                delete(daqOUTlist);
+                clear global daqOUTlist
+            end
+            outputSingleScan(daqOUTtrig, 0);
         end
-        if exist('daqOUTlist', 'var')
-            disp('MainWindow: daqOUTlist exists, deleting before running.')
-            delete(daqOUTlist);
+        
+        if strcmp(get(imagerhandles.cameraToggle, 'string'), 'Stop Camera')
+            % Camera is on for previewing, so turn off preview.
+            set(imagerhandles.cameraToggle, 'string', 'Start Camera');
+            set(imagerhandles.startAcquisition, 'Enable', 'off');
+            set(imagerhandles.captureImage, 'Enable', 'off');
+            % Stop imager GUI updates
+            if isfield(imagerhandles, 'video')
+                if isvalid(imagerhandles.video)
+                    set(imagerhandles.video, 'TimerPeriod', 0.05, ...
+                        'TimerFcn', []);
+                end
+            end
+            pause(0.5)
         end
     end
    
@@ -277,7 +310,7 @@ if ~Mstate.running
 else
     %Global flag for interrupt in real-time loop ('Abort')   
     Mstate.running = 0; 
-    set(handles.runbutton,'string','Run')    
+    set(handles.runbutton, 'string', 'Run')    
 end
 
 %This is done to ensure that user builds a new stimulus before doing
