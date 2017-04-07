@@ -3,7 +3,7 @@ function modID = getmoduleID
 
     modID = get(GUIhandles.param.module, 'value');
     switch modID
-        case 1
+        case 1  % Periodic Grating
             modID = 'PG';
         case 2
             modID = 'FG';
@@ -11,10 +11,10 @@ function modID = getmoduleID
             modID = 'RD';
         case 4
             modID = 'FN';
-        case 5
+        case 5  % Manual Mapper
             modID = 'MP';
         case 6
             modID = 'CM';
-        case 7
+        case 7  % Image Block
             modID = 'IB';
     end
