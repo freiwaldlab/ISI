@@ -1,4 +1,4 @@
-function [amp temp] = makeSeparableProfiles(tdom,sdom,x_ecc,y_ecc,pID)
+function [amp, temp] = makeSeparableProfiles(tdom,sdom,x_ecc,y_ecc,pID)
 
 %Ian Nauhaus
 
