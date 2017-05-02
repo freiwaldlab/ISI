@@ -54,8 +54,8 @@ function GrabSaveLoop(fname)
         end
         fprintf('.')
         % Get next frame data set from camera
-        Tens(:,:,frameR) = permute(squeeze(getdata(h.video, frameRnum)), ...
-            [2 1 3]);
+        Tens(:,:,frameR) = fliplr(permute(squeeze(getdata(h.video, frameRnum)), ...
+            [2 1 3]));
         timelastframe = now;
         % Save frames to disk
         if saveToggle

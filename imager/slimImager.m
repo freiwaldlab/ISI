@@ -252,7 +252,8 @@ function guiUpdate(varargin)
     if isfield(handles, 'video')
         if isvalid(handles.video)
             if handles.video.FramesAvailable > 0
-                I = getdata(handles.video, 1);
+                Is = fliplr(getdata(handles.video, handles.video.FramesAvailable));
+                I = Is(:,:,end);
                 handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
             end
         else
@@ -325,7 +326,7 @@ else
       if isfield(handles, 'video')
           if isvalid(handles.video)
               disp('FIX ME FIX ME FIX ME Saving captured video...');
-              videodata = getdata(handles.video);
+              videodata = fliplr(getdata(handles.video));
               save('testvideo.mat', 'videodata');
               disp('Video saved to file ''testvideo.mat''');
           end
