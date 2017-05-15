@@ -239,7 +239,65 @@ imagerhandles = handles;
 
 % --- Executes on button press in captureImage.
 function captureImage_Callback(hObject, eventdata, handles)
-    guiUpdate
+    global imagerhandles DataPath
+    handles = imagerhandles;
+    
+    axes(handles.cameraAxes);
+    if isfield(handles, 'video')
+        if isvalid(handles.video)
+            if handles.video.FramesAvailable > 0
+                %Is = fliplr(getdata(handles.video, handles.video.FramesAvailable));
+                %Is = flipud(getdata(handles.video, handles.video.FramesAvailable));
+                Is = rot90(getdata(handles.video, handles.video.FramesAvailable), 2);
+                %Is = getdata(handles.video, handles.video.FramesAvailable);
+                I = Is(:,:,end);
+                handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
+            end
+        end
+    end
+    axis off;
+    if exist('I', 'var')
+        % Plot image histogram in middle panel
+        axes(handles.histAxes);
+        %%% XXX *** might want to set up 'BinEdges',edges,'BinCounts',counts
+        handles.histPlot = histogram(handles.histAxes, I);
+        %BinLims = handles.histPlot.BinLimits;
+        % set(handles.histAxes, 'YTick', [] , 'XTick', BinLims, ...
+        %     'XTickLabel', {num2str(BinLims(1)), num2str(BinLims(2))}, ...
+        %     'XLim', [0 (2^16 - 1)], 'TickDir', 'out');
+        set(handles.histAxes, 'TickDir', 'out', 'XGrid', 'on', ...
+            'YTick', [], 'YTickLabel', {}, ...
+            'XTick', [0 (2^16 - 1)], 'XTickLabel', {0, (2^16 - 1)}, ...
+            'XLim', [0 (2^16 - 1)]);
+        axis off;
+        
+        % Plot jet verson of snapshot to show image saturation
+        jetmap = jet;
+        jetmap((end-2):end, :) = 1;
+        axes(handles.jetAxes);
+        colormap(jetmap);
+        handles.jetImage = imshow(I, 'Colormap', jetmap, ...
+            'DisplayRange', [0 (2^16 - 1)], 'Parent', handles.jetAxes);
+        axis off
+        
+        % Color the colormap bar under jet
+        axes(handles.jetMapAxes);
+        %set(handles.jetMapAxes, 'XTick', []);
+        colormap(jetmap);
+        handles.jetMap = image(1:64);
+        axis off;
+        
+        pfix = datestr(now, 'yymmddtHHMMSS');
+        capfname = strcat(DataPath, filesep, pfix, '_capture.png');
+        imwrite(I, capfname);
+        disp(['slimImager: Saved image (' capfname ').']);
+    else
+        % If no new preview image exists
+        disp('slimImager ERROR: Could not capture image.');
+        return
+    end
+
+    imagerhandles = handles;
 
 
 function guiUpdate(varargin)
@@ -252,7 +310,10 @@ function guiUpdate(varargin)
     if isfield(handles, 'video')
         if isvalid(handles.video)
             if handles.video.FramesAvailable > 0
-                Is = fliplr(getdata(handles.video, handles.video.FramesAvailable));
+                %Is = fliplr(getdata(handles.video, handles.video.FramesAvailable));
+                %Is = flipud(getdata(handles.video, handles.video.FramesAvailable));
+                Is = rot90(getdata(handles.video, handles.video.FramesAvailable), 2);
+                %Is = getdata(handles.video, handles.video.FramesAvailable);
                 I = Is(:,:,end);
                 handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
             end
@@ -326,7 +387,10 @@ else
       if isfield(handles, 'video')
           if isvalid(handles.video)
               disp('FIX ME FIX ME FIX ME Saving captured video...');
-              videodata = fliplr(getdata(handles.video));
+              %videodata = fliplr(getdata(handles.video));
+              %videodata = flipud(getdata(handles.video));
+              videodata = rot90(getdata(handles.video), 2);
+              %videodata = getdata(handles.video);
               save('testvideo.mat', 'videodata');
               disp('Video saved to file ''testvideo.mat''');
           end
