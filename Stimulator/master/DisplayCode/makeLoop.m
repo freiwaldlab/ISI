@@ -19,7 +19,6 @@ for i = 1:Nparam
         istring = [istring ',1:' num2str(length(paramV))];
         ostring = [ostring ',' 'd{' num2str(i) '}'];
     end
-    
 end
 
 istring = ['meshgrid(' istring ')'];
@@ -33,25 +32,21 @@ end
 
 nr = str2double(get(GUIhandles.looper.repeats, 'string'));                      
 
-
 %Create random sequence across conditions, for each repeat
 for rep = 1:nr
-    
     if get(GUIhandles.looper.randomflag,'value')
         [~, seq{rep}] = sort(rand(1,nc));  %make random sequence
     else                          
         seq{rep} = 1:nc;                                   
-    end
-                                
+    end                      
 end 
 
 bflag = get(GUIhandles.looper.blankflag,'value');
-bPer = str2num(get(GUIhandles.looper.blankPeriod,'string'));
+bPer = str2double(get(GUIhandles.looper.blankPeriod,'string'));
 
 %Make the analyzer structure
 for c = 1:nc
     for p = 1:Nparam
-        
         idx = d{p}(c); %index into value vector of parameter p
 
         paramS = Lstate.param{p}{1};
@@ -59,37 +54,32 @@ for c = 1:nc
 
         looperInfo.conds{c}.symbol{p} = paramS;
         looperInfo.conds{c}.val{p} = paramV(idx);
-
     end
-    
     for r = 1:nr
         pres = find(seq{r} == c);
         looperInfo.conds{c}.repeats{r}.trialno = nc*(r-1) + pres;      
     end
-    
 end
 
-
-%Interleave the blanks:
-
+% Interleave blanks
 looperInfoDum = looperInfo;
 blankcounter = 0;
 if bflag
     for t = 1:nr*nc
-        [c, r] = getcr(t,looperInfoDum,nc);
+        [c, r] = getcr(t, looperInfoDum, nc);
 
-        if rem(t-1,bPer)==0 && t~=1
-            blankcounter = blankcounter+1;
+        if rem(t, bPer) == 0 && t ~= 1
+            disp('makeLoop DEBUG: blankcounter incremented')
+            blankcounter = blankcounter + 1;
             looperInfo.conds{nc+1}.repeats{blankcounter}.trialno = t + blankcounter - 1;
         end
-
         looperInfo.conds{c}.repeats{r}.trialno = looperInfo.conds{c}.repeats{r}.trialno + blankcounter;
-
     end
-
 end
 
-if blankcounter > 0  %If the total number of trials is less than the blank period, then no blanks are shown
+% If the total number of trials is less than the blank period,
+% then no blanks are shown.
+if blankcounter > 0
     for p = 1:Nparam
         looperInfo.conds{nc+1}.symbol{p} = 'blank';
         looperInfo.conds{nc+1}.val{p} = [];
