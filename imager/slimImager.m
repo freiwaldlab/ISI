@@ -80,10 +80,13 @@ set(handles.startAcquisition, 'Enable', 'off');
 set(handles.captureImage, 'Enable', 'off');
 
 % Remove tickmarks and labels that are inserted when using IMAGE
-set(handles.cameraAxes, 'YTick', [], 'XTick', []);
-set(handles.histAxes, 'YTick', []);
+set(handles.cameraAxes, 'YTick', [], 'XTick', [], 'Visible', 'off');
+set(handles.histAxes, 'YTick', [], 'XTick', [], 'XLim', [0 (2^16 - 1)]);
+box(handles.histAxes, 'on')
 set(handles.jetAxes, 'YTick', [], 'XTick', []);
-set(handles.jetMapAxes, 'YTick', []);
+box(handles.jetAxes, 'on')
+set(handles.jetMapAxes, 'YTick', [], 'XTick', []);
+box(handles.jetMapAxes, 'on')
 
 % Create image in the same position as GUI camera axes
 handles.video = videoinput('pointgrey', 1, 'F7_Raw16_1920x1200_Mode0');
@@ -100,6 +103,15 @@ camImBands = handles.video.NumberOfBands;
 handles.cameraImage = imshow(uint16(zeros(camImHpx, camImWpx, camImBands)), ...
     'Parent', handles.cameraAxes);
 
+% Color the colormap bar under jet
+jetmap = jet;
+jetmap((end-2):end, :) = 1;
+handles.jetcolmap = jetmap;
+colormap(handles.jetcolmap);
+handles.jetMap = image(handles.jetMapAxes, 1:64);
+set(handles.jetMapAxes, 'YTick', [], 'XTick', []);
+box(handles.jetMapAxes, 'on');
+
 imagerhandles = handles;
 
 % Update handles structure
@@ -111,13 +123,6 @@ uiwait(handles.slimImager);
 function timerhandler(varargin)
     if ~isempty(gco)
         guiUpdate
-    %else
-    %    if isfield(handles, 'video')
-    %        if isvalid(handles.video)
-    %            delete(handles.video)
-    %            clear handles.video
-    %        end
-    %    end
     end
 
 
@@ -242,50 +247,32 @@ function captureImage_Callback(hObject, eventdata, handles)
     global imagerhandles DataPath
     handles = imagerhandles;
     
-    axes(handles.cameraAxes);
+    % Check if this data directory already exists
+    [Oflag, ~] = checkforOverwrite;
+    if ~Oflag
+        errordlg('Data directory does not exist. Please update subject or experiment number.')
+        return
+    end
+    
     if isfield(handles, 'video')
         if isvalid(handles.video)
             if handles.video.FramesAvailable > 0
-                %Is = fliplr(getdata(handles.video, handles.video.FramesAvailable));
-                %Is = flipud(getdata(handles.video, handles.video.FramesAvailable));
                 Is = rot90(getdata(handles.video, handles.video.FramesAvailable), 2);
-                %Is = getdata(handles.video, handles.video.FramesAvailable);
                 I = Is(:,:,end);
                 handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
             end
         end
     end
-    axis off;
     if exist('I', 'var')
         % Plot image histogram in middle panel
-        axes(handles.histAxes);
-        %%% XXX *** might want to set up 'BinEdges',edges,'BinCounts',counts
         handles.histPlot = histogram(handles.histAxes, I);
-        %BinLims = handles.histPlot.BinLimits;
-        % set(handles.histAxes, 'YTick', [] , 'XTick', BinLims, ...
-        %     'XTickLabel', {num2str(BinLims(1)), num2str(BinLims(2))}, ...
-        %     'XLim', [0 (2^16 - 1)], 'TickDir', 'out');
-        set(handles.histAxes, 'TickDir', 'out', 'XGrid', 'on', ...
-            'YTick', [], 'YTickLabel', {}, ...
-            'XTick', [0 (2^16 - 1)], 'XTickLabel', {0, (2^16 - 1)}, ...
-            'XLim', [0 (2^16 - 1)]);
-        axis off;
+        set(handles.histAxes, 'YTick', [], 'XTick', [], 'XLim', [0 (2^16 - 1)]);
+        box(handles.histAxes, 'on');
         
         % Plot jet verson of snapshot to show image saturation
-        jetmap = jet;
-        jetmap((end-2):end, :) = 1;
-        axes(handles.jetAxes);
-        colormap(jetmap);
-        handles.jetImage = imshow(I, 'Colormap', jetmap, ...
+        handles.jetImage = imshow(I, 'Colormap', handles.jetcolmap, ...
             'DisplayRange', [0 (2^16 - 1)], 'Parent', handles.jetAxes);
-        axis off
-        
-        % Color the colormap bar under jet
-        axes(handles.jetMapAxes);
-        %set(handles.jetMapAxes, 'XTick', []);
-        colormap(jetmap);
-        handles.jetMap = image(1:64);
-        axis off;
+        box(handles.jetAxes, 'on');
         
         pfix = datestr(now, 'yymmddtHHMMSS');
         capfname = strcat(DataPath, filesep, pfix, '_capture.png');
@@ -296,7 +283,7 @@ function captureImage_Callback(hObject, eventdata, handles)
         disp('slimImager ERROR: Could not capture image.');
         return
     end
-
+    
     imagerhandles = handles;
 
 
@@ -306,7 +293,6 @@ function guiUpdate(varargin)
     camImPos = get(handles.cameraAxes, 'Position');
     camImWpx = camImPos(3);
     camImHpx = camImPos(4);
-    axes(handles.cameraAxes);
     if isfield(handles, 'video')
         if isvalid(handles.video)
             if handles.video.FramesAvailable > 0
@@ -323,44 +309,22 @@ function guiUpdate(varargin)
     else
         I = uint16(zeros(camImHpx, camImWpx, 1));
     end
-    axis off;
     if ~exist('I', 'var')
         % If no new preview image exists, no need to update the GUI
         imagerhandles = handles;
         return
-        %I = getimage(handles.cameraImage);
     end
 
     % Plot image histogram in middle panel
-    axes(handles.histAxes);
-    %%% XXX *** might want to set up 'BinEdges',edges,'BinCounts',counts
     handles.histPlot = histogram(handles.histAxes, I);
-    %BinLims = handles.histPlot.BinLimits;
-    % set(handles.histAxes, 'YTick', [] , 'XTick', BinLims, ...
-    %     'XTickLabel', {num2str(BinLims(1)), num2str(BinLims(2))}, ...
-    %     'XLim', [0 (2^16 - 1)], 'TickDir', 'out');
-    set(handles.histAxes, 'TickDir', 'out', 'XGrid', 'on', ...
-        'YTick', [], 'YTickLabel', {}, ...
-        'XTick', [0 (2^16 - 1)], 'XTickLabel', {0, (2^16 - 1)}, ...
-        'XLim', [0 (2^16 - 1)]);
-    axis off;
+    set(handles.histAxes, 'YTick', [], 'XTick', [], 'XLim', [0 (2^16 - 1)]);
+    box(handles.histAxes, 'on');
 
     % Plot jet verson of snapshot to show image saturation
-    jetmap = jet;
-    jetmap((end-2):end, :) = 1;
-    axes(handles.jetAxes);
-    colormap(jetmap);
-    handles.jetImage = imshow(I, 'Colormap', jetmap, ...
+    handles.jetImage = imshow(I, 'Colormap', handles.jetcolmap, ...
         'DisplayRange', [0 (2^16 - 1)], 'Parent', handles.jetAxes);
-    axis off
-
-    % Color the colormap bar under jet
-    axes(handles.jetMapAxes);
-    %set(handles.jetMapAxes, 'XTick', []);
-    colormap(jetmap);
-    handles.jetMap = image(1:64);
-    axis off;
-
+    box(handles.jetAxes, 'on');
+    
     imagerhandles = handles;
 
 
