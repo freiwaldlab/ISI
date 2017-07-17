@@ -67,6 +67,7 @@ function buildStimulus(cond, trial)
             end
         end
     else % Blank condition
+        disp([msgpre ': Blank trial.'])
         msg = sprintf('%s;%s=%.4f', msg, 'contrast', 0);
     end
     
