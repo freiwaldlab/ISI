@@ -1,5 +1,6 @@
 function updateMonitorValues
     global Mstate
+    msgpre = 'updateMonitorValues';
 
     % Correct pixel values are not important because the stimulus computer
     % asks for the actual value anyway.
@@ -7,6 +8,11 @@ function updateMonitorValues
     % (like retinotopy stimuli).
 
     switch Mstate.monitor
+       case 'VPX'
+            Mstate.screenXcm = 52.07;
+            Mstate.screenYcm = 29.21;
+            Mstate.xpixels = 1920;
+            Mstate.ypixels = 1080;
         case 'LCD' 
             Mstate.screenXcm = 33.7;
             Mstate.screenYcm = 27;
@@ -27,12 +33,11 @@ function updateMonitorValues
             Mstate.screenYcm = 50;
             Mstate.xpixels = 1024;
             Mstate.ypixels = 768;
-       case 'VPX'
+       case 'LIN'
             Mstate.screenXcm = 52.07;
             Mstate.screenYcm = 29.21;
-            Mstate.xpixels = 1920;
-            Mstate.ypixels = 1080;
-       case 'LIN'
+        otherwise
+            disp([msgpre ' WARNING: monitor not recognized, assuming LIN.']);
             Mstate.screenXcm = 52.07;
             Mstate.screenYcm = 29.21;
     end
