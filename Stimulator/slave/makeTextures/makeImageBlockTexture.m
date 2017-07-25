@@ -1,17 +1,19 @@
 function stimTime = makeImageBlockTexture
     % Make an image presentation block
     global screenPTR
+    %global Mstate
     global Gtxtr TDim
     Gtxtr = []; 
     TDim = [];
     P = getParamStruct;
+    msgpre = 'makeImageBlockTexture';
     window = screenPTR;
     
     % Settings
     imPath = P.image_path;
     imExt = P.image_ext;
     if ~exist(imPath, 'dir')
-        disp('makeImageBlockTexture ERROR: image_path not found.');
+        disp([msgpre ' ERROR: image_path not found.']);
         return;
     end
     
@@ -32,40 +34,36 @@ function stimTime = makeImageBlockTexture
         imfile = strcat(imPath, filesep, imList(imfn).name);
         imInfoTmp = imfinfo(imfile);
         if imInfoTmp.Height ~= imHpx
-            disp(['makeImageBlockTexture ERROR: Stimulus images do ' ...
+            disp([msgpre ' ERROR: Stimulus images do ' ...
                 'not all share the same dimensions.']);
             return;
         end
         if imInfoTmp.Width ~= imWpx
-            disp(['makeImageBlockTexture ERROR: Stimulus images do ' ...
+            disp([msgpre ' ERROR: Stimulus images do ' ...
                 'not all share the same dimensions.']);
             return;
         end
     end
     clear imfn imfile imInfoTmp
     if imHpx ~= imWpx
-	disp('makeImageBlockTexture WARNING: Stimulus image is not square.');
-        disp(['makeImageBlockTexture WARNING:   All calculations will ' ...
+	disp([msgpre ' WARNING: Stimulus image is not square.']);
+        disp([msgpre ' WARNING:   Calculations will ' ...
             'be made based on larger dimension.']);
     end
-    % Make sure that set stimulus time is correct
-    %%% TODO throw an error elsewhere, not just on slave
+    
+    % Calculate total stimulus time
     stimTcalc = (imNum * P.image_duration) + ...
         ((imNum - 1) * P.interval_duration);
     stimTime = stimTcalc;
-    %if stimTcalc ~= P.stim_time
-    %    disp(['makeImageBlockTexture WARNING: Stimulus time set to ' ...
-    %        num2str(P.stim_time) ' sec, calculated' ...
-    %        num2str(stimTcalc) ' sec.'])
-    %end
     
     % Preload all images into a buffer
-    disp('makeImageBlockTexture: Loading stimulus images.')
+    disp([msgpre ': Loading stimulus images.'])
     tic
     if imHpx > screenYpx || imWpx > screenXpx
-        disp(['makeImageBlockTexture WARNING: Stimulus image is too ' ...
+    % If images are larger than screen, downsample
+        disp([msgpre ' WARNING: Stimulus image is too ' ...
             'big to fit on the screen.']);
-        disp(['makeImageBlockTexture WARNING:   Resizing image, which ' ...
+        disp([msgpre ' WARNING:   Resizing image, which ' ...
             'is slow and undesireable!']);
         if imHpx > imWpx
             imHpx = screenYpx;
@@ -85,6 +83,7 @@ function stimTime = makeImageBlockTexture
         end
         clear imfn imfile
     else
+    % Otherwise, load at full resolution
         imBuff = zeros(imHpx, imWpx, imNum);
         for imfn = 1:imNum
             imfile = strcat(imPath, filesep, imList(imfn).name);
@@ -93,27 +92,10 @@ function stimTime = makeImageBlockTexture
         clear imfn imfile I
     end
     load_time = toc;
-    disp(['makeImageBlockTexture: Finished loading images (' ...
+    disp([msgpre ': Finished loading images (' ...
         num2str(load_time) ' sec)'])
-    
-    % % Calculate width and height in centimeters from degrees
-    % %   TODO: Check to make sure specified width/height matches 
-    % %   image dimensions.
-    % if imHpx == imWpx
-    %     stimHdeg = P.y_size;
-    %     stimWdeg = P.x_size;
-    % elseif imHpx > imWpx
-    %     stimHdeg = P.y_size;
-    %     stimWdeg = round(P.x_size * (imWpx / imHpx));
-    % elseif imWpx > imHpx
-    %     stimHdeg = round(P.y_size * (imHpx / imWpx));
-    %     stimWdeg = P.x_size;
-    % end
-    % stimHcm = 2 * Mstate.screenDist * tan(((stimHdeg / 2) * pi) / 180);
-    % stimWcm = 2 * Mstate.screenDist * tan(((stimWdeg / 2) * pi) / 180);
-    % clear Hdeg Wdeg
   
-    % Adjust the contast for each image
+    % Adjust contast for each image
     %     f(x) = ?(x?128) + 128 + b
     %     slope ? controls contrast
     %         (?>1 means more contrast and 0<?<1 less contrast)
@@ -127,7 +109,7 @@ function stimTime = makeImageBlockTexture
     clear alpha beta imn I
     
     % Convert the images into textures that are ready to be played
-    Gtxtr = zeros(1, imNum);
+    Gtxtr = NaN(1, imNum);
     for imn = 1:imNum
         Gtxtr(imn) = Screen('MakeTexture', window, imBuff(:,:,imn));
     end

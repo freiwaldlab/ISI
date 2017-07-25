@@ -1,33 +1,38 @@
 function playimageblock
     global Mstate screenPTR screenNum comState
     global Gtxtr TDim  % from makeImageBlockTexture
-    global Stxtr % from makeSyncTexture
+    global Stxtr  % from makeSyncTexture
     syncHigh = Stxtr(1);
     syncLow = Stxtr(2);
-
     P = getParamStruct;
+    msgpre = 'playimageblock';
     window = screenPTR;
+    
     screenRes = Screen('Resolution', screenNum);
     resXpxpercm = screenRes.width / Mstate.screenXcm;
     resYpxpercm = screenRes.height / Mstate.screenYcm;
     syncWpx = round(resXpxpercm * Mstate.syncSize);
     syncHpx = round(resYpxpercm * Mstate.syncSize);
-    % ifi = Screen('GetFlipInterval', window);
+    %ifi = Screen('GetFlipInterval', window);
     white = WhiteIndex(window);
     black = BlackIndex(window);
     grey = (white + black) / 2;
     inc = white - grey;
+    
     if strcmp(P.altazimuth, 'none')
+        % Assumes curved screen (projects flat)
         stimWcm = 2 * pi * Mstate.screenDist * (P.x_size / 360);
         stimWpx = round(resXpxpercm * stimWcm);
         stimHcm = 2 * pi * Mstate.screenDist * (P.y_size / 360);
         stimHpx = round(resYpxpercm * stimHcm);
     else
+        % Assumes flat screen (projects spherical)
         stimWcm = 2 * Mstate.screenDist * tan((P.x_size / 2) * (pi / 180));
         stimWpx = round(resXpxpercm * stimWcm);
         stimHcm = 2 * Mstate.screenDist * tan((P.y_size / 2) * (pi / 180));
         stimHpx = round(resYpxpercm * stimHcm);
     end
+    
     imWpx = TDim(1);
     imHpx = TDim(2);
     rngXpx = [(P.x_pos - floor(stimWpx / 2) + 1) ...
@@ -42,18 +47,20 @@ function playimageblock
     % Make a list of all frames and another with random ordering
     imNum = size(Gtxtr, 2);
     imList = (1:imNum)';
+    
     % Determine the order in which images will be presented
     if strcmpi(P.randomize, 'T')
-        disp('playimageblock: Image presentation will be RANDOMLY ordered.');
+        disp([msgpre ': Image presentation will be RANDOMLY ordered.']);
         imList = imList(randperm(size(imList, 1)))';
     elseif strcmpi(P.randomize, 'F')
-        disp('playimageblock: Image presentation will be SERIALLY ordered.');
+        disp([msgpre ': Image presentation will be SERIALLY ordered.']);
     else
-        disp(['playimageblock WARNING: Setting for randomization ' ...
+        disp([msgpre ' WARNING: Setting for randomization ' ...
             'incorrect. Assuming random ordering as default.']);
-        disp('playimageblock: Image presentation will be RANDOMLY ordered.');
+        disp([msgpre ': Image presentation will be RANDOMLY ordered.']);
         imList = imList(randperm(size(imList, 1)))';
     end
+    
     % Communicate order of image presentation to master
     imPath = P.image_path;
     imListStr = sprintf('%.0f,', imList);
