@@ -70,6 +70,7 @@ modStrings{4} = 'Filtered Noise';
 modStrings{5} = 'Manual Mapper';
 modStrings{6} = 'Coherent Motion';
 modStrings{7} = 'Image Block';
+modStrings{8} = 'Spherical Bar';
 
 % Populate pop-up menu with module names
 set(handles.module, 'string', modStrings)
@@ -176,13 +177,11 @@ function saveParams_Callback(hObject, eventdata, handles)
 % hObject    handle to saveParams (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 global Pstate
-
 [file, path] = uiputfile('*.param','Save as');
 if file  %if 'cancel' was not pressed
     file = [path file];
-    save(file,'Pstate')
+    save(file, 'Pstate')
 end
 
 

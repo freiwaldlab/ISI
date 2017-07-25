@@ -21,8 +21,10 @@ function playstimulus(modID)
             playmapper
         case 'CM'  %Coherent Motion
             playcohmotion
-        case 'IB'
+        case 'IB'  % Image Block
             playimageblock
+        case 'SB'  % Spherical Bar
+            playSphericalBar
         otherwise
             disp('playstimulus ERROR: Unknown module ID.')
     end

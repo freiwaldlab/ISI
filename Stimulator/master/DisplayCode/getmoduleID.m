@@ -17,4 +17,6 @@ function modID = getmoduleID
             modID = 'CM';
         case 7  % Image Block
             modID = 'IB';
+        case 8  % Spherical Bar
+            modID = 'SB';
     end

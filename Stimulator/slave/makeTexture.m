@@ -20,8 +20,10 @@ function makeTexture(modID)
             %makeMapper  %No need to a make file
         case 'CM'
             makeCohMotion
-        case 'IB'
+        case 'IB'  % Image Block
             stimTime = makeImageBlockTexture;
+        case 'SB'  % Spherical Bar
+            makeSphericalBarTexture
         otherwise
             disp('makeTexture ERROR: Unknown module ID.')
             makeDone = false;
