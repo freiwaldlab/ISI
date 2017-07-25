@@ -12,7 +12,7 @@ Screen('Flip', screenPTR);
 direction = P.BarDirection;
 numcycles = P.NumCycles;
 
-stimdur = P.StimDuration;
+stimdur = P.stim_time;
 movieDurationSecs = stimdur/numcycles; % Run the movie animation for a fixed period.
 
 frameRate  = Mstate.screenFrameRate;
@@ -53,7 +53,7 @@ waitframes = 1;
 %% prestimulus delay
 Screen('DrawTexture', screenPTR, SyncStateTxtr(2),SyncPiece,SyncLoc);
 prestimTimeR  = Screen(screenPTR, 'Flip');% Sync us to the vertical retrace
-PreStimTime  = prestimTimeR + P.PreStimDelay;
+PreStimTime  = prestimTimeR + P.predelay;
 
 while prestimTimeR < PreStimTime
     Screen('DrawTexture', screenPTR, SyncStateTxtr(1),SyncPiece,SyncLoc);
@@ -84,7 +84,7 @@ Screen('Flip', screenPTR);
 
 Screen('DrawTexture', screenPTR, SyncStateTxtr(2),SyncPiece,SyncLoc);
 postStimTimeR  = Screen(screenPTR, 'Flip');
-PostStimTime  = postStimTimeR + P.PostStimDelay;
+PostStimTime  = postStimTimeR + P.postdelay;
 
 while postStimTimeR < PostStimTime
     Screen('DrawTexture', screenPTR, SyncStateTxtr(1),SyncPiece,SyncLoc);

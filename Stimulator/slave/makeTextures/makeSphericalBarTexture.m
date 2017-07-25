@@ -28,11 +28,11 @@ barChecksize = P.CheckSize; %in degrees, if 0 make white bar
 flickerBar = P.FlickerRate;
 numcycles = P.NumCycles;
 barOrient = P.BarOrient;
-stimdur = P.StimDuration;
-movieDurationSecs = stimdur/numcycles; % Run the movie animation for a fixed period.
+stimdur = P.stim_time;
+%movieDurationSecs = stimdur/numcycles; % Run the movie animation for a fixed period.
 
 screenDistance = Mstate.screenDist; %in cm, needs to be converted to pixels
-w = Mstate.screenXcm;% width of monitor
+w = Mstate.screenXcm; %width of monitor
 h = Mstate.screenYcm; %height of monitor
 cx = P.eyeXLocation; %eye x location, cm
 cy = P.eyeYLocation; %eye y location, cm
@@ -117,7 +117,7 @@ a = cos(angle)*f;
 b = sin(angle)*f;
 
 flickerInds = ones(1, numframes); %non-flickering checkerboard
-barBackground = ones(pxYmax, pxXmax, length(flickerInds));
+barBackground = ones(pxYmax, pxXmax, numframes);
 % barBackground = ones(pxYmax,pxXmax,flickerInds); % throws error
 
 if barChecksize > 0
@@ -173,7 +173,7 @@ destRect = [0 0 pxXmax*scale pxYmax*scale]; %scale the stimulus to fill the scre
 syncWX = round(resXpxpercm*Mstate.syncSize*scale);
 syncWY = round(resYpxpercm*Mstate.syncSize*scale);
 
-SyncStateTxtr(1) = Screen(screenPTR, 'MakeTexture', white*ones(syncWY,syncWX));  % "hi"
+SyncStateTxtr(1) = Screen(screenPTR, 'MakeTexture', white*ones(syncWY,syncWX)); % "hi"
 SyncStateTxtr(2) = Screen(screenPTR, 'MakeTexture', black*ones(syncWY,syncWX)); % "low"
 % coordinates for sync marker
 SyncLoc = [0 0 syncWX-1 syncWY-1]';
