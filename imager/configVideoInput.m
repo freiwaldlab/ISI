@@ -1,5 +1,5 @@
 function handout = configVideoInput(handin, trigtype)
-    global FPS IMGSIZE 
+    global FPS IMGSIZE Mstate
     handout = handin;
     
     %%% Camera initialization
@@ -27,6 +27,7 @@ function handout = configVideoInput(handin, trigtype)
     handout.src.Strobe1Delay = 0;
     handout.src.Strobe1Duration = handout.src.Shutter;
     FPS = floor(handout.src.FrameRate);
+    Mstate.FrameRate = FPS;
     IMGSIZE = handout.video.VideoResolution;
 
     % Using GigE adaptor in MATLAB 2015 (broken)
