@@ -70,7 +70,7 @@ function GrabSaveLoop(fname)
             for n = 1:frameRnum
                 fn = frameR(n);
                 im = Tens(:,:,fn);
-                fnamedum = [fname '_' 'f' num2str(fn)];
+                fnamedum = [fname '_f' sprintf('%0*.0f', numel(num2str(frameN)), fn) '_data'];
                 save(fnamedum, 'im', '-v6');
             end
             totalsaveT = toc(tsave);
@@ -111,4 +111,5 @@ function GrabSaveLoop(fname)
     % Send pulse to timing DAQ to indicate that acquisition is complete
     outputSingleScan(daqOUTIOI, 0);
 
+    clear Tens
     imagerhandles = h;
