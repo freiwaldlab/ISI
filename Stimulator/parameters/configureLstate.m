@@ -6,7 +6,7 @@ function configureLstate
 
     Lstate.formula = '';
 
-    Lstate.param{1} = {'ori' 0};
+    Lstate.param{1} = {'contrast' 100};
     Lstate.param{2} = {[] []};
     Lstate.param{3} = {[] []};
     %Lstate.param{4} = {[] []};
