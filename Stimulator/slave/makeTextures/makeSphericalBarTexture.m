@@ -1,5 +1,5 @@
 function makeSphericalBarTexture
-% original author Onyekachi 'Kachi' Odoemene 30June2016
+% original author: Onyekachi 'Kachi' Odoemene 2016-06-30
 %drifting bar stimulus i.e. full field drifting grating
     global Mstate screenPTR screenNum
     global srcRect destRect 
@@ -26,9 +26,9 @@ Screen('Flip', screenPTR);
 barThicknessDeg = P.BarThickness;	
 barChecksize = P.CheckSize; %in degrees, if 0 make white bar
 flickerBar = P.FlickerRate;
-numcycles = P.NumCycles;
 barOrient = P.BarOrient;
-stimdur = P.stim_time;
+%numcycles = P.NumCycles;
+%stimdur = P.stim_time;
 %movieDurationSecs = stimdur/numcycles; % Run the movie animation for a fixed period.
 
 screenDistance = Mstate.screenDist; %in cm, needs to be converted to pixels
@@ -40,10 +40,9 @@ cy = P.eyeYLocation; %eye y location, cm
 zdistTop = hypot(screenDistance,h-cy); %distance from eye to top of screen
 zdistBottom = hypot(screenDistance,cy); %distance from eye to bottom of screen
 
-priorityLevel = MaxPriority(screenPTR); %#ok<NASGU>
+%priorityLevel = MaxPriority(screenPTR); %#ok<NASGU>
 
 scale = P.ScreenScaleFactor;
-
 pxXmax = screenRes.width / scale;
 pxYmax = screenRes.height / scale;
 resXpxpercm = round(pxXmax / w);
