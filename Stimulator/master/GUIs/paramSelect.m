@@ -22,7 +22,7 @@ function varargout = paramSelect(varargin)
 
 % Edit the above text to modify the response to help paramSelect
 
-% Last Modified by GUIDE v2.5 09-Feb-2017 15:03:57
+% Last Modified by GUIDE v2.5 25-Jul-2017 18:14:26
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -74,8 +74,11 @@ modStrings{8} = 'Spherical Bar';
 
 % Populate pop-up menu with module names
 set(handles.module, 'string', modStrings)
-% Default to Image Block module (number 7)
+% Default to Image Block module ('IB', number 7)
 set(handles.module, 'Value', 7);
+% Try to pre-fill edit value with a valid setting
+set(handles.paramEditVal, 'string', '');
+set(handles.paramEdit, 'string', []);
 GUIhandles.param = handles;
 refreshParamView
 playSampleFlag = 0;
@@ -99,12 +102,11 @@ function parameterList_Callback(hObject, eventdata, handles)
 % hObject    handle to parameterList (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 global Pstate
 
-idx = get(handles.parameterList,'value');
-set(handles.paramEditVal,'string',num2str(Pstate.param{idx}{3}));
-set(handles.paramEdit,'string',Pstate.param{idx}{1});
+idx = get(handles.parameterList, 'value');
+set(handles.paramEditVal, 'string', num2str(Pstate.param{idx}{3}));
+set(handles.paramEdit, 'string', Pstate.param{idx}{1});
 
 
 % --- Executes during object creation, after setting all properties.
@@ -112,7 +114,6 @@ function parameterList_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to parameterList (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -122,9 +123,8 @@ function paramEditVal_Callback(hObject, eventdata, handles)
 % hObject    handle to paramEditVal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-pval = get(handles.paramEditVal,'string');
-psymbol = get(handles.paramEdit,'string');
+pval = get(handles.paramEditVal, 'string');
+psymbol = get(handles.paramEdit, 'string');
 
 updatePstate(psymbol, pval)
 refreshParamView
@@ -178,8 +178,8 @@ function saveParams_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global Pstate
-[file, path] = uiputfile('*.param','Save as');
-if file  %if 'cancel' was not pressed
+[file, path] = uiputfile('*.param', 'Save as');
+if file
     file = [path file];
     save(file, 'Pstate')
 end
@@ -232,7 +232,7 @@ msg = ['B;' mod ';-1;~'];
 fwrite(DcomState.serialPortHandle,msg);  %Tell it to buffer images
 waitforDisplayResp
 
-set(handles.playSample,'enable','on')
+set(handles.playSample, 'enable', 'on')
 
 
 % --- Executes on button press in playSample.
