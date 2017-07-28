@@ -30,7 +30,7 @@ function sendtoImager(cmd)
             dd = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
             DataPath = dd;
             fname = sprintf('%s%su%s_%s', dd, filesep, unit, expt);
-            fname = [fname  '_' sprintf('%03d', trial)];
+            fname = [fname  '_' sprintf('t%03d', trial)];
             GrabSaveLoop(fname)
         case 'C'
             % Stop video object and clean up
