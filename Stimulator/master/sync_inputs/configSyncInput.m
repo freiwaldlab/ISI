@@ -45,7 +45,7 @@ function configSyncInput
         daqOUTtrig.IsContinuous = true;
         % %%% *** XXX TODO just putting in 1000 to make the trigger easy to construct in preallocate mmf
         daqOUTtrig.Rate = 1000;
-        disp([mfilename ': Configured DAQ output.');
+        disp([mfilename ': Configured DAQ output.']);
     end
     if isempty(analogIN)
         error([mfilename ': Problem configuring NI DAQ IN device.']);
