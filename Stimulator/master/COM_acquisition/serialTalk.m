@@ -2,9 +2,9 @@ function out=serialTalk(in)
 	out=[];
 	global serialstate
 
-	if length(serialstate.serialPortHandle) == 0
-		disp(['StimulusTalk: Stimulus not configured']);
-		return;
+	if isempty(serialstate.serialPortHandle)
+		error([mfilename ': Stimulus not configured']);
+		return
 	end
  
 	if nargin < 2
@@ -20,14 +20,13 @@ function out=serialTalk(in)
 	
 	temp=StimulusReadAnswer;
 	temp=temp';
-	if length(temp)==0
-		disp('StimulusTalk: Stimulus Timed out without returning anything');
+	if isempty(temp)
+		error([mfilename ': Stimulus timed out.']);
 	else
-		if length(temp)>1 | temp(1)~=13
-			disp(['StimulusTalk: Stimulus did not return 13']);
+		if length(temp)>1 || temp(1)~=13
+			warning([mfilename ': Stimulus did not return 13.']);
 		end
 
-		disp(['StimulusTalk: Stimulus returned [' num2str(double(temp)) '] = ' char(temp(1:end-1))]);
+		disp([mfilename ': Stimulus returned [' num2str(double(temp)) '] = ' char(temp(1:end-1))]);
 	end
 	out=temp;
-		

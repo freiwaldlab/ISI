@@ -5,7 +5,6 @@ function playimageblock
     syncHigh = Stxtr(1);
     syncLow = Stxtr(2);
     P = getParamStruct;
-    msgpre = 'playimageblock';
     window = screenPTR;
     
     screenRes = Screen('Resolution', screenNum);
@@ -50,14 +49,14 @@ function playimageblock
     
     % Determine the order in which images will be presented
     if strcmpi(P.randomize, 'T')
-        disp([msgpre ': Image presentation will be RANDOMLY ordered.']);
+        disp([mfilename ': Image presentation will be RANDOMLY ordered.']);
         imList = imList(randperm(size(imList, 1)))';
     elseif strcmpi(P.randomize, 'F')
-        disp([msgpre ': Image presentation will be SERIALLY ordered.']);
+        disp([mfilename ': Image presentation will be SERIALLY ordered.']);
     else
-        disp([msgpre ' WARNING: Setting for randomization ' ...
+        warning([mfilename ': Setting for randomization ' ...
             'incorrect. Assuming random ordering as default.']);
-        disp([msgpre ': Image presentation will be RANDOMLY ordered.']);
+        disp([mfilename ': Image presentation will be RANDOMLY ordered.']);
         imList = imList(randperm(size(imList, 1)))';
     end
     

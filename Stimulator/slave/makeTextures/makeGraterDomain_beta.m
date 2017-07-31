@@ -1,7 +1,6 @@
 function [sdom, tdom, x_ecc, y_ecc] = makeGraterDomain_beta(xN, yN, ori, s_freq, t_period, altazimuth)
 global Mstate
 P = getParamStruct;
-msgpre = 'makeGraterDomain_beta';
 
 switch altazimuth
     case 'altitude'
@@ -24,7 +23,7 @@ switch altazimuth
         [x_ecc, y_ecc] = meshgrid(x_ecc, y_ecc);
     otherwise
         if ~strcmpi(altazimuth, 'none')
-            disp([msgpre ': Invalid value for altazimuth. Assuming ''none''.']);
+            warning([mfilename ': Invalid value for altazimuth. Assuming ''none''.']);
         end
         % Assume the screen is curved
         x_ecc = P.x_size / 2;
@@ -71,7 +70,7 @@ switch altazimuth
         sdom = atan(x_eccO ./ z_eccR) * 180 / pi; %deg
     otherwise
         if ~strcmpi(altazimuth, 'none')
-            disp([msgpre ': Invalid value for altazimuth. Assuming ''none''.']);
+            warning([mfilename ': Invalid value for altazimuth. Assuming ''none''.']);
         end
         sdom = (x_ecc * cos(ori * pi / 180)) - (y_ecc * sin(ori * pi / 180));    %deg
 end

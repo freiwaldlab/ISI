@@ -53,7 +53,7 @@ if Mstate.running && (trialno <= nt)
         lhIn = addlistener(analogIN, ...
             'DataAvailable', @(src, event)logData(src, event, fid1));
         analogIN.startBackground;
-        disp(['run2: Log file opened (' LogFile ').'])
+        disp([mfilename ': Log file opened (' LogFile ').']);
     end
     
     pause(0.25)
@@ -73,7 +73,7 @@ if Mstate.running && (trialno <= nt)
         if ~isempty(trialInfo)
             saveTrialInfo(trialInfo)
         else
-            disp('run2 ERROR: Failed to retrieve ImageBlock trialInfo.')
+            error([mfilename ': Failed to retrieve ImageBlock trialInfo.']);
         end
     end
     
@@ -84,7 +84,7 @@ if Mstate.running && (trialno <= nt)
         analogIN.stop;
         delete(lhIn);
         fclose(fid1);
-        disp(['run2: Reading log file (' LogFile ').']);
+        disp([mfilename ': Reading log file (' LogFile ').']);
         fid2 = fopen(LogFile, 'r');
         % analogINdata is a 6 x samples matrix where...
         %   (1,:) is the time each sample is taken from start
@@ -98,7 +98,7 @@ if Mstate.running && (trialno <= nt)
         
         samples = length(analogINdata);
         timevals = analogINdata(1,:)';
-        Fs = analogIN.Rate;  % 2000;  % sampling frequency in Hz; set in configSyncInput
+        Fs = analogIN.Rate;  % 1000;  % sampling frequency in Hz; set in configSyncInput
         stimsync = analogINdata(2,:)';
 
         % Normalize photodiode signal

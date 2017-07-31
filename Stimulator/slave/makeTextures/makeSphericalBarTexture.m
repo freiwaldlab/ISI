@@ -6,7 +6,6 @@ function makeSphericalBarTexture
     global SyncStateTxtr barTex
     global syncWX syncWY SyncLoc SyncPiece
     P = getParamStruct;
-    msgpre = 'makeSphericalBarTexture';
     window = screenPTR;
 
     screenRes = Screen('Resolution', screenNum);
@@ -161,8 +160,7 @@ for ff = 1:numframes
     
 end
 
-disp('')    
-disp('done making texture')
+disp([mfilename ': Done making texture.']);
 toc(timestart)
 
 srcRect=[0 0 visiblesizeX visiblesizeY]; %texture size

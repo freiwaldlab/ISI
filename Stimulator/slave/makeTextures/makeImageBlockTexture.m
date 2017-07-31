@@ -6,14 +6,13 @@ function stimTime = makeImageBlockTexture
     Gtxtr = []; 
     TDim = [];
     P = getParamStruct;
-    msgpre = 'makeImageBlockTexture';
     window = screenPTR;
     
     % Settings
     imPath = P.image_path;
     imExt = P.image_ext;
     if ~exist(imPath, 'dir')
-        disp([msgpre ' ERROR: image_path not found.']);
+        error([mfilename ': image_path not found.']);
         return;
     end
     
@@ -34,21 +33,21 @@ function stimTime = makeImageBlockTexture
         imfile = strcat(imPath, filesep, imList(imfn).name);
         imInfoTmp = imfinfo(imfile);
         if imInfoTmp.Height ~= imHpx
-            disp([msgpre ' ERROR: Stimulus images do ' ...
+            error([mfilename ': Stimulus images do ' ...
                 'not all share the same dimensions.']);
             return;
         end
         if imInfoTmp.Width ~= imWpx
-            disp([msgpre ' ERROR: Stimulus images do ' ...
+            error([mfilename ': Stimulus images do ' ...
                 'not all share the same dimensions.']);
             return;
         end
     end
     clear imfn imfile imInfoTmp
     if imHpx ~= imWpx
-	disp([msgpre ' WARNING: Stimulus image is not square.']);
-        disp([msgpre ' WARNING:   Calculations will ' ...
-            'be made based on larger dimension.']);
+        warning([mfilename ': Stimulus image is not square.']);
+        warning([mfilename ': Calculations will be made based on ' ...
+            'the larger dimension.']);
     end
     
     % Calculate total stimulus time
@@ -57,14 +56,14 @@ function stimTime = makeImageBlockTexture
     stimTime = stimTcalc;
     
     % Preload all images into a buffer
-    disp([msgpre ': Loading stimulus images.'])
+    disp([mfilename ': Loading stimulus images.']);
     tic
     if imHpx > screenYpx || imWpx > screenXpx
     % If images are larger than screen, downsample
-        disp([msgpre ' WARNING: Stimulus image is too ' ...
+        warning([mfilename ': Stimulus image is too ' ...
             'big to fit on the screen.']);
-        disp([msgpre ' WARNING:   Resizing image, which ' ...
-            'is slow and undesireable!']);
+        warning([mfilename ':   Resizing image, which ' ...
+            'may be slow.']);
         if imHpx > imWpx
             imHpx = screenYpx;
             imWpx = round(imWpx * (imHpx / screenYpx));
@@ -92,8 +91,8 @@ function stimTime = makeImageBlockTexture
         clear imfn imfile I
     end
     load_time = toc;
-    disp([msgpre ': Finished loading images (' ...
-        num2str(load_time) ' sec)'])
+    disp([mfilename ': Finished loading images (' ...
+        num2str(load_time) ' sec).'])
   
     % Adjust contast for each image
     %     f(x) = ?(x?128) + 128 + b

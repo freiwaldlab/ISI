@@ -2,7 +2,21 @@ function makeLoop
     global Lstate GUIhandles looperInfo
 
 looperInfo = struct;
+
+%%% TODO *** !!! Looper needs one parameter in it... bad.
 Nparam = length(Lstate.param); %number of looper parameters
+% Nparam = 0;
+% param_tmp = Lstate.param;
+% Lstate.param = {};
+% for i=1:length(param_tmp)
+%     if ~isempty(param_tmp{i}{1}) && ~isempty(param_tmp{i}{2})
+%         Nparam = Nparam + 1;
+%         Lstate.param{Nparam}{1} = param_tmp{i}{1};
+%         Lstate.param{Nparam}{2} = param_tmp{i}{2};
+%     else
+%         continue;
+%     end
+% end
 
 %Produces a cell array 'd', with each element corresponding to a different
 %looper variable.  Each element contains a multidimensional array from
@@ -69,7 +83,7 @@ if bflag
         [c, r] = getcr(t, looperInfoDum, nc);
 
         if rem(t, bPer) == 0 && t ~= 1
-            disp('makeLoop DEBUG: blankcounter incremented')
+            disp([mfilename ' DEBUG: blankcounter incremented']);
             blankcounter = blankcounter + 1;
             looperInfo.conds{nc+1}.repeats{blankcounter}.trialno = t + blankcounter - 1;
         end

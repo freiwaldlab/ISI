@@ -26,6 +26,6 @@ function playstimulus(modID)
         case 'SB'  % Spherical Bar
             playSphericalBar
         otherwise
-            disp('playstimulus ERROR: Unknown module ID.')
+            error([mfilename ': Unknown module ID.']);
     end
     ShowCursor

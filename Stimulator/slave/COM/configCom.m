@@ -1,5 +1,4 @@
 function configCom(varargin)
-
 global comState
 
 %Modification of MP285Config, for configuration of udp port connection to visual stimulus PC (pep) 	
@@ -41,7 +40,7 @@ comState.serialPortHandle.Terminator = '~'; %Magic number to identify request fr
 fopen(comState.serialPortHandle);
 stat=get(comState.serialPortHandle, 'Status');
 if ~strcmp(stat, 'open')
-    disp(' StimConfig: trouble opening port; cannot proceed');
+    error([mfilename ': trouble opening port; cannot proceed']);
     comState.serialPortHandle = [];
     return
 end

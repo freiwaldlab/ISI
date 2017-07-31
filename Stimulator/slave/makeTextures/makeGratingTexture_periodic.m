@@ -6,11 +6,10 @@ function makeGratingTexture_periodic
     Gtxtr = []; 
     TDim = [];
     P = getParamStruct;
-    msgpre = 'makeGratingTexture_periodic';
     window = screenPTR;
     
-    disp([msgpre ': screenXcm ' num2str(Mstate.screenXcm)]);
-    disp([msgpre ': screenYcm ' num2str(Mstate.screenYcm)]);
+    disp([mfilename ': screenXcm ' num2str(Mstate.screenXcm)]);
+    disp([mfilename ': screenYcm ' num2str(Mstate.screenYcm)]);
     screenRes = Screen('Resolution', screenNum)
     resXpxpercm = screenRes.width / Mstate.screenXcm
     resYpxpercm = screenRes.height / Mstate.screenYcm
@@ -56,7 +55,7 @@ function makeGratingTexture_periodic
         [sdom2, tdom2, x_ecc2, y_ecc2] = makeGraterDomain(stimWpx, stimHpx, P.ori2, ...
             P.s_freq2, P.t_period, AZ2);
     end
-    disp([msgpre ': tdom length ' num2str(length(tdom))]);
+    disp([mfilename ': tdom length ' num2str(length(tdom))]);
 
     flipbit = 0;
     if ~P.separable

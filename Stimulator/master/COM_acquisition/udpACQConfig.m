@@ -24,7 +24,7 @@ set(ACQserial.serialPortHandle, 'Datagramterminatemode', 'off')
 fopen(ACQserial.serialPortHandle);
 stat=get(ACQserial.serialPortHandle, 'Status');
 if ~strcmp(stat, 'open')
-    disp([' StimConfig: trouble opening port; cannot proceed']);
+    error([mfilename ': Could not open port.']);
     ACQserial.serialPortHandle=[];
     out=1;
     return;

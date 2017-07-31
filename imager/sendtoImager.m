@@ -35,19 +35,19 @@ function sendtoImager(cmd)
         case 'C'
             % Stop video object and clean up
             if isvalid(daqOUTtrig)
-                disp('sendtoImager: daqOUTtrig exists, stopping.')
+                disp([mfilename ': daqOUTtrig exists, stopping.']);
                 stop(daqOUTtrig);
                 if event.hasListener(daqOUTtrig, 'DataRequired')
-                    disp('sendtoImager: daqOUTlist exists, deleting.')
+                    disp([mfilename ': daqOUTlist exists, deleting.']);
                     delete(daqOUTlist);
                     clear global daqOUTlist
                 end
                 outputSingleScan(daqOUTtrig, 0);
             end
             flushdata(ih.video);
-            disp('sendtoImager: Stopped triggering video.')
+            disp([mfilename ': Stopped triggering video.'])
         otherwise
-            disp('sendtoImager ERROR: Send command was not understood.');
+            error([mfilename ': Send command was not understood.']);
     end
     
     imagerhandles = ih;

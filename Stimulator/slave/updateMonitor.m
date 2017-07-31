@@ -24,13 +24,13 @@ function updateMonitor
             bufLUT = bufLUT' * [1 1 1];
             cal_file = [];
         otherwise
-            disp('updateMonitor ERROR: Unknown monitor type specified.')
+            error([mfilename ': Unknown monitor type specified.']);
     end
     if exist(cal_file, 'file')
         load(cal_file, 'bufLUT')
-        disp('updateMonitor: Loaded gamma correction LUT.')
+        disp([mfilename ': Loaded gamma correction LUT.']);
     elseif ~isempty(cal_file)
-        disp('updateMonitor ERROR: Unable to load gamma correction LUT.')
+        error([mfilename ': Unable to load gamma correction LUT.']);
     end
         
     % Set gamma LUT

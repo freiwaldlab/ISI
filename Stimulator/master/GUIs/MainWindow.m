@@ -267,10 +267,10 @@ if ~Mstate.running
         analogIN.stop; 
         
         if isvalid(daqOUTtrig)
-            disp('MainWindow: daqOUTtrig exists, stopping before running.')
+            disp([mfilename ': daqOUTtrig exists, stopping before running.']);
             stop(daqOUTtrig);
             if event.hasListener(daqOUTtrig, 'DataRequired')
-                disp('MainWindow: daqOUTlist exists, deleting before running.')
+                disp([mfilename ': daqOUTlist exists, deleting before running.']);
                 delete(daqOUTlist);
                 clear global daqOUTlist
             end

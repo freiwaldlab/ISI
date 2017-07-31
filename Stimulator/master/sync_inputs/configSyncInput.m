@@ -26,7 +26,7 @@ function configSyncInput
         % Rate determined by maximum on device/number of channels
         analogIN.Rate = 2000;
         analogIN.IsContinuous = true;
-        disp('configSyncInput: Configured DAQ analog input.')
+        disp([mfilename ': Configured DAQ analog input.']);
     end
     if ~isempty(daqOUT_devid)
         daqOUTLED = daq.createSession('ni');
@@ -45,12 +45,12 @@ function configSyncInput
         daqOUTtrig.IsContinuous = true;
         % %%% *** XXX TODO just putting in 1000 to make the trigger easy to construct in preallocate mmf
         daqOUTtrig.Rate = 1000;
-        disp('configSyncInput: Configured DAQ output.')
+        disp([mfilename ': Configured DAQ output.');
     end
     if isempty(analogIN)
-        disp('configSyncInput ERROR: Problem configuring NI DAQ IN device.')
+        error([mfilename ': Problem configuring NI DAQ IN device.']);
     end
     if isempty(daqOUTLED) || isempty(daqOUT2p) || isempty(daqOUTIOI) || ...
             isempty(daqOUTtrig)
-        disp('configSyncInput ERROR: Problem configuring NI DAQ OUT device.')
+        error([mfilename ': Problem configuring NI DAQ OUT device.']);
     end

@@ -69,7 +69,7 @@ vbl = Screen('Flip',screenPTR);
 for n = 1:numcycles
     for i=1:movieDurationFrames
         % Draw image:
-        Screen('DrawTexture', screenPTR, barTex(flipBar(i),movieFrameIndices(i)),srcRect,destRect);
+        Screen('DrawTextures', screenPTR, [SyncStateTxtr(2) barTex(flipBar(i),movieFrameIndices(i))],[SyncPiece srcRect],[SyncLoc destRect]);
 %         Screen('Flip', screenPTR);
         Screen('DrawingFinished',screenPTR);
         vbl = Screen('Flip',screenPTR,vbl+(waitframes-0.5)*ifi);

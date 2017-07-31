@@ -92,7 +92,8 @@ try
             %pos = str2num(paramstring(delims(2)+1:delims(3)-1)); %setting of RE shutter
             %moveShutter(eye,pos);
             %pause(2)
-            disp('Mastercb WARNING: master asked to move shutter, but slave shutter capability disabled')    
+            warning([mfilename ': master asked to move shutter, but ' ...
+                'slave shutter capability is disabled.']);
     end
     if ~strcmp(msgID,'G')
         fwrite(comState.serialPortHandle, 'a')  %dummy so that Master knows it finished

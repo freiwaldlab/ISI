@@ -277,10 +277,10 @@ function captureImage_Callback(hObject, eventdata, handles)
         pfix = datestr(now, 'yymmddtHHMMSS');
         capfname = strcat(DataPath, filesep, pfix, '_capture.png');
         imwrite(I, capfname);
-        disp(['slimImager: Saved image (' capfname ').']);
+        disp([mfilename ': Saved image (' capfname ').']);
     else
         % If no new preview image exists
-        disp('slimImager ERROR: Could not capture image.');
+        error([mfilename ': Could not capture image.']);
         return
     end
     
@@ -350,7 +350,7 @@ else
       % and change button string.
       if isfield(handles, 'video')
           if isvalid(handles.video)
-              disp('FIX ME FIX ME FIX ME Saving captured video...');
+              disp([mfilename 'FIX ME FIX ME FIX ME Saving captured video...']);
               %videodata = fliplr(getdata(handles.video));
               %videodata = flipud(getdata(handles.video));
               videodata = rot90(getdata(handles.video), 2);

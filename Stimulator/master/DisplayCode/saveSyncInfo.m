@@ -13,7 +13,7 @@ function saveSyncInfo(syncInfo)
             mkdir(dd);
         end
         file_name = [dd filesep title '.analyzer'];
-        disp(['saveSyncInfo: Appending syncInfo to .analyzer file (' ...
-            file_name ').'])
-        save(file_name, ['syncInfo' num2str(trialno)], '-append')
+        disp([mfilename ': Appending syncInfo to .analyzer file (' ...
+            file_name ').']);
+        save(file_name, ['syncInfo' num2str(trialno)], '-append');
     end

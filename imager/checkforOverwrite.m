@@ -11,7 +11,7 @@ function [flag, dd] = checkforOverwrite
 
     % Increment experiment number until no matching data directory exists
     while exist(dd, 'dir')
-        disp(['checkforOverwrite: Data directory exists, ' ...
+        disp([mfilename ': Data directory exists, ' ...
             'incrementing experiment number.'])
         expt = sprintf('%03d', str2double(expt) + 1);
         Mstate.expt = expt;

@@ -9,7 +9,7 @@ ACQserial.port='COM3';
 % close all open serial port objects on the same port and remove
 % the relevant object form the workspace
 	port=instrfind('Port',ACQserial.port);
-	if length(port) > 0; 
+	if length(port) > 0
 		fclose(port); 
 		delete(port);
 		clear port;
@@ -28,10 +28,10 @@ ACQserial.serialPortHandle.Terminator = 99; %Magic number to identify request fr
 fopen(ACQserial.serialPortHandle);
 stat=get(ACQserial.serialPortHandle, 'Status');
 if ~strcmp(stat, 'open')
-    disp([' serialConfig: trouble opening port; cannot proceed']);
+    error([mfilename ': Could not open port.']);
     ACQserial.serialPortHandle=[];
     out=1;
-    return;
+    return
 end
     
 ACQserial.serialPortHandle.bytesavailablefcn = @ScanImageAlert;  

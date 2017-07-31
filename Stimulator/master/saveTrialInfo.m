@@ -13,7 +13,7 @@ function saveTrialInfo(trialInfo)
             mkdir(dd);
         end
         file_name = [dd filesep title '.analyzer'];
-        disp(['saveTrialInfo: Appending trialInfo to .analyzer file (' ...
+        disp([mfilename ': Appending trialInfo to .analyzer file (' ...
             file_name ').'])
         save(file_name, ['trialInfo' num2str(trialno)], '-append')
     end
