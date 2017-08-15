@@ -25,8 +25,8 @@ function makeTexture(modID)
         case 'SB'  % Spherical Bar
             makeSphericalBarTexture
         otherwise
-            error([mfilename ': Unknown module ID.']);
             makeDone = false;
+            error([mfilename ': Unknown module ID.']);
     end
     if makeDone
         if stimTime

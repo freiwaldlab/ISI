@@ -28,10 +28,9 @@ ACQserial.serialPortHandle.Terminator = 99; %Magic number to identify request fr
 fopen(ACQserial.serialPortHandle);
 stat=get(ACQserial.serialPortHandle, 'Status');
 if ~strcmp(stat, 'open')
-    error([mfilename ': Could not open port.']);
     ACQserial.serialPortHandle=[];
     out=1;
-    return
+    error([mfilename ': Could not open port.']);
 end
     
 ACQserial.serialPortHandle.bytesavailablefcn = @ScanImageAlert;  

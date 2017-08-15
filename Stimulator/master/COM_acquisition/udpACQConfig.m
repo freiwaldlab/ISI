@@ -24,10 +24,9 @@ set(ACQserial.serialPortHandle, 'Datagramterminatemode', 'off')
 fopen(ACQserial.serialPortHandle);
 stat=get(ACQserial.serialPortHandle, 'Status');
 if ~strcmp(stat, 'open')
-    error([mfilename ': Could not open port.']);
     ACQserial.serialPortHandle=[];
     out=1;
-    return;
+    error([mfilename ': Could not open port.']);
 end
 
 %Establish serial port event callback criterion (Master doesn't use callbacks, it waits)

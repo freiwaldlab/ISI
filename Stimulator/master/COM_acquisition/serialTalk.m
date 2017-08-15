@@ -4,7 +4,6 @@ function out=serialTalk(in)
 
 	if isempty(serialstate.serialPortHandle)
 		error([mfilename ': Stimulus not configured']);
-		return
 	end
  
 	if nargin < 2

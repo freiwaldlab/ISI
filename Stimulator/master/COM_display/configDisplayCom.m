@@ -30,7 +30,6 @@ function configDisplayCom
     fopen(DcomState.serialPortHandle);
     stat = get(DcomState.serialPortHandle, 'Status');
     if ~strcmp(stat, 'open')
-        error([mfilename ': Could not open port.']);
         DcomState.serialPortHandle = [];
-        return
+        error([mfilename ': Could not open port.']);
     end

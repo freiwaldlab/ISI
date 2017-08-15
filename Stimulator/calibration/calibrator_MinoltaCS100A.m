@@ -65,7 +65,6 @@ if strcmp(msg, 'OK00')
     disp([mfilename ': Measurement mode set.']);
 elseif iserror(msg)
     error([mfilename ': Unable to set measurement mode.']);
-    return
 end
 clear msg
 flushinput(CS100A);
@@ -79,7 +78,6 @@ if ~iserror(msg)
     disp([mfilename ': Test measurement recorded (' msg ').']);
 else
     error([mfilename ': Unable to record a test measurement.']);
-    return
 end
 clear msg
 flushinput(CS100A);
@@ -205,20 +203,20 @@ function errbool = iserror(mess)
     end
     switch mess
         case 'ER00'
+            errbool = true;
             error([mfilename ': Command not understood.']);
-            errbool = true;
         case 'ER10'
+            errbool = true;
             error([mfilename ': Luminance or chromaticity out of range.']);
-            errbool = true;
         case 'ER11'
+            errbool = true;
             error([mfilename ': Memory value error.']);
-            errbool = true;
         case 'ER20'
+            errbool = true;
             error([mfilename ': Cannot access EEPRON.']);
-            errbool = true;
         case 'ER30'
-            error([mfilename ': Battery too low.']);
             errbool = true;
+            error([mfilename ': Battery too low.']);
         otherwise
             errbool = false;
     end

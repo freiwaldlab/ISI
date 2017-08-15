@@ -40,9 +40,8 @@ comState.serialPortHandle.Terminator = '~'; %Magic number to identify request fr
 fopen(comState.serialPortHandle);
 stat=get(comState.serialPortHandle, 'Status');
 if ~strcmp(stat, 'open')
-    error([mfilename ': trouble opening port; cannot proceed']);
     comState.serialPortHandle = [];
-    return
+    error([mfilename ': trouble opening port; cannot proceed']);
 end
 
 comState.serialPortHandle.bytesavailablefcn = @Mastercb;

@@ -13,7 +13,6 @@ function stimTime = makeImageBlockTexture
     imExt = P.image_ext;
     if ~exist(imPath, 'dir')
         error([mfilename ': image_path not found.']);
-        return;
     end
     
     %screenRes = Screen('Resolution', screenNum);
@@ -35,12 +34,10 @@ function stimTime = makeImageBlockTexture
         if imInfoTmp.Height ~= imHpx
             error([mfilename ': Stimulus images do ' ...
                 'not all share the same dimensions.']);
-            return;
         end
         if imInfoTmp.Width ~= imWpx
             error([mfilename ': Stimulus images do ' ...
                 'not all share the same dimensions.']);
-            return;
         end
     end
     clear imfn imfile imInfoTmp
