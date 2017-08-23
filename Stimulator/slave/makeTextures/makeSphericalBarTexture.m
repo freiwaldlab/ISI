@@ -37,15 +37,16 @@ function makeSphericalBarTexture
     
     %internal conversions?
     top = h - cy;
-    bottom = -cy;
-    right = cx;
+    %bottom = -cy;
+    %right = cx;
     left = cx - w;
     
     [xi,yi] = meshgrid(1:pxXmax,1:pxYmax);
     cart_pointsX = left + (w/pxXmax).*xi;
     cart_pointsY = top - (h/pxYmax).*yi;
     cart_pointsZ = zdistTop + ((zdistBottom - zdistTop)/pxYmax).*yi;
-    [sphr_pointsTh, sphr_pointsPh, ~] = cart2sph(cart_pointsZ,cart_pointsX,cart_pointsY);
+    [sphr_pointsTh, sphr_pointsPh, ~] = cart2sph(cart_pointsZ, ...
+        cart_pointsX, cart_pointsY);
     
     %rescale Cartesian maps into dimensions of radians
     xmaxRad = max(sphr_pointsTh(:));
@@ -54,15 +55,15 @@ function makeSphericalBarTexture
     fy = ymaxRad / max(cart_pointsY(:));
     
     % determine stimulus size in pixels
-    % barThicknessPixels = round(tan(barThicknessDeg)*screenDistance
-    texsizeY = ceil(pxXmax / 2);
-    texsizeZ = ceil(pxYmax / 2);
+    % barThicknessPixels = round(tan(barThicknessDeg) * screenDistance
+    texsizeX = ceil(pxXmax / 2);
+    texsizeY = ceil(pxYmax / 2);
     
     % This is the visible size of the texture. It is twice the half-width
     % of the texture plus one pixel to make sure it has an odd number of
     % pixels and is therefore symmetric around the center of the texture:
-    visiblesizeX = 2*texsizeY + 1;
-    visiblesizeY = 2*texsizeZ + 1;
+    visiblesizeX = 2*texsizeX + 1;
+    visiblesizeY = 2*texsizeY + 1;
     
     %% define destination of stimuli
     frameRate = Screen('FrameRate', screenNum);
