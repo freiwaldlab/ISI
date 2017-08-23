@@ -83,8 +83,8 @@ function playimageblock
         % Simultaneously draw "high" sync and image to the screen
         %   Unless otherwise specified PTB will draw the texture 
         %   full size in the center of the screen
-        Screen('DrawTextures', window, [syncHigh Gtxtr(imn)], ...
-           [syncPiece stimPiece], [syncPos stimPos], [0 P.ori]);
+        Screen('DrawTextures', window, [Gtxtr(imn) syncHigh], ...
+           [stimPiece syncPiece], [stimPos syncPos], [P.ori 0]);
         Screen('Flip', window);
         WaitSecs(P.image_duration);
         Screen('DrawTexture', window, syncHigh, syncPiece, syncPos);
