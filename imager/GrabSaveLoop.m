@@ -1,5 +1,5 @@
 function GrabSaveLoop(fname)
-    global imagerhandles frameN Tens
+    global imagerhandles frameN Tens FrameTimes
     global daqOUTtrig daqOUTIOI
     h = imagerhandles;
     
@@ -14,7 +14,7 @@ function GrabSaveLoop(fname)
     % If in debug mode, display current logging mode setting
     if debugToggle
         disp([mfilename ': Camera logging mode set to ' ...
-            h.video.LoggingMode])
+            h.video.LoggingMode]);
     end
 
     %%% TODO XXX *** 2p testing
@@ -49,7 +49,7 @@ function GrabSaveLoop(fname)
         if debugToggle
             disp([mfilename ' DEBUG: ' num2str(frameNacqd) ...
                 ' frames acquired. ' num2str(frameNaval) ...
-                ' remaining on camera.'])
+                ' remaining on camera.']);
         end
         fprintf('.')
         % Get next frame data set from camera
@@ -57,9 +57,9 @@ function GrabSaveLoop(fname)
         %    [2 1 3]));
         %Tens(:,:,frameR) = flipud(permute(squeeze(getdata(h.video, frameRnum)), ...
         %    [2 1 3]));
-        Tens(:,:,frameR) = rot90(permute(squeeze(getdata(h.video, frameRnum)), ...
-            [2 1 3]), 2);
-        [~, frameTrel, ~] = getdata(h.video, frameRnum);
+        [frames, framesTrel, ~] = getdata(h.video, frameRnum);
+        Tens(:,:,frameR) = rot90(permute(squeeze(frames), [2 1 3]), 2);
+        FrameTimes(frameR) = framesTrel;
         %Tens(:,:,frameR) = permute(squeeze(getdata(h.video, frameRnum)), ...
         %    [2 1 3]);
         timelastframe = now;
@@ -70,7 +70,7 @@ function GrabSaveLoop(fname)
             for n = 1:frameRnum
                 fn = frameR(n);
                 im = Tens(:,:,fn);
-                tm = frameTrel;
+                tm = FrameTimes(fn);
                 fnamedum = [fname '_f' ...
                     sprintf('%0*.0f', numel(num2str(frameN)), fn) '_data'];
                 %save(fnamedum, 'im', '-v6');
@@ -80,9 +80,9 @@ function GrabSaveLoop(fname)
             clear n im imlast tsave
             if debugToggle && (frameRnum > 0)
                 disp([mfilename ' DEBUG: Save time for recent '...
-                    'fetched frames was ' num2str(totalsaveT) ' sec.'])
+                    'fetched frames was ' num2str(totalsaveT) ' sec.']);
                 disp([mfilename ' DEBUG:           per frame ' ...
-                    num2str(totalsaveT / frameRnum) ' sec.'])
+                    num2str(totalsaveT / frameRnum) ' sec.']);
             end
         end
         % Track frames
@@ -93,35 +93,40 @@ function GrabSaveLoop(fname)
     if (frameNleft > 0) && ((10^5) * (now - timelastframe) > maxwait)
         warning([mfilename ': Stopped waiting for frames from ' ...
             ' camera after ' num2str((10^5)*(now - timelastframe)) ...
-            ' sec idle.'])
+            ' sec idle.']);
     end
     frameNacqd = h.video.FramesAcquired - frameNbase;
     if frameNrecd < frameN
         warning([mfilename ': Received fewer (' ...
             num2str(frameNrecd) ') frames than expected (' ...
-            num2str(frameN) ').'])
+            num2str(frameN) ').']);
     end
     totalT = toc;
     frameTsec = totalT / frameNrecd;
     disp([mfilename ': Total frames acquired ' ...
-        num2str(frameNacqd) ', ' num2str(frameN) ' expected.'])
+        num2str(frameNacqd) ', expected ' num2str(frameN) '.']);
     disp([mfilename ': Total acquisition and pull time was ' ...
-        num2str(totalT) ' sec, ' num2str(total_time) ...
-        ' sec expected.'])
+        num2str(totalT) ' sec, expected ' num2str(total_time) ...
+        ' sec.']);
     disp([mfilename ': Acquisition and pull time per frame ' ...
-        num2str(frameTsec) ' sec, ' num2str(total_time / frameN) ...
-        ' sec expected.'])
+        num2str(frameTsec) ' sec, expected ' num2str(total_time / frameN) ...
+        ' sec.']);
     % Send pulse to timing DAQ to indicate that acquisition is complete
     outputSingleScan(daqOUTIOI, 0);
-    % Attempt to get relative frame timing since first trigger
-    [~, frameTrecord, ~] = getdata(h.video, frameNacqd);
+
+    % % Save all frames into one file
+    % tsave = tic;
+    % fnamedum = [fname '_all_data'];
+    % temp.data = Tens;
+    % temp.times = FrameTimes;
+    % save(fnamedum, '-v6', '-struct', 'temp');
+    % totalsaveT = toc(tsave);
+    % clear n im imlast tsave
+    % if debugToggle
+    %     disp([mfilename ' DEBUG: Save time for all '...
+    %         'frames was ' num2str(totalsaveT) ' sec.']);
+    % end
+    % clear temp
     
-    frameTrecord
-    fnamedum = [fname '_all_data'];
-    temp.(data) = Tens;
-    temp.(times) = frameTrecord;
-    save(fnamedum, '-struct', 'temp', '-v6');
-    clear temp
-    
-    clear Tens
+    clear Tens FrameTimes
     imagerhandles = h;

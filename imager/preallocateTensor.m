@@ -1,5 +1,5 @@
 function preallocateTensor
-    global imagerhandles FPS Tens IMGSIZE frameN daqOUTtrig % trigSeq GUIhandles
+    global imagerhandles FPS Tens FrameTimes IMGSIZE frameN daqOUTtrig % trigSeq GUIhandles
     h = imagerhandles;
     
     % Set whether debugging output should be displayed
@@ -12,6 +12,7 @@ function preallocateTensor
     Xpx = IMGSIZE(1);
     Ypx = IMGSIZE(2);
     Tens = zeros(Xpx, Ypx, frameN, 'uint16');
+    FrameTimes = nan(frameN, 1);
     
     if isvalid(daqOUTtrig)
         stop(daqOUTtrig);
