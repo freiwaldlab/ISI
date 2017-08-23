@@ -28,7 +28,7 @@ function sendtoImager(cmd)
             datadir = get(findobj('Tag', 'datatxt'), 'String');
             tag = get(findobj('Tag', 'tagtxt'), 'String');
             dd = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
-            DataPath = dd;
+            DataPath = [datadir filesep lower(animal)];
             fname = sprintf('%s%su%s_%s', dd, filesep, unit, expt);
             fname = [fname  '_' sprintf('t%03d', trial)];
             GrabSaveLoop(fname)

@@ -64,7 +64,7 @@ unit = get(findobj('Tag', 'unittxt'), 'string');
 expt = get(findobj('Tag', 'expttxt'), 'string');
 datadir = get(findobj('Tag', 'datatxt'), 'string');
 tag = get(findobj('Tag', 'tagtxt'), 'string');
-DataPath = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+DataPath = [datadir filesep lower(animal)];
 
 % Get screen information for window positioning
 scpx = get(0, 'ScreenSize');
@@ -247,26 +247,27 @@ function captureImage_Callback(hObject, eventdata, handles)
     global imagerhandles DataPath
     handles = imagerhandles;
     
-    % Check if this data directory already exists
-    [Oflag, ~] = checkforOverwrite;
-    if ~Oflag
-        errordlg('Data directory does not exist. Please update subject or experiment number.')
-        return
+    if ~exist(DataPath, 'dir')
+        warning([mfilename ': Data path did not exist, made directory.']);
+        mkdir(DataPath);
     end
     
     if isfield(handles, 'video')
         if isvalid(handles.video)
             if handles.video.FramesAvailable > 0
-                Is = rot90(getdata(handles.video, handles.video.FramesAvailable), 2);
+                Is = rot90(getdata(handles.video, ...
+                    handles.video.FramesAvailable), 2);
                 I = Is(:,:,end);
-                handles.cameraImage = imshow(I, 'Parent', handles.cameraAxes);
+                handles.cameraImage = imshow(I, 'Parent', ...
+                    handles.cameraAxes);
             end
         end
     end
     if exist('I', 'var')
         % Plot image histogram in middle panel
         handles.histPlot = histogram(handles.histAxes, I);
-        set(handles.histAxes, 'YTick', [], 'XTick', [], 'XLim', [0 (2^16 - 1)]);
+        set(handles.histAxes, 'YTick', [], 'XTick', [], ...
+            'XLim', [0 (2^16 - 1)]);
         box(handles.histAxes, 'on');
         
         % Plot jet verson of snapshot to show image saturation
@@ -274,14 +275,12 @@ function captureImage_Callback(hObject, eventdata, handles)
             'DisplayRange', [0 (2^16 - 1)], 'Parent', handles.jetAxes);
         box(handles.jetAxes, 'on');
         
-        pfix = datestr(now, 'yymmddtHHMMSS');
+        pfix = [datestr(now, 'yymmdd') 'd' datestr(now, 'HHMMSS') 't'];
         capfname = strcat(DataPath, filesep, pfix, '_capture.png');
         imwrite(I, capfname);
         disp([mfilename ': Saved image (' capfname ').']);
     else
-        % If no new preview image exists
         error([mfilename ': Could not capture image.']);
-        return
     end
     
     imagerhandles = handles;
@@ -390,7 +389,7 @@ unit = get(findobj('Tag', 'unittxt'), 'string');
 expt = get(findobj('Tag', 'expttxt'), 'string');
 datadir = get(findobj('Tag', 'datatxt'), 'string');
 tag = get(findobj('Tag', 'tagtxt'), 'string');
-DataPath = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+DataPath = [datadir filesep lower(animal)];
 imagerhandles = handles;
 
 
@@ -420,7 +419,7 @@ function directory_Callback(hObject, eventdata, handles)
         expt = get(findobj('Tag', 'expttxt'), 'string');
         datadir = get(findobj('Tag', 'datatxt'), 'string');
         tag = get(findobj('Tag', 'tagtxt'), 'string');
-        DataPath = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+        DataPath = [datadir filesep lower(animal)];
     end
     imagerhandles = handles;
 

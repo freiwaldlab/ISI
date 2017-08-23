@@ -77,8 +77,8 @@ function buildStimulus(cond, trial)
             imPath = getParamVal('image_path');
         end
         if exist(imPath, 'dir')
-            cpdir = strcat(DataPath, filesep, 'stimuli_', ...
-                sprintf('%03d', trial));
+            cpdir = strcat(DataPath, filesep, 'stimuli_t', ...
+                sprintf('%02d', trial));
             [cpstatus,cpmsg] = copyfile(imPath, cpdir);
             if cpstatus
                 disp([mfilename ': ImageBlock stimulus images copied to ' ...

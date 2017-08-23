@@ -25,4 +25,4 @@ function UpdateACQExptName
     expt = get(findobj('Tag', 'expttxt'), 'string');
     datadir = get(findobj('Tag', 'datatxt'), 'string');
     tag = get(findobj('Tag', 'tagtxt'), 'string');
-    DataPath = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
+    DataPath = [datadir filesep lower(animal)];
