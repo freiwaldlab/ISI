@@ -1,414 +1,460 @@
-function maps = makeFourierPhaseMaps(subject,day,exptnum, rescaleImg,rotateImage,gcampFlag)
-% this code is based off of Ian Nauhaus's (Callaway lab) online analysis of the Fourier
-% phase map.
-% It works by computing a fourier component for each frame, adding them together and taking the mean. This seems reasonable.
-% see OnlineAnalysis code in Callaway lab intrinsic imaging package
+function makeFourierPhaseMaps(root, subj, expt, scale, rotate, gcampFlag)
+% modified for Freiwald lab
+% original author: Onyekachi 'Kachi' Odoemene, last update 2016-08
+% based on online analysis of the Fourier phase map from Ian Nauhaus
 
-%subject    :   string representing the animal name e.g. 'dr35'. This parameter is necessary.
-%day        :   string representing the day the experiment was done.e.g.'20-June-2014. This parameter is necessary.
-%exptnum    :   string representing the experiment number e.g. '001'. This parameter is necessary.
-%recaleImg  :   number indicating the factor by which to reduce the image X & Y pixel. e.g
-%               if the data were collected at 600x500 pixels (width x height).
-%               If the rescaleImg parameter is 2, the resulting data will prodce an image that is 300x250.
-%               Why you might want to do this is to save on computational memory/power. Having more pixels takes longer to compute the fourier transform.
-%rotateImg  :   angle to rotate image
-%gcampFlag  :   binary flag to indicate whether session was calcium imaging
-%               or intrinsic. 
+% Computes Fourier component for each frame, adds them together, and 
+% takes the mean.
 
-%Kachi O. circa 2014. Updated Aug 2016
+%subj      :   Animal name. (string, required)
+%expt      :   Experiment indicator. (string, required, e.g. '001')
+%scale     :   Factor by which to downsample. (optional, default 1.0)
+%              For data collected at 600px x 500px (width x height),
+%              setting the parameter to 0.5 results in 300px x 250px images.
+%              This saves on computation and demands less memory.
+%rotate    :   Angle to rotate images. (optional, default 0)
+%gcampFlag :   binary flag to indicate whether session was calcium imaging
+%              or intrinsic. (optional, default 0)
 
 %example usage:
 %   maps = makeFourierPhaseMaps('k32','25-June-2015','000',2,5,0,1);
-%
-if ~exist('rescaleImg','var')
-    rescaleImg = 1; %default value. reduce pixel size by a factor of 2.
-end
 
-if ~exist('rotateImage','var')
-    rotateImage = 0;
-end
+% Setup
+subj = 'zz9';
+expt = 'u000_014';
+scale = 1;
+root = 'H:\intrinsic';
 
-if ~exist('gcampFlag','var')
+data_path = fullfile(root, subj, expt);
+if ~isdir(data_path)
+    error([mfilename ': Could not find data directory.']);
+end
+map_path = fullfile('H:\intrinsic', subj, expt, 'FourierMaps');
+if ~isdir(map_path)
+    mkdir(map_path)
+end
+scale_default = 1;
+if ~exist('scale', 'var')
+    scale = scale_default;
+end
+rotate_default = 0;
+if ~exist('rotate', 'var')
+    rotate = rotate_default;
+end
+if ~exist('gcampFlag', 'var')
     gcampFlag = 0;
 end
+max_intens = 2^16 - 1;
 
-day = datestr(day,'dd-mmm-yyyy');
+%set(0, 'DefaultFigureWindowStyle', 'docked')
 
-%% choose directories 
-%this section needs to modified to point the script to the correct
-    %location.
-if ispc 
-    %ImgDirHeader = 'C:\Users\Kachi\Desktop\IntrinsicMaps\FourierMaps\';
-    
-%         dataDirHeader = ['Z:\Intrinsic\' fullfile(subject,'intrinsic imaging',day,exptnum)];
-%     dataDirHeader = fullfile('C:\Users\Baguette\Documents\Intrinsic Data\',subject,day,exptnum);
-    dataDirHeader = fullfile('E:\IntrinsicData\',subject,day,exptnum);
-    
-    ImgOutputDirHeader = 'C:\Users\ChurchlandLab\Desktop\Widefield\maps\fourier\';
-    
-elseif ismac
-    ImgOutputDirHeader = '~/Desktop/maps/FourierMaps/';
-    dataDirHeader = fullfile ('/Volumes/Churchland/Intrinsic',subject,day,exptnum);
-    
+% Import experiment details
+info_file = fullfile(data_path, ls(fullfile(data_path, '*.analyzer')));
+load(deblank(info_file), '-mat');
+clear info_file
+if ~exist('Analyzer', 'var')
+    error([mfilename ': Could not load experiment details.']);
 end
-%check file directory
-if ~isdir(dataDirHeader)
-    error('please check file directory, server connection, subject name,or date and try again')
+if ~strcmpi(Analyzer.P.type, 'SB')
+    error([mfilename ': The loaded data was not acquired with the spherical bar stimulus.']);
 end
-
-%specify directory for output of image file.
-ImageOutputDir = fullfile(ImgOutputDirHeader,subject,day,exptnum);
-
-if ~isdir(ImageOutputDir)
-    mkdir(ImageOutputDir) %create one.
-end
-
-set(0,'DefaultFigureWindowStyle','docked')
-
-%% go to the data directory and get the data files
-getfiles = dir(dataDirHeader);
-files = getfiles(~[getfiles.isdir]); %cell array listing files in the data directory
-
-datafiles = files(cellfun(@(x) strcmp(x(end-8:end),'_data.mat'),{files.name})); %find imaging data files within the cell array
-datafiles = {datafiles.name};
-numFiles = numel(datafiles);
-
-%% grab session stimulus params and trial conditions
-%the stimulus parameters are saved in a file called "analyzer.mat"
-%load this file and extract the number of conditions, the stimulus
-%parameter names and values, and the trial indices corresponding to a given
-%trial condition
-
-analyzerfile  = ls(fullfile(dataDirHeader,'*analyzer.mat')); %find the analyzer file
-analyzerfile = fullfile(dataDirHeader,analyzerfile); %get the full file name including directory
-load(deblank(analyzerfile)); %load the Analyzer file into the workspace.
-trialconditions = Analyzer.loops.conds; %find the conditions
-numconditions  = numel(trialconditions); %number of conditions
-paramVals = nan(numconditions,numel(Analyzer.L.param)); %find parameter values
-paramTrialInds = cell(1,numconditions);
-
-%% get trial condition information
-for n = 1:numconditions
-    thisparamval = cell2mat(trialconditions{1,n}.val);
-    paramNames(n,:) = trialconditions{1,n}.symbol;
-    
-    if ~isempty(thisparamval)
-        paramVals(n,:) = thisparamval;
+I.NumConds = numel(Analyzer.loops.conds);
+reps = numel(Analyzer.loops.conds{1}.repeats);
+for c = 1:I.NumConds
+    if numel(Analyzer.loops.conds{c}.repeats) == reps
+        continue
+    else
+        error([mfilename ': Number of repeats varies across conditions.']);
     end
-    
-    repeats = cell2mat(trialconditions{1,n}.repeats); %this has the trial numbers for each condition
-    paramTrialInds{n} = struct2array(repeats);
 end
+I.NumReps = reps;
+clear reps c
+I.NumTrials = I.NumConds * I.NumReps;
+I.Conditions = Analyzer.loops.conds;
+I.NumConds = numel(I.Conditions);
+I.CondParams = nan(I.NumConds, numel(Analyzer.L.param));
+I.CondTrials = cell(1, I.NumConds);
 
-%get frame rate
-try
-    %the frame rate parameter should be in Analyzer
-    fps = Analyzer.M.framerate;
-    
-%     if isfield(Analyzer.M,'binFrameRate')
-%         if ~isnan(Analyzer.M.binFrameRate)
-%             fps = Analyzer.M.binFrameRate;
-%         end
-%     end
-    
-catch
-    %if the frame rate is not there for some reason(old dataset), calculate
-    %the frame rate by taking the mean difference of the timestamps of each
-    %frame. The frames are stored in the variable "IntrinsicData"
-    thisdatafile = fullfile(dataDirHeader,datafiles{1});
-    load(thisdatafile);
-    fps = str2double (sprintf('%1.2f',(1./mean(diff(IntrinsicData.timestamps)))));
-    
+for c = 1:I.NumConds
+    I.CondParamNames(c,:) = I.Conditions{1,c}.symbol;
+    v = cell2mat(I.Conditions{1,c}.val);
+    if ~isempty(v)
+        I.CondParams(c,:) = v;
+    end
+    I.Repeats = cell2mat(I.Conditions{1,c}.repeats);
+    I.CondTrials{c} = struct2array(I.Repeats);
+    clear v
 end
-
-%Make parameter list and save file
-paramfilename = [subject '_' day '_' exptnum '_stimulus parameters.txt']; %parameter text file name
-
-%loop will list the parameters and enter them into the designated text
-%file.
-for kk = 1:length(Analyzer.P.param)
-    thisparamname  = Analyzer.P.param{kk}{1};
-    thisparamval = Analyzer.P.param{kk}{3};
-    eval(['params.' thisparamname '= thisparamval;']);    
+clear c
+for p = 1:length(Analyzer.P.param)
+    n = Analyzer.P.param{p}{1};
+    v = Analyzer.P.param{p}{3};
+    eval(['I.Params.' n ' = v;']);    
 end
+clear p n v
 
-%get trial durations
-preT =  params.predelay;
-stimT = params.stim_time;
-postT = params.postdelay;
-
-totT = preT+stimT+postT;
-nframes = totT*fps;
-
-%get the indices i.e. frames that correspond to a particlar time in the trial.
-prestim_ind = 1:floor(preT*fps); %indices(or frames) that correspond to prestimulus period
-stim_ind = floor(preT*fps)+1:floor(preT*fps)+ floor(stimT*fps); %indices(or frames) that correspond to stimulus period
-post_ind = stim_ind(end)+1:nframes; %indices(or frames) that correspond to poststimulus period
-
-%get stimulus cycle
-if isfield(params, 'CyclePeriod')
-    %this is for the rotating wedge.
-    numcycles = floor(params(1).stim_time/params(1).CyclePeriod); %# cycles in session
-    cyclePeriod = params.CyclePeriod;
-else
-    %this is for the sweeping bar.
-    numcycles = params.NumCycles; %# cycles in session
-    cyclePeriod = stimT/numcycles;
+tempfiles = dir(data_path);
+files = tempfiles(~[tempfiles.isdir]);
+data_files = files(cellfun(@(x) ...
+    ~isempty(regexp(x, '.*_Intrinsic\.mat', 'once')), {files.name}));
+data_files = {data_files.name};
+clear tempfiles files
+if numel(data_files) < I.NumTrials
+    error([mfilename ': Fewer data files than trials.']);
 end
+fr = nan(1, 4);
+nf = nan(1, 4);
+for d = 1:numel(data_files)
+    mv = who('-file', fullfile(data_path, data_files{d}));
+    m = matfile(fullfile(data_path, data_files{d}));
+    if ismember('NumFrames', mv)
+        nf(d) = m.NumFrames;
+    elseif ismember('Frames', mv)
+        nf(d) = m.Frames;
+    else
+        warning([mfilename ': Could not import number of frames.']);
+    end
+    % Calculate frame rate as the mean difference in all frame timestamps
+    fr(d) = round((1 ./ mean(diff(m.FrameTimes))), 2);
+end
+clear d
+if ~all(nf == nf(1))
+    warning([mfilename ': Number of frames is not the same for all trials.']);
+end
+if ~all(fr == fr(1))
+    warning([mfilename ': Frame rate is not the same for all trials.']);
+end
+I.NumFrames = mean(nf);
+I.FrameRate = mean(fr);
+clear fr nf m mv
 
-%% compute Fourier maps
-%initialize storage variables
-meanFourierPhaseMaps = cell(numconditions,1); %empty cell array for storing the phase maps for each condition
-meanFourierMagMaps = cell(numconditions,1);
+%% Compute Fourier maps
 
-conditions = meanFourierPhaseMaps;
+% Initialize variables where Fourier maps will be stored
+I.meanFourierPhaseMaps = cell(I.NumConds, 1);
+I.meanFourierMagMaps = cell(I.NumConds, 1);
+
 fignum = 0;
-close all
-for thiscondition = 1 :numconditions
-    %Each trial is saved as a sequence of images. One might have 32 trials for the entire
-    %imaging session, with 4 conditions. This turns out to be 8 trials per
-    %condition. However the sequence of trials and consequently the data files might not be saved sequentially.
-    %i.e. trials 1-8 might not correspon to conditon #1.
-    %To solve this, need to loop thru each condtion and find the trial numbers that correspond to a
-    %particular condition.
+for condNum = 1:I.NumConds
+    disp([mfilename ': Processing condition ' num2str(condNum) ', ' ...
+        I.CondParamNames{condNum,1} '=' num2str(I.CondParams(condNum,1))]);
+    % Each trial is saved as a sequence of images.
+    % For example, 32 trials for the imaging session and 4 conditions turns
+    % out to be 8 trials per condition.
+    % However, the sequence of trials and consequently the data files might
+    % not be saved sequentially.
+    % To solve this, loop through each condtion to find the trial numbers 
+    % that correspond to each condition.
     timer = tic;
-    trialstolookfor = paramTrialInds{thiscondition};
-    
-    for tt = 1 :numel(trialstolookfor)
-        
-        trial = trialstolookfor(tt);
-        trialstring = ['_' num2str(trial) '_data.mat'];
-        
+    condTrials = I.CondTrials{condNum};
+    for trialIdx = 1:numel(condTrials)
+        trialNum = condTrials(trialIdx);
+        trialStr = sprintf('t%02d', trialNum);
+        disp([mfilename ': Processing trial ' trialStr]);
         try
-            %to find filename that matches trial string ("'trial#'_data.mat") and load data
-            thisFile = datafiles{cellfun(@(x) strcmp(x(end-numel(trialstring)+1:end),trialstring),datafiles)};
+            % Load data file(s) corresponding to trial
+            trialFile = fullfile(data_path, data_files{trialNum});
+            trialData = matfile(trialFile, 'Writable', false);
+            %trial_data = load(deblank(trial_file));
         catch err
-            %this hack, avoids trials that were not collected, say for
-            %example when the session was interrupted.
+            % Warn if data file(s) cannot be found, but continue processing
+            warning([mfilename ': Could not load file. Experiment may ' ...
+                'have been interrupted.']);
             continue
         end
-        %load the file into the workspace and extract the frames
-        thisFile = fullfile(dataDirHeader,thisFile);
-        load(deblank(thisFile)) %load to workspace
-        thisTrialFrames = imrotate(imresize(single(squeeze(IntrinsicData.data)),(1/rescaleImg)),rotateImage); %extract data frames.squeeze to get rid of extraneous dimensions i.e. dimensions equal to 1
+        trailVars = who('-file', trialFile);
+        if ismember('NumFrames', trailVars)
+            trialFrameNum = trialData.NumFrames;
+        elseif ismember('Frames', trailVars)
+            trialFrameNum = trialData.Frames;
+        else
+            warning([mfilename ': Could not import number of frames.']);
+        end
+        clear trailVars
         
-        stimFrames = thisTrialFrames(:,:,stim_ind); %grab only frames during which the stimulus was presented
-        timeStamps = IntrinsicData.timestamps; %get the time stamps, i.e. when the frames were taken.
-        frameTimes = timeStamps(stim_ind); %take only the times when the stimulus was present.
-        frameTimes = frameTimes - frameTimes(1); %start from zero
-        clear IntrinsicData
+        % Find frame files
+        trial_path = fullfile(data_path, [trialStr '_data']);
+        data_list = dir(trial_path);
+        file_list = data_list(~[data_list.isdir]);
+        match_str = strcat('.*_', trialStr, '_f(\d+)_data\.mat');
+        im_files = struct2cell(file_list(cellfun(@(x) ...
+            ~isempty(regexp(x, match_str, 'once')), {file_list.name})));
+        im_names = im_files(1,:);
+        
+        % Index trial epochs (predelay, stim_time, and postdelay)
+        %preFrameIdx = 1:trialData.PreStimFrames;
+        stimFrameIdx = (trialData.PreStimFrames + 1):(trialFrameNum - trialData.PostStimFrames);
+        %postFrameIdx = (trialFrameNum - trialData.PostStimFrames + 1):trialFrameNum;
+        
+        load(fullfile(trial_path, im_names{1}), 'im');
+        [imHpx,imWpx] = size(im);
+        
+        frameTimes = trialData.FrameTimes(stimFrameIdx,1);
+        frameTimes = frameTimes - frameTimes(1);
 
-         %% Compute the discrete Fourier transform (i.e. component) for each frame
-        %the Fourier transform at k cycles of a sequence x[n] is
-        % X[k] = Cummulative sum, from n = 1 to N, of x[n]*exp((-j*2*pi*n*k)/N) OR otherewise written as x[n]*exp(-j*w*n)
+        % Compute the discrete Fourier transform (i.e. component) for each 
+        % frame the Fourier transform at k cycles of a sequence x[n] is
+        %   X[k] = cumsum( x[n]*exp((-j*2*pi*n*k)/N) ), from n = 1 to N, 
+        % otherwise expressed as
+        %   x[n]*exp(-j*w*n)
         % where,
-        % w is the angular frequency  = (2*pi*k)/N
-        % N is equal to number of frames (samples) in one cycle period (i.e k = 1) OR the total number of frames (i.e. k = however many cycles of your stimulus was presented within the total number of frames)
-        % x[n] is the image frame with w by h pixels
-        % n is the frame number (i.e. discrete time point)
-        % k is the number of cycles presented
-        
-        k = numcycles; %number of cycles presented during the stimulus epoch.
-        N = stimT; %duration of stimulus frames in secs.
-        n = frameTimes; %discrete time steps/stamps
-        anglularFreqofFrames = (2*pi*k*n)./N; %angular frequency. belongs in the exponential of the fourier transform equation. see thisFourierComponent below.
-        %         anglularFreqofFrames = 2*pi*n/cyclePeriod; % here k = 1,and N = cyclePeriod. It ends up being the same thing as the above equation.
-                
-        for n = 1:size(stimFrames,3)
-            thisframe = stimFrames(:,:,n);
+        %   x[n] is the image frame with w by h pixels
+        %   n is the frame time point
+        %   k is the number of cycles presented during the stimulus epoch
+        %   N is equal to number of frames (samples) in one cycle period
+        %        (i.e. k = 1) or the total number of frames 
+        %        (i.e. k = however many cycles of your stimulus was
+        %         presented within the total number of frames)
+        %   w is the angular frequency = (2*pi*k)/N
+        n = frameTimes;
+        k = I.Params.NumCycles;
+        N = I.Params.stim_time;
+        w = (2*pi * k * n) ./ N;
+     
+        firstTwoFrames = zeros(imHpx, imWpx, 2, 'double');
+        clear im tm
+        for f = 1:length(stimFrameIdx)
+            %frame = double(trialFrames(:,:,stimFrameIdx(f)));
+            fidx = stimFrameIdx(f);
+            load(fullfile(trial_path, im_names{fidx}), 'im');
+            if exist('im', 'var')
+                if (scale == scale_default) && (rotate == rotate_default)
+                    frame = double(squeeze(im));
+                elseif (scale ~= scale_default) && (rotate ~= rotate_default)
+                    frame = imrotate(imresize(double(squeeze(im)), scale), rotate);
+                elseif scale ~= scale_default
+                    frame = imresize(double(squeeze(im)), scale);
+                elseif rotate ~= rotate_default
+                    frame = imrotate(double(squeeze(im)), rotate);
+                end
+            else
+                error([mfilename ': Could not load image data for ' ...
+                    'frame ' num2str(f) '.']);
+            end
+            if f == 1
+                firstTwoFrames(:,:,1) = im;
+            elseif f == 2
+                firstTwoFrames(:,:,2) = im;
+            end
             if ~gcampFlag
-                thisframe = 4096 - thisframe; %inverts the pixel response, only for intrinsic data which is a negative dip
+                % Inverts the pixel intensity for intrinsic data,
+                % which is a negative dip.
+                frame = max_intens - frame;
             end
-            if n == 1
-                fourierTransform  = zeros(size(thisframe)); %start with zero. the fourier transform of each frame will be added together
+            if f == 1
+                % Start with zeros.
+                % The Fourier transforms of all frames will be summed.
+                fourierTransform = zeros(size(frame));
             end
-            thisFourierComponent = thisframe .* exp(1i*anglularFreqofFrames(n)); % x[n]*exp((-j*2*pi*n*k)/N)
-            fourierTransform = fourierTransform + thisFourierComponent; % The fourier transform at k cycles, X[k] = Cummulative sum, from n = 1 to N, of x[n]*exp((-j*2*pi*n*k)/N) take a cummulative sum of the fourier component of each frame (i.e. sample)
+            fourierComponent = frame .* exp(1i * w(f));  % x[n]*exp(-j*w*n)
+            % The Fourier transform at k cycles, 
+            %   X[k] = cumsum( x[n]*exp((-j*2*pi*n*k)/N) )
+            % from n = 1 to k,
+            % so sum of the Fourier components of frames 1 to k.
+            fourierTransform = fourierTransform + fourierComponent;
         end
+        clear f fidx fourierComponent
+        clear im tm
         
-        %% remove spectral (f0) leakage.--> optional
-        %From the little I understand this helps to reduce smearing of the frequency spectrum caused by computing the Fourier transform.
-        %The smearing occurs because the assumption of the FFT is that the
-        %signal is periodic and it's duration is infinite, and we only ever observe a fraction
-        %of the infinitely long signal. Because of this we might have discontinuities (or imperfect periodic signal) which contribute to spectral leakage.
-        %This website:http://bugra.github.io/work/notes/2012-09-15/Spectral-Leakage/ offers a nice explanation with figures.
-        f0 = sum(stimFrames(:,:,1:2),3)/2;
+        % (optionally) Remove spectral (F0) leakage.
+        % Helps to reduce smearing of the frequency spectrum caused by
+        % computing the Fourier transform.  The smearing occurs because
+        % the FFT assumes that the signal is periodic with an infinite
+        % duration, but we only ever observe a fraction of the infinitely
+        % long signal. Therefore, there may be discontinuities (or 
+        % imperfect, non-periodic signals) that cause spectral leakage.
+        % see http://bugra.github.io/work/notes/2012-09-15/Spectral-Leakage/
+        %f0 = sum(double(trialFrames(:,:,stimFrameIdx(1:2))), 3) / 2;
+        f0 = sum(double(firstTwoFrames(:,:,1:2)), 3) / 2;
         if ~gcampFlag
-            f0 = 4096 - f0;
+            f0 = max_intens - f0;
         end
-        fourierTransform = fourierTransform - f0*sum(exp(1i*anglularFreqofFrames)); 
-        fourierTransform = 2*fourierTransform ./n; %normalize/scale the transform
-       
-        %% sum phase and magnitude maps
-        if tt == 1
-            fourierPhase = zeros(size(thisframe));
-            fourierMag = zeros(size(thisframe));
+        fourierTransform = fourierTransform - f0 * sum(exp(1i * w));
+        % Normalize (scale) the transform
+        fourierTransform = 2 * fourierTransform ./ length(stimFrameIdx);
+        clear f0
+        % Sum phase and magnitude maps
+        if trialIdx == 1
+            fourierPhase = zeros(size(frame));
+            fourierMag = zeros(size(frame));
         end
-        
-        fourierPhase = fourierPhase + angle(fourierTransform); %compute the mean phase (angle) for each peak and sum for all trials in this condition.
+        clear frame
+        % Compute the mean phase (angle) for each peak and sum for all 
+        % trials within condition.
+        fourierPhase = fourierPhase + angle(fourierTransform);
         fourierMag = fourierMag + abs(fourierTransform);
+        
+        clear w k n N;
     end
-    thisFourierPhaseMap = fourierPhase/tt;%take the average angle (phase) map for this condition
-    thisFourierMagMap = fourierMag/tt;%average magnitude map for this condition
-    thisFourierMagMap = (thisFourierMagMap - min(thisFourierMagMap(:)))./range(thisFourierMagMap(:)); %normalize from zero to 1
+    % Average the angle (phase) map across trials for this condition
+    condPhaseMap = fourierPhase / trialIdx;
+    % Average the magnitude map across trials for this condition
+    condMagMap = fourierMag / trialIdx;
+    % Normalize magnitude map
+    condMagMap = (condMagMap - min(condMagMap(:))) ./ range(condMagMap(:));
     
-    %make condition title
-    conditionTitle = [];
-    for i = 1:size(paramNames,2)
-        conditionTitle = [conditionTitle paramNames(thiscondition,i) ': ' num2str(paramVals(thiscondition,i)) ' '];
+    condTitle = [];
+    for i = 1:size(I.CondParamNames, 2)
+        condTitle = [condTitle I.CondParamNames(condNum,i) ': ' ...
+            num2str(I.CondParams(condNum,i))];
     end
-    conditionTitle = cell2mat(conditionTitle);
-    conditionTitle = deblank(conditionTitle);
+    condTitle = cell2mat(condTitle);
+    condTitle = deblank(condTitle);
     
-    %plot mean phase map
-    fignum = fignum+1;
-    figure(fignum);
-    subplot(2,1,1)
-    imshow(thisFourierPhaseMap,[]);colorbar;colormap((jet));
-    title(conditionTitle);
-    subplot(2,1,2)
-    imshow(thisFourierMagMap,stretchlim(thisFourierMagMap)');colorbar;colormap((jet));
+    % Plot mean phase map
+    figure(fignum + 1);
+    subplot(2,1,1); axis equal;
+    imshow(rot90(condPhaseMap, -1), []); colorbar; colormap(parula);
+    title(condTitle);
+    subplot(2,1,2); axis equal;
+    imshow(rot90(condMagMap, -1), stretchlim(condMagMap)'); 
+    colorbar; colormap(parula);
     
-    %convert to rgb image
+    % Convert to RGB image
     bit = 2^8;
-    thisFourierPhaseMapDisplay = (thisFourierPhaseMap - min(thisFourierPhaseMap(:)))./(max(thisFourierPhaseMap(:))-min(thisFourierPhaseMap(:))); %scale the map from 0 to 1 by subtracting the minimum value of the mean phase map from the mean phase map, then dividing by the range (max - min).
-    phaseIndxMap = gray2ind(imadjust(thisFourierPhaseMapDisplay),bit);
-    phaseRGBMap = ind2rgb(phaseIndxMap,jet(bit));
-    figFilename = conditionTitle;
+    % Scale map from 0 to 1 by subtracting the min value from the mean phase
+    % map, then dividing by the range.
+    condPhaseMapDisp = (condPhaseMap - min(condPhaseMap(:))) ./ ...
+        (max(condPhaseMap(:)) - min(condPhaseMap(:)));
+    phaseMapIdx = gray2ind(imadjust(condPhaseMapDisp), bit);
+    phaseMapRGB = ind2rgb(phaseMapIdx, parula(bit));
+    figFilename = strcat(subj, '_', expt, '_', condTitle);
     figFilename(~((figFilename ~= ':') & (figFilename ~= ';'))) = '_';
+    figFilename(figFilename == ' ') = '';
     
-    imwrite(phaseRGBMap,(fullfile(ImageOutputDir,[figFilename '.tiff']))) %write TiFF file.
-%     print(fignum,(fullfile(ImageOutputDir,[figFilename '.eps'])),'-depsc2') %create EPS file
-    
-    conditions{thiscondition} = conditionTitle;
-    meanFourierPhaseMaps{thiscondition} = thisFourierPhaseMap; %store phase map in cell array.
-    meanFourierMagMaps{thiscondition} = thisFourierMagMap; %store mag map in cell array
+    imwrite(rot90(phaseMapRGB, -1), ...
+        (fullfile(map_path, [figFilename '.png'])));
+
+    I.ConditionTitles{condNum} = condTitle;
+    % Store maps
+    I.meanFourierPhaseMaps{condNum} = condPhaseMap; 
+    I.meanFourierMagMaps{condNum} = condMagMap;
     
     toc(timer)
 end
-maps.phaseMaps = meanFourierPhaseMaps;
-maps.magMaps = meanFourierMagMaps;
-maps.conditions = conditions;
-%% subtract maps generated from stimulus moving in the opposite direction
-azimuthWidthDeg = round(Analyzer.M.widthDeg);
-elevationHeightDeg = round(Analyzer.M.heightDeg);
-monitorAzDeg = round(Analyzer.M.screenAngle);
-monitorElDeg = round(Analyzer.M.screenCenterEyeVerticalDeg);
-azimuthRange = [monitorAzDeg-round(azimuthWidthDeg/2) monitorAzDeg+round(azimuthWidthDeg/2)];
-elevationRange = [0 elevationHeightDeg] - elevationHeightDeg/2 + monitorElDeg;
 
-if isfield(params,'BarOrient')
-    %for sweeping bar stimulus
-    
-    %BarOrient == 1 horizontal bar; BarOrient == 0 vertical bar
-    barOrientValcol = find(strcmp('BarOrient',paramNames)); %
-    hbar_inds = find(paramVals(barOrientValcol) == 1);
-    verticalMap = meanFourierPhaseMaps{hbar_inds(1)} - meanFourierPhaseMaps{hbar_inds(2)}; %to cancel hemodynamic delay, subtract phase map for reverse direction
-    verticalMap = (verticalMap - min(verticalMap(:))) ./(max(verticalMap(:)) - min(verticalMap(:))); %scale from 0 to 1
-    maps.vertical = verticalMap;
-    verticalMapScaled = diff(elevationRange)*(verticalMap) + elevationRange(1); %scale to stimulus units
+%% Subtract from each map the map generated from stimulus moving in the
+%  orthogonal direction
+I.screenXcm = Analyzer.M.screenXcm;
+I.screenYcm = Analyzer.M.screenYcm;
+I.screenDcm = Analyzer.M.screenDist;
+I.screenWdeg = 2 * atand((I.screenXcm / 2) / I.screenDcm);
+I.screenHdeg = 2 * atand((I.screenYcm / 2) / I.screenDcm);
+azimWdeg = round(I.screenWdeg);
+elevHdeg = round(I.screenHdeg);
+I.screenAdeg = 0;
+I.screen2eyeAdeg = 0;
+monAZIMdeg = round(I.screenAdeg);
+monELEVdeg = round(I.screen2eyeAdeg);
+azimRange = [(monAZIMdeg - round(azimWdeg / 2)) ...
+    (monAZIMdeg + round(azimWdeg / 2))];
+elevRange = [0 elevHdeg] - elevHdeg/2 + monELEVdeg;
 
-    %plot vertical map
-    figure(5);clf
-    subplot(2,1,1)
-    imshow(verticalMapScaled,[]);colorbar;colormap((jet));
-    title('vertical (elevation) retinotopy')
-    subplot(2,1,2)
-    magMapV =(meanFourierMagMaps{hbar_inds(1)}+ meanFourierMagMaps{hbar_inds(2)})/2;
-    magMapV = (magMapV - min(magMapV(:)))./(range(magMapV(:)));
-    imshow(magMapV,stretchlim(magMapV));colorbar;colormap(jet);
-%     
-    %save tiff and eps versions   
-    figFilename = 'retinotopy_elevation map';
-    verticalIndxMap = gray2ind(imadjust(verticalMap),bit);
-    verticalRGBMap = ind2rgb(verticalIndxMap,jet(bit));
-    imwrite(verticalRGBMap,(fullfile(ImageOutputDir,[figFilename '.tiff'])))
-%     print(fignum,(fullfile(ImageOutputDir,[figFilename '.eps'])),'-depsc2')
+if isfield(I.Params, 'BarDirection')
+    % BarDirection == 0, right-to-left or bottom-to-top 
+    % BarDirection == 1, left-to-right or top-to-bottom
+    barDirParamCol = find(strcmp('BarDirection', I.CondParamNames));
+    disp([mfilename ' WARNING: TODO *** CHECK FOR TWO SEPARATE DIRECTIONS'])
+    pause
+    elevInds = find(I.CondParams(barDirParamCol) == 1)
+    % Cancel hemodynamic delay by subtracting phase map for reverse direction
+    I.meanFourierPhaseMaps
+    elevPhaseMap = I.meanFourierPhaseMaps{elevInds(1)} - ...
+        I.meanFourierPhaseMaps{elevInds(2)};
+    % Scale
+    elevPhaseMap = (elevPhaseMap - min(elevPhaseMap(:))) ./ ...
+        (max(elevPhaseMap(:)) - min(elevPhaseMap(:)));
+    % Scale to stimulus units
+    elevPhaseMapScaled = (diff(elevRange) * elevPhaseMap) + elevRange(1);
+    elevMagMap =(I.meanFourierMagMaps{elevInds(1)} + ...
+        I.meanFourierMagMaps{elevInds(2)}) / 2;
+    elevMagMap = (elevMagMap - min(elevMagMap(:))) ./ range(elevMagMap(:));
+    I.elevPhaseMap = elevPhaseMap;
+    I.elevMagMap = elevMagMap;
+
+    % Plot elevation map
+    figure(fignum + 1); clf;
+    subplot(2,1,1);
+    imshow(rot90(elevPhaseMapScaled, -1), []);
+    colorbar; colormap(parula);
+    title('elevation retinotopy')
+    subplot(2,1,2);
+    imshow(rot90(elevMagMap, -1), stretchlim(elevMagMap));
+    colorbar; colormap(parula);
+    figFilename = 'retinotopy_elevation_map';
+    elevMapIdx = gray2ind(imadjust(elevPhaseMap), bit);
+    elevMapRGB = ind2rgb(elevMapIdx, parula(bit));
+    imwrite(rot90(elevMapRGB, -1), fullfile(map_path, [figFilename '.png']));
    
-    %horizontal map
-    vbar_inds = find(paramVals(barOrientValcol) == 0);
-    horizontalMap = meanFourierPhaseMaps{vbar_inds(1)} - meanFourierPhaseMaps{vbar_inds(2)};
-    horizontalMap = (horizontalMap - min(horizontalMap(:)))./ (max(horizontalMap(:))- min(horizontalMap(:))); %scale from 0 to 1
-    horizontalMapScaled  = diff(azimuthRange)*(horizontalMap) + azimuthRange(1); %scale to stimulus units 
+    % Plot azimuth map
+    azimInds = find(I.CondParams(barDirParamCol) == 0);
+    azimPhaseMap = I.meanFourierPhaseMaps{azimInds(1)} - ...
+        I.meanFourierPhaseMaps{azimInds(2)};
+    azimPhaseMap = (azimPhaseMap - min(azimPhaseMap(:))) ./ ...
+        (max(azimPhaseMap(:)) - min(azimPhaseMap(:)));
+    azimPhaseMapScaled = (diff(azimRange) * azimPhaseMap) + azimRange(1);
+    azimMagMap = (I.meanFourierMagMaps{azimInds(1)} + ...
+        I.meanFourierMagMaps{azimInds(2)}) / 2;
+    azimMagMap = (azimMagMap - min(azimMagMap(:))) ./ range(azimMagMap(:));
+    I.azimPhaseMap = azimPhaseMap;
+    I.azimMagMap = azimMagMap;
     
-    maps.horizontal = horizontalMap;
-    figure(6);clf
-    subplot(2,1,1)
-    imshow(horizontalMapScaled,[]); colorbar;colormap((jet));
+    figure(fignum + 1); clf;
+    subplot(2,1,1);
+    imshow(rot90(azimPhaseMapScaled, -1), []);
+    colorbar; colormap(parula);
     title('horizontal (azimuth) retinotopy')
-    subplot(2,1,2)
-    magMapH =(meanFourierMagMaps{vbar_inds(1)}+ meanFourierMagMaps{vbar_inds(2)})/2;
-    magMapH = (magMapH - min(magMapH(:)))./(range(magMapH(:)));
-    imshow(magMapH,stretchlim(magMapH));colorbar;colormap(jet);
+    subplot(2,1,2);
+    imshow(rot90(azimMagMap, -1), stretchlim(azimMagMap));
+    colorbar; colormap(parula);
+    figFilename = 'retinotopy_azimuth_map';   
+    azimMapIdx = gray2ind(imadjust(azimPhaseMap), bit);
+    azimMapRGB = ind2rgb(azimMapIdx, parula(bit));
+    imwrite(rot90(azimMapRGB, -1), fullfile(map_path, [figFilename '.png']));
     
-%     %save two (tiff and eps) versions of the horizontal map
-    figFilename = 'retinotopy_azimuth map';   
-    horizontalIndxMap = gray2ind(imadjust(horizontalMap),bit);
-    horizontalRGBMap = ind2rgb(horizontalIndxMap,jet(bit));
-    imwrite(horizontalRGBMap,(fullfile(ImageOutputDir,[figFilename '.tiff'])))
-    %     print(fignum,(fullfile(ImageOutputDir,[figFilename '.eps'])),'-depsc2')
+    save(fullfile(map_path, 'retinotopy_azimuth_map.mat'), 'azimPhaseMapScaled');
+    save(fullfile(map_path, 'retinotopy_elevation_map.mat'), 'elevPhaseMapScaled');
     
-    save(fullfile(ImageOutputDir,'retinotopy_azimuth map.mat'),'horizontalMapScaled')
-    save(fullfile(ImageOutputDir,'retinotopy_elevation map.mat'),'verticalMapScaled')
-    %% Compute visual field sign map from Callaway lab visual area segmentation paper-->optional
-    
-    kmap_hor = spatialFilterGaussian(horizontalMapScaled,1);
-    kmap_vert = spatialFilterGaussian(verticalMapScaled,1);
-     
-    pixpermm = 1000/(7.2*rescaleImg*Analyzer.M.spatialBinFactor); %camera: 1 pixel = 7.2 um
-        
-    mmperpix = 1/pixpermm;
-    
-    [dhdx, dhdy] = gradient(kmap_hor);
-    [dvdx, dvdy] = gradient(kmap_vert);
-    
-    xdom = (0:size(kmap_hor,2)-1)*mmperpix;
-    ydom = (0:size(kmap_hor,1)-1)*mmperpix;
+    %% (optionally) Compute visual field sign map from Callaway lab visual
+    %  area segmentation paper
+    azimKmap = spatialFilterGaussian(azimPhaseMapScaled, 1);
+    elevKmap = spatialFilterGaussian(elevPhaseMapScaled, 1);
+    % camera: 1 pixel = 7.2 um
+    pixpermm = (scale * 1000) / 5.86; %%% TODO !!! *** stop hardcoding px size
+    mmperpix = 1 / pixpermm;
+    [dadx, dady] = gradient(azimKmap);
+    [dedx, dedy] = gradient(elevKmap);
+    xdom = (0:size(azimKmap, 2) - 1) * mmperpix;
+    ydom = (0:size(azimKmap, 1) - 1) * mmperpix;
 
-    graddir_hor = atan2(dhdy,dhdx);
-    graddir_vert = atan2(dvdy,dvdx);
+    azimGradDir = atan2(dady, dadx);
+    elevGradDir = atan2(dedy, dedx);
     
-    vdiff = exp(1i*graddir_hor) .* exp(-1i*graddir_vert); %Should be vert-hor, but the gradient in Matlab for y is opposite.
-    VFS = sin(angle(vdiff)); %Visual field sign map
-    id = find(isnan(VFS));
-    VFS(id) = 0;
-    VFS = spatialFilterGaussian(VFS,5);  %Important to smooth before thresholding below
+    % Should be elev-azim, but the gradient in MATLAB indexing for y is opposite
+    diffGrad = exp(1i * azimGradDir) .* exp(-1i * elevGradDir);
+    % Visual field sign map
+    visFieldSignMap = sin(angle(diffGrad));
+    id = isnan(visFieldSignMap);
+    visFieldSignMap(id) = 0;
+    % Smooth before thresholding
+    visFieldSignMap = spatialFilterGaussian(visFieldSignMap, 5);
     
-    figure(111), clf
-    imagesc(xdom,ydom,VFS,[-1 1]), axis image; axis off
-    colorbar
-    title('sin(angle(Hor)-angle(Vert))')
-    
-    
-elseif isfield(params,'Rotation')
-    %for rotating wedge stimulus
-    rotationDiffMap = maps.phaseMaps{1} - maps.phaseMaps{2};
-    rotationDiffMap = (rotationDiffMap - min(min(rotationDiffMap)))./(max(max(rotationDiffMap))- min(min(rotationDiffMap)));
-    rotationDiffMap = rotationDiffMap*2*pi;
-    maps.rotationDiff = rotationDiffMap;
-    
-    figure(5);clf
-    imshow(rotationDiffMap,[]);colorbar;colormap((jet));
-    title('Rotating Wedge difference map')
-    figFilename = 'Rotating wedge difference map';
-    
-    rotationIndxMap = gray2ind(imadjust(rotationDiffMap./(2*pi)),bit);
-    rotationRGBMap = ind2rgb(rotationIndxMap,jet(bit));
-%     imwrite(rotationRGBMap,fullfile(ImageOutputDir,[figFilename '.tiff']))
-%     print(fignum,fullfile(ImageOutputDir,[figFilename '.eps']))
+    figure(fignum + 1); clf;
+    imagesc(xdom, ydom, visFieldSignMap, [-1 1]);
+    axis image; axis off; colorbar;
+    title('sin(angle(elev)-angle(azim))')
 end
+clear fignum
 
-set(0,'DefaultFigureWindowStyle','normal');
-% horizontalMapScaled = imrotate(horizontalMapScaled,rotateImage);
-% verticalMapScaled = imrotate(verticalMapScaled,rotateImage);
+%set(0,'DefaultFigureWindowStyle', 'normal');
+% horizontalMapScaled = imrotate(horizontalMapScaled, rotateImage);
+% verticalMapScaled = imrotate(verticalMapScaled, rotateImage);
 
 
 function img = spatialFilterGaussian(img, sigma)
-
 % cutoff = ceil(2*sigma);
 % h=fspecial('gaussian',[1,2*cutoff+1],sigma);
-% 
 % imgOut = conv2(h,h,img,'same'); %apply spatial filter
-hh = fspecial('gaussian',size(img),sigma); 
-hh = hh/sum(hh(:));
-img = ifft2(fft2(img).*abs(fft2(hh)));
+    hh = fspecial('gaussian', size(img), sigma); 
+    hh = hh / sum(hh(:));
+    img = ifft2(fft2(img) .* abs(fft2(hh)));
