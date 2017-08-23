@@ -21,3 +21,6 @@ function configureMstate
     
     % Set running state
     Mstate.running = 0;
+    
+    % Set camera pixel size in um
+    Mstate.cameraPxSize = 5.86;
