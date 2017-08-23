@@ -77,7 +77,7 @@ function GrabSaveLoop(fname)
                 save(fnamedum, 'im', 'tm', '-v6');
             end
             totalsaveT = toc(tsave);
-            clear n im imlast tsave
+            clear n im tm tsave
             if debugToggle && (frameRnum > 0)
                 disp([mfilename ' DEBUG: Save time for recent '...
                     'fetched frames was ' num2str(totalsaveT) ' sec.']);
@@ -121,12 +121,12 @@ function GrabSaveLoop(fname)
     % temp.times = FrameTimes;
     % save(fnamedum, '-v6', '-struct', 'temp');
     % totalsaveT = toc(tsave);
-    % clear n im imlast tsave
+    % clear n im tsave
     % if debugToggle
     %     disp([mfilename ' DEBUG: Save time for all '...
     %         'frames was ' num2str(totalsaveT) ' sec.']);
     % end
     % clear temp
     
-    clear Tens FrameTimes
+    clearvars -global Tens FrameTimes
     imagerhandles = h;

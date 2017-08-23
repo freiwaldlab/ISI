@@ -46,6 +46,7 @@ function sendtoImager(cmd)
             end
             flushdata(ih.video);
             disp([mfilename ': Stopped triggering video.'])
+            clearvars -global Tens FrameTimes
         otherwise
             error([mfilename ': Send command was not understood.']);
     end
