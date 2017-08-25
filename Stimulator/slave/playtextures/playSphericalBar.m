@@ -1,5 +1,5 @@
 function playSphericalBar
-    % original author Onyekachi 'Kachi' Odoemene 2016-06-30
+    % Original author Onyekachi 'Kachi' Odoemene 2016-06-30
     global Mstate screenPTR screenNum
     global barTex srcRect dstRect  % from makeSphericalBarTexture
     global Stxtr  % from makeSyncTexture
@@ -31,7 +31,6 @@ function playSphericalBar
     else
         flipRate = 0;
     end
-    direction = P.BarDirection;
     cycleN = P.NumCycles;
     
     % Run the movie animation for a fixed period.
@@ -42,20 +41,30 @@ function playSphericalBar
     %temporal period, i.e. number of frames in one cycle of bar sweep
     frameN = floor(frameRate);
     
-    % Convert movieDuration in seconds to duration in frames to draw:
-    movFrames = round(movTsec * frameRate);
-    movFrameInds = floor(mod((0:movFrames-1)/(movFrames/frameN), frameN)) + 1;
+    % Convert movTsec to duration in frames.
+    movFrms = round(movTsec * frameRate);
+    movFrmInds = floor(mod((0:movFrms-1)/(movFrms/frameN), frameN)) + 1;
     
-    if direction == 1 %forward direction
-        movFrameInds = reshape(movFrameInds, 1, max(size(movFrameInds)));
-        movFrameInds = fliplr(movFrameInds);
+    if P.BarDirection == 1
+    % Forward direction
+        movFrmInds = reshape(movFrmInds, 1, max(size(movFrmInds)));
+        movFrmInds = fliplr(movFrmInds);
+        disp([mfilename ': Presenting bar in forward direction.']);
+    elseif P.BarDirection == -1
+    % Reverse direction
+        disp([mfilename ': Presenting bar in reverse direction.']);
+    else
+        movFrmInds = reshape(movFrmInds, 1, max(size(movFrmInds)));
+        movFrmInds = fliplr(movFrmInds);
+        disp([mfilename ': Direction incorrectly specified, ' ...
+            'defaulting to forward.']);
     end
     
     if flipRate
-        flipFrames = (frameRate / flipRate) / 2; %convert to frames per cycle
-        flipBar = floor(mod((0:movFrames)/flipFrames, 2)) + 1;
+        flipFramesPerCyc = (frameRate / flipRate) / 2;
+        flipBar = floor(mod((0:movFrms)/flipFramesPerCyc, 2)) + 1;
     else
-        flipBar = ones(1, movFrames);
+        flipBar = ones(1, movFrms);
     end
     
     % Translate that into the amount of seconds to wait between screen
@@ -77,9 +86,9 @@ function playSphericalBar
     % Play stimulus by drawing pre-generated textures to the screen
     vbl = Screen('Flip', window);
     for n = 1:cycleN
-        for i = 1:movFrames
+        for i = 1:movFrms
             Screen('DrawTextures', window, ...
-                [barTex(flipBar(i), movFrameInds(i)) syncLow], ...
+                [barTex(flipBar(i), movFrmInds(i)) syncLow], ...
                 [srcRect syncPiece], [dstRect syncPos]);
             Screen('DrawingFinished', window);
             vbl = Screen('Flip', window, vbl + (waitframes - 0.5) * ifi);
