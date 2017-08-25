@@ -258,7 +258,7 @@ if ~Mstate.running
     
     if get(GUIhandles.main.intrinsicflag, 'value')
         % sendtoImager 'I' runs preallocateTensor, which depends on
-        % stimulus time, so moved into run2.m
+        % stimulus time, so moved into runExperiment.m
         %P = getParamStruct;
         %total_time = P.predelay + P.postdelay + P.stim_time;
         %sendtoImager(sprintf(['I %2.3f' 13], total_time))
@@ -295,12 +295,12 @@ if ~Mstate.running
    
     trialno = 1;
     
-    %In 2 computer version 'run2' is no longer a loop, but gets recalled
+    %In 2 computer version 'runExperiment' is no longer a loop, but gets recalled
     %after each trial... 
     %In 'endAcquisition' (2ph), below (intrinsic), or 'Displaycb' (no acquisition)
-    run2 
+    runExperiment 
     
-    %We don't want anything significant to happen after 'run2', so that
+    %We don't want anything significant to happen after 'runExperiment', so that
     %scanimage will be ready to accept TTL
     
     % Remove video object and clean up after all trials

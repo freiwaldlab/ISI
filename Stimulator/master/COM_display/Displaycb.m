@@ -35,6 +35,6 @@ function Displaycb(obj, event)
     if (strcmp(inString, 'nextT') && ...
        ~get(GUIhandles.main.twophotonflag, 'value') && ...
        ~get(GUIhandles.main.intrinsicflag, 'value'))
-        run2    
+        runExperiment    
     end
   

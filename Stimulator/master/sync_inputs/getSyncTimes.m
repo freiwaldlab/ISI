@@ -13,7 +13,7 @@ function [dispSynctimes, acqSynctimes, dsyncwave] = getSyncTimes
     dsyncwave = syncs(:,1);
 
 % 4 lines below are optional to save synctimes. replaces saveSync. however,
-% looks like data is saved in run2 by saveSyncInfo. confirm and then delete
+% looks like data is saved in runExperiment by saveSyncInfo. confirm and then delete
 % 170109mmf
 % % processedSynctimes = {dispSynctimes, acqSynctimes};
 % % title = ['processedSynctimes ' Mstate.anim '_' sprintf('u%s',Mstate.unit) '_' Mstate.expt];
