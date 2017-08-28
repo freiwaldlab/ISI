@@ -67,6 +67,10 @@ function playimageblock
     msg = strcat('SO;IB;', imPath, ';', imListStr, ';~');
     fwrite(comState.serialPortHandle, msg);
     
+    % Set screen to background
+    Screen('FillRect', window, P.background);
+    Screen('Flip', window);
+
     % Pre-delay
     % Draw "high" sync state for first half of pre-delay to indicate 
     % beginning of new block
