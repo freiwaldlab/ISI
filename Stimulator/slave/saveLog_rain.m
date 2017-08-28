@@ -1,8 +1,8 @@
 function saveLog_rain(x, varargin)
-global Mstate pathData
+global Mstate pathBase
 
 expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [pathData expt '.mat'];
+fname = [pathBase expt '.mat'];
 frate = Mstate.refresh_rate;
 
 if isempty(varargin)  %from 'make' (happens on first trial only)

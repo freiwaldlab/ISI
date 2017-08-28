@@ -1,12 +1,12 @@
 function saveLog(x, varargin)
-    global Mstate loopTrial pathData
+    global Mstate loopTrial pathBase
 %An important thing to note on the way this is saved:  Since domains are
 %only saved once, I can't put variables in the looper that
 %would change this.  Also, rseeds are saved on top of each other. The
 %sequences would also change if other parameters change, such as nori.
 
 expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [pathData expt '.mat'];
+fname = [pathBase expt '.mat'];
 frate = Mstate.refresh_rate;
 
 if isempty(varargin)  %from 'make'  (happens on first trial only)... save domains and frame rate
