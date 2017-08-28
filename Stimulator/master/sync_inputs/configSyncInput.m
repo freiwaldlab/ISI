@@ -21,8 +21,8 @@ function configSyncInput
     if ~isempty(analogIN_devid)
         analogIN = daq.createSession('ni');
         addAnalogInputChannel(analogIN, analogIN_devid, 0:4, 'Voltage');
-        %0: photodiode, 1: strobe, 2: trigger copy, 3: audio copy, 4:
-        %start/stop IOI ttl copy
+        % 0: photodiode, 1: strobe, 2: trigger copy, 3: audio copy, 
+        % 4: start/stop IOI ttl copy
         % Rate determined by maximum on device/number of channels
         analogIN.Rate = 2000;
         analogIN.IsContinuous = true;
