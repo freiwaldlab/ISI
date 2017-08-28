@@ -1,45 +1,40 @@
-function runExperiment
-global GUIhandles Mstate trialno syncInfo trialInfo analogIN analogINdata
-global DataPath LogFile
-mod = getmoduleID;
+function runExpt
+global GUIhandles Mstate
+global trialno trialInfo
+global pathBase pathData
+global syncInfo analogIN analogINdata daqOUT2p
+global prefixDate prefixTrial
 
-%otherwise 'getnotrials' won't be defined for play sample
+modID = getmoduleID;
 if Mstate.running
     nt = getnotrials;
 end
 
 % Determine what to run from GUI toggles
-ScanImageBit = get(GUIhandles.main.twophotonflag, 'value');
+twoPbit = get(GUIhandles.main.twophotonflag, 'value');
 ISIbit = get(GUIhandles.main.intrinsicflag, 'value');
 
-%'trialno<nt' may be redundant.
 if Mstate.running && (trialno <= nt)
+    prefixTrial = sprintf('t%0*.0f', numel(num2str(nt)), trialno);
     set(GUIhandles.main.showTrial, 'string', ...
-        ['Trial ' num2str(trialno) ' of ' num2str(nt)] );
+        ['Trial ' prefixTrial ' of ' ...
+        sprintf('t%0*.0f', numel(num2str(nt)), nt)]);
     drawnow
 
-    %get cond and rep for this trialno
-    [c, r] = getcondrep(trialno);
+    [c,r] = getcondrep(trialno);
     
-    %%%Update ScanImage with Trial/Cond/Rep
-    %This gets sent before trial starts
-    if ScanImageBit
-        updateACQtrial(trialno)
-    end
+    %if twoPbit
+    %    update2Ptrial(trialno)
+    %end
 
-    %%%Organization of commands is important for timing in this part of loop
-    %Tell stimulus to buffer the images (also controls shutter)
     buildStimulus(c, trialno)
-    %Wait for serial port to respond from display
     waitforDisplayResp
-    %Tell Display to show its buffered images. 
-    %TTL from stimulus computer "feeds back" to trigger 2ph acquisition
     
     if ISIbit
-        % moved here from MainWindow so that each trial can have
-        % different total durations and acquired frames
+        % Each ImageBlock trial can have different total durations 
+        % and acquired frames
         P = getParamStruct;
-        if strcmpi(mod, 'IB')
+        if strcmpi(modID, 'IB')
             tag_time = str2double(get(findobj('tag', 'timetxt'), 'string'));
             total_time = P.predelay + P.postdelay + tag_time;
         else
@@ -47,27 +42,36 @@ if Mstate.running && (trialno <= nt)
         end
         sendtoImager(sprintf(['I %2.3f' 13], total_time))
         
-        pf = [datestr(now, 'yymmdd') 'd' datestr(now, 'HHMMSS') 't'];
-        LogFile = [DataPath filesep pf sprintf('_t%03d', trialno) '.log'];
-        clear pf
-        fid1 = fopen(LogFile, 'w');
+        pathData = fullfile(pathBase, [prefixDate '_' prefixTrial '_data']);
+        if ~exist(pathData, 'dir')
+            mkdir(pathData);
+            disp([mfilename ': Data path did not exist. ' ...
+                'Created [' pathData '].']);
+        end
+        fileLog = fullfile(pathBase, [prefixDate '_' prefixTrial '.log']);
+        fid1 = fopen(fileLog, 'w');
         lhIn = addlistener(analogIN, ...
             'DataAvailable', @(src, event)logData(src, event, fid1));
         analogIN.startBackground;
-        disp([mfilename ': Log file opened (' LogFile ').']);
+        disp([mfilename ': Log file opened [' fileLog '].']);
     end
     
     pause(0.25)
-    startStimulus      
-    
-    %In 2ph mode, we don't want anything significant to happen after startStimulus, so that
-    %scanimage will be ready to accept TTL
-    
+    startStimulus
+
+    if twoPbit
+        high = 1;
+        low = 0;
+        outputSingleScan(daqOUT2p, high);
+        ttlTmsec = 50 / 1000;
+        tic;
+        while toc < ttlTmsec
+        end
+        outputSingleScan(daqOUT2p, low);
+        clear high low
+    end
     if ISIbit
-        %Matlab now enters the frame grabbing loop
         sendtoImager(sprintf(['S %d' 13], trialno))
-        %%%Timing is not crucial for this last portion of the loop 
-        %(both display and frame grabber/saving is inactive)...
     end
     
     if strcmpi(getmoduleID, 'IB')
@@ -85,8 +89,8 @@ if Mstate.running && (trialno <= nt)
         analogIN.stop;
         delete(lhIn);
         fclose(fid1);
-        disp([mfilename ': Reading log file (' LogFile ').']);
-        fid2 = fopen(LogFile, 'r');
+        disp([mfilename ': Reading log file (' fileLog ').']);
+        fid2 = fopen(fileLog, 'r');
         % analogINdata is a 6 x samples matrix where...
         %   (1,:) is the time each sample is taken from start
         %   (2,:) is the voltage on analog input 0: photodiode from display
@@ -145,37 +149,25 @@ if Mstate.running && (trialno <= nt)
         [syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
             getSyncTimes;
         syncInfo.dSyncswave = [];
-        % Append to .analyzer file
         saveSyncInfo(syncInfo)
         
-        %[looperInfo.conds{c}.repeats{r}.dispSyncs looperInfo.conds{c}.repeats{r}.acqSyncs looperInfo.conds{c}.repeats{r}.dSyncswave] = getSyncTimes;
+        %[looperInfo.conds{c}.repeats{r}.dispSyncs ...
+        %    looperInfo.conds{c}.repeats{r}.acqSyncs ...
+        %    looperInfo.conds{c}.repeats{r}.dSyncswave] = getSyncTimes;
         
         %Compute F1
         onlineAnalysis(c, r, syncInfo)
     end
     
     trialno = trialno + 1;
-    
-    %This would otherwise get called by Displaycb 
     if ISIbit
-        %Nothing should happen after this
-        runExperiment
+        runExpt
     end
 else
-    %Before, I had this in the 'mainwindow callback routine, which messed
-    %things up on occasion.
-    %This is executed at the end of experiment and when abort button is hit
-    if get(GUIhandles.main.twophotonflag,'value')
-        Stimulus_localCallback('abort'); %Tell ScanImage to hit 'abort' button
-    end
-    
-    %set(GUIhandles.param.playSample,'enable','off')
-    
     Mstate.running = 0;
     set(GUIhandles.main.runbutton, 'string', 'Run')
     
     if get(GUIhandles.main.intrinsicflag, 'value')
-        %set(GUIhandles.param.playSample,'enable','off')
         saveOnlineAnalysis
     end
 end
