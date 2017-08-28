@@ -19,7 +19,7 @@ function confPstate_SphericalBar
     Pstate.param{sh(Pstate.param)+1} = {'FlickerRate', 'float', 6, 0, ' Hz'};
     Pstate.param{sh(Pstate.param)+1} = {'contrast', 'int', 100, 0, '%'};
     Pstate.param{sh(Pstate.param)+1} = {'TrialInterval', 'int', 10, 0, ' sec'};
-    Pstate.param{sh(Pstate.param)+1} = {'eyeXLocation', 'float', 26.035, 0, ' cm'};
-    Pstate.param{sh(Pstate.param)+1} = {'eyeYLocation', 'float', 14.605, 0, ' cm'};
+    Pstate.param{sh(Pstate.param)+1} = {'eyeXLocation', 'float', 26.035, 0, ' cm (half monitor X)'};
+    Pstate.param{sh(Pstate.param)+1} = {'eyeYLocation', 'float', 14.605, 0, ' cm (half monitor Y)'};
     Pstate.param{sh(Pstate.param)+1} = {'ScreenScaleFactor', 'int', 4, 0, ' x'};
     Pstate.param{sh(Pstate.param)+1} = {'sphereCorrectON', 'int', 1, 0, ' 1=on 0=off'};
