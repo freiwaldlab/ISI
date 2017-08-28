@@ -22,7 +22,7 @@ function varargout = slimImager(varargin)
 
 % Edit the above text to modify the response to help slimImager
 
-% Last Modified by GUIDE v2.5 09-Feb-2017 15:22:19
+% Last Modified by GUIDE v2.5 28-Aug-2017 12:07:43
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,15 +55,15 @@ global imagerhandles imagerWinOffYpx
 
 % Data directory, unit, and tag settings
 handles.datatxt = 'D:\';
-handles.unit = 'u000_000';
+%handles.unit = 'u000_000';
 handles.time_tag = 0;
 set(findobj('Tag', 'datatxt'), 'string', handles.datatxt);
-%trial = str2double(cmd(3:end));
 animal = get(findobj('Tag', 'animaltxt'), 'string');
-unit = get(findobj('Tag', 'unittxt'), 'string');
-expt = get(findobj('Tag', 'expttxt'), 'string');
+%unit = get(findobj('Tag', 'unittxt'), 'string');
+%expt = get(findobj('Tag', 'expttxt'), 'string');
 datadir = get(findobj('Tag', 'datatxt'), 'string');
 tag = get(findobj('Tag', 'tagtxt'), 'string');
+%trial = str2double(cmd(3:end));
 
 % Get screen information for window positioning
 scpx = get(0, 'ScreenSize');
@@ -384,12 +384,12 @@ function datatxt_Callback(hObject, eventdata, handles)
 global imagerhandles pathBase
 dir = get(findobj('Tag', 'datatxt'), 'string');
 set(findobj('Tag', 'datatxt'), 'string', dir);
-%trial = str2double(cmd(3:end));
 animal = get(findobj('Tag', 'animaltxt'), 'string');
-unit = get(findobj('Tag', 'unittxt'), 'string');
-expt = get(findobj('Tag', 'expttxt'), 'string');
+%unit = get(findobj('Tag', 'unittxt'), 'string');
+%expt = get(findobj('Tag', 'expttxt'), 'string');
 datadir = get(findobj('Tag', 'datatxt'), 'string');
 tag = get(findobj('Tag', 'tagtxt'), 'string');
+%trial = str2double(cmd(3:end));
 pathBase = [datadir filesep deblank(animal)];
 imagerhandles = handles;
 
@@ -414,63 +414,15 @@ function directory_Callback(hObject, eventdata, handles)
         'Select Data Path');
     if dir ~= 0
         set(findobj('Tag', 'datatxt'), 'string', dir);
-        %trial = str2double(cmd(3:end));
         animal = get(findobj('Tag', 'animaltxt'), 'string');
-        unit = get(findobj('Tag', 'unittxt'), 'string');
-        expt = get(findobj('Tag', 'expttxt'), 'string');
+        %unit = get(findobj('Tag', 'unittxt'), 'string');
+        %expt = get(findobj('Tag', 'expttxt'), 'string');
         datadir = get(findobj('Tag', 'datatxt'), 'string');
         tag = get(findobj('Tag', 'tagtxt'), 'string');
+        %trial = str2double(cmd(3:end));
         pathBase = [datadir filesep deblank(animal)];
     end
     imagerhandles = handles;
-
-
-function unittxt_Callback(hObject, eventdata, handles)
-% hObject    handle to unittxt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes during object creation, after setting all properties.
-function unittxt_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to unittxt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-function tagtxt_Callback(hObject, eventdata, handles)
-% hObject    handle to tagtxt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes during object creation, after setting all properties.
-function tagtxt_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to tagtxt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-function expttxt_Callback(hObject, eventdata, handles)
-% hObject    handle to expttxt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes during object creation, after setting all properties.
-function expttxt_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to expttxt (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 
 function animaltxt_Callback(hObject, eventdata, handles)
@@ -500,18 +452,11 @@ function timetxt_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of timetxt as text
-%        str2double(get(hObject,'String')) returns contents of timetxt as a double
-
-
 % --- Executes during object creation, after setting all properties.
 function timetxt_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to timetxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -522,3 +467,51 @@ function streamMemory_Callback(hObject, eventdata, handles)
 % hObject    handle to streamMemory (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% function unittxt_Callback(hObject, eventdata, handles)
+% % hObject    handle to unittxt (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+
+
+% % --- Executes during object creation, after setting all properties.
+% function unittxt_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to unittxt (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
+
+
+% function tagtxt_Callback(hObject, eventdata, handles)
+% % hObject    handle to tagtxt (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+
+
+% % --- Executes during object creation, after setting all properties.
+% function tagtxt_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to tagtxt (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
+
+
+% function expttxt_Callback(hObject, eventdata, handles)
+% % hObject    handle to expttxt (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+
+
+% % --- Executes during object creation, after setting all properties.
+% function expttxt_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to expttxt (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end

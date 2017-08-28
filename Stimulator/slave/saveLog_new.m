@@ -1,8 +1,8 @@
 function saveLog_new(domains, seqs)
 global Mstate loopTrial pathBase
 
-expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [pathBase expt '.mat'];
+title = [Mstate.anim];% '_' Mstate.unit '_' Mstate.expt];
+fname = [pathBase title '.mat'];
 frate = Mstate.refresh_rate;
 basename = ['randlog_T' num2str(loopTrial)];
 

@@ -9,7 +9,7 @@ function updateMstate
     Mstate.anim = get(Gh.main.animal, 'string');
     Mstate.hemi = get(Gh.main.hemisphere, 'string');
     Mstate.screenDist = str2double(get(Gh.main.screendistance, 'string'));
-    Mstate.analyzerRoot = get(Gh.main.analyzerRoots, 'string');
+    %Mstate.analyzerRoot = get(Gh.main.analyzerRoots, 'string');
     Mstate.monitor = get(Gh.main.monitor, 'string');
     updateMonitorValues
     

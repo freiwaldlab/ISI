@@ -8,12 +8,12 @@ function sendtoImager(cmd)
         case 'A'  %% animal
             set(findobj('Tag', 'animaltxt'), ...
                 'string', deblank(cmd(3:end)));
-        case 'E' %% expt
-            set(findobj('Tag', 'expttxt'),...
-                'string', num2str(deblank(cmd(3:end))));
-        case 'U'  %% unit
-            set(findobj('Tag', 'unittxt'), ...
-                'string', num2str(deblank(cmd(3:end))));
+        %case 'E' %% expt
+        %    set(findobj('Tag', 'expttxt'),...
+        %        'string', num2str(deblank(cmd(3:end))));
+        %case 'U'  %% unit
+        %    set(findobj('Tag', 'unittxt'), ...
+        %        'string', num2str(deblank(cmd(3:end))));
         %case 'T'  %% time tag
         %    set(findobj('Tag','tagtxt'),...
         %    'String',deblank(sprintf('%03d',str2num(cmd(3:end)))));
@@ -23,12 +23,12 @@ function sendtoImager(cmd)
             set(findobj('Tag', 'timetxt'), 'String', deblank(cmd(3:end)));
             preallocateTensor
         case 'S'  %% start sampling...
+            animal = get(findobj('Tag', 'animaltxt'), 'string');
+            %unit = get(findobj('Tag', 'unittxt'), 'string');
+            %expt = get(findobj('Tag', 'expttxt'), 'string');
+            datadir = get(findobj('Tag', 'datatxt'), 'string');
+            tag = get(findobj('Tag', 'tagtxt'), 'string');
             trial = str2double(cmd(3:end));
-            animal = get(findobj('Tag', 'animaltxt'), 'String');
-            unit = get(findobj('Tag', 'unittxt'), 'String');
-            expt = get(findobj('Tag', 'expttxt'), 'String');
-            datadir = get(findobj('Tag', 'datatxt'), 'String');
-            tag = get(findobj('Tag', 'tagtxt'), 'String');
             GrabSaveLoop(pathData, prefixTrial)
         case 'C'
             % Stop video object and clean up

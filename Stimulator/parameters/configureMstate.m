@@ -1,9 +1,9 @@
 function configureMstate
     global Mstate
 
-    Mstate.anim = 'aa0';
-    Mstate.unit = '000';
-    Mstate.expt = '000';
+    Mstate.anim = 'mittens';
+    %Mstate.unit = '000';
+    %Mstate.expt = '000';
     Mstate.hemi = 'left';
     
     % This should match the default value in Display

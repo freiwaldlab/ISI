@@ -1,11 +1,11 @@
 function saveLog_rain(x, varargin)
 global Mstate pathBase
 
-expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [pathBase expt '.mat'];
+title = [Mstate.anim];% '_' Mstate.unit '_' Mstate.expt];
+fname = [pathBase title '.mat'];
 frate = Mstate.refresh_rate;
 
-if isempty(varargin)  %from 'make' (happens on first trial only)
+if isempty(varargin)
     if ~exist(fname)
         save(fname, 'domains', 'frate', '-v6');
     end

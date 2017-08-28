@@ -5,8 +5,8 @@ function saveLog(x, varargin)
 %would change this.  Also, rseeds are saved on top of each other. The
 %sequences would also change if other parameters change, such as nori.
 
-expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [pathBase expt '.mat'];
+title = [Mstate.anim];% '_' Mstate.unit '_' Mstate.expt];
+fname = [pathBase title '.mat'];
 frate = Mstate.refresh_rate;
 
 if isempty(varargin)  %from 'make'  (happens on first trial only)... save domains and frame rate

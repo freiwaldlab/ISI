@@ -66,10 +66,10 @@ set(handles.intrinsicflag, 'value', 1)
 set(handles.twophotonTog, 'value', 0);
 set(handles.twophotonflag, 'value', 0)
 set(handles.screendistance, 'string', num2str(Mstate.screenDist))
-set(handles.analyzerRoots, 'string', Mstate.analyzerRoot)
+%set(handles.analyzerRoots, 'string', Mstate.analyzerRoot)
 set(handles.animal, 'string', deblank(Mstate.anim));
-set(handles.unitcb, 'string', Mstate.unit)
-set(handles.exptcb, 'string', Mstate.expt)
+%set(handles.unitcb, 'string', Mstate.unit)
+%set(handles.exptcb, 'string', Mstate.expt)
 set(handles.hemisphere, 'string', Mstate.hemi)
 set(handles.screendistance, 'string', Mstate.screenDist)
 set(handles.monitor, 'string', Mstate.monitor)
@@ -102,15 +102,13 @@ function animal_Callback(hObject, eventdata, handles)
 global Mstate
     set(handles.animal, 'string', deblank(get(handles.animal, 'string')));
     Mstate.anim = deblank(get(handles.animal, 'string'));
-    % Backwards compatibility
-    newunit = '000';
-    newexpt = '000';
-    Mstate.unit = newunit;
-    Mstate.expt = newexpt;
-    set(handles.exptcb, 'string', newexpt)
-    set(handles.unitcb, 'string', newunit)
-    anaroot = get(handles.analyzerRoots, 'string');
-    Mstate.analyzerRoot = anaroot;
+    % % Backwards compatibility
+    %Mstate.unit = '000';
+    %Mstate.expt = '000';
+    %set(handles.exptcb, 'string', '000')
+    %set(handles.unitcb, 'string', '000')
+    %anaroot = get(handles.analyzerRoots, 'string');
+    %Mstate.analyzerRoot = anaroot;
     updateExptName
 
 
@@ -277,32 +275,32 @@ else
 end
 
 
-% --- Executes on button press in unitcb.
-function unitcb_Callback(hObject, eventdata, handles)
-% hObject    handle to unitcb (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-global Mstate
-newunit = sprintf('%03d', str2double(Mstate.unit));
-Mstate.unit = newunit;
-set(handles.unitcb, 'string', newunit)
-newexpt = '000';
-Mstate.expt = newexpt;
-set(handles.exptcb, 'string', newexpt)
-updateExptName
+% % --- Executes on button press in unitcb.
+% function unitcb_Callback(hObject, eventdata, handles)
+% % hObject    handle to unitcb (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% global Mstate
+% newunit = sprintf('%03d', str2double(Mstate.unit));
+% Mstate.unit = newunit;
+% set(handles.unitcb, 'string', newunit)
+% newexpt = '000';
+% Mstate.expt = newexpt;
+% set(handles.exptcb, 'string', newexpt)
+% updateExptName
 
 
-% --- Executes on button press in exptcb.
-function exptcb_Callback(hObject, eventdata, handles)
-% hObject    handle to exptcb (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-global Mstate
-newexpt = sprintf('%03d', str2double(Mstate.expt));
-Mstate.expt = newexpt;
-set(handles.exptcb, 'string', newexpt)
-% Send expt info to acquisition
-updateExptName
+% % --- Executes on button press in exptcb.
+% function exptcb_Callback(hObject, eventdata, handles)
+% % hObject    handle to exptcb (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% global Mstate
+% newexpt = sprintf('%03d', str2double(Mstate.expt));
+% Mstate.expt = newexpt;
+% set(handles.exptcb, 'string', newexpt)
+% % Send expt info to acquisition
+% updateExptName
 
 
 % --- Executes on button press in closeDisplay.
@@ -314,49 +312,43 @@ global DcomState
 fwrite(DcomState.serialPortHandle, 'C;~')
 
 
-function analyzerRoots_Callback(hObject, eventdata, handles)
-% hObject    handle to analyzerRoots (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-%This is not actually necessary since updateMstate is always called prior
-%to showing stimuli...
-Mstate.analyzerRoot = get(handles.analyzerRoots, 'string');
-
-
-% --- Executes during object creation, after setting all properties.
-function analyzerRoots_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to analyzerRoots (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
+% function analyzerRoots_Callback(hObject, eventdata, handles)
+% % hObject    handle to analyzerRoots (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% %This is not actually necessary since updateMstate is always called prior
+% %to showing stimuli...
+% Mstate.analyzerRoot = get(handles.analyzerRoots, 'string');
+% % --- Executes during object creation, after setting all properties.
+% function analyzerRoots_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to analyzerRoots (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
 
 
-% --- Executes on button press in REflag.
-function REflag_Callback(hObject, eventdata, handles)
-% hObject    handle to REflag (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-%mmf
-% REbit = get(handles.REflag,'value');
-% moveShutter(2,REbit)
-% waitforDisplayResp
-
-
-% --- Executes on button press in LEflag.
-function LEflag_Callback(hObject, eventdata, handles)
-% hObject    handle to LEflag (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-%mmf
-% LEbit = get(handles.LEflag,'value');
-% moveShutter(1,LEbit)
-% waitforDisplayResp
+% % --- Executes on button press in REflag.
+% function REflag_Callback(hObject, eventdata, handles)
+% % hObject    handle to REflag (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% %mmf
+% % REbit = get(handles.REflag,'value');
+% % moveShutter(2,REbit)
+% % waitforDisplayResp
+% % --- Executes on button press in LEflag.
+% function LEflag_Callback(hObject, eventdata, handles)
+% % hObject    handle to LEflag (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% %mmf
+% % LEbit = get(handles.LEflag,'value');
+% % moveShutter(1,LEbit)
+% % waitforDisplayResp
 
 
 function monitor_Callback(hObject, eventdata, handles)
@@ -374,7 +366,6 @@ function monitor_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to monitor (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -391,7 +382,6 @@ function stimulusIDP_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to stimulusIDP (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -444,19 +434,6 @@ function streamTog_Callback(hObject, eventdata, handles)
         set(GUIhandles.main.analysisFlag, 'value', 0)
     end
 
-% % --- Executes on button press in streamFlag.
-% function streamFlag_Callback(hObject, eventdata, handles)
-% % hObject    handle to streamFlag (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% global GUIhandles
-% flag = get(handles.streamFlag,'value');
-% set(GUIhandles.main.streamFlag,'value',flag)
-% if flag
-%     set(handles.analysisFlag,'value',0);
-%     set(GUIhandles.main.analysisFlag,'value',0)
-% end
-
 
 % --- Executes on button press in computef1Tog.
 function computef1Tog_Callback(hObject, eventdata, handles)
@@ -486,12 +463,27 @@ function LEDtogglebutton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 % Hint: get(hObject,'Value') returns toggle state of LEDtogglebutton
 global GUIhandles daqOUTLED
-flag = get(handles.LEDtogglebutton,'value');
-set(GUIhandles.main.LEDtogglebutton,'value',flag)
+flag = get(handles.LEDtogglebutton, 'value');
+set(GUIhandles.main.LEDtogglebutton, 'value', flag)
 if flag
     outputSingleScan(daqOUTLED, 1)
-    set(GUIhandles.main.LEDtogglebutton,'string','LED ON')
+    set(GUIhandles.main.LEDtogglebutton, 'string', 'LED on')
 else
     outputSingleScan(daqOUTLED, 0)
-    set(GUIhandles.main.LEDtogglebutton,'string','LED OFF')
+    set(GUIhandles.main.LEDtogglebutton, 'string', 'LED off')
 end
+
+
+% % --- Executes on button press in streamFlag.
+% function streamFlag_Callback(hObject, eventdata, handles)
+% % hObject    handle to streamFlag (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% global GUIhandles
+% flag = get(handles.streamFlag,'value');
+% set(GUIhandles.main.streamFlag,'value',flag)
+% if flag
+%     set(handles.analysisFlag,'value',0);
+%     set(GUIhandles.main.analysisFlag,'value',0)
+% end
+
