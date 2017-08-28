@@ -1,17 +1,19 @@
 function sendtoImager(cmd)
-    global daqOUTtrig daqOUTlist DataPath imagerhandles
+    global imagerhandles
+    global pathData prefixTrial
+    global daqOUTtrig daqOUTlist
     ih = imagerhandles;
     
     switch(cmd(1))
         case 'A'  %% animal
             set(findobj('Tag', 'animaltxt'), ...
-                'String', deblank(cmd(3:end)));
+                'string', deblank(cmd(3:end)));
         case 'E' %% expt
             set(findobj('Tag', 'expttxt'),...
-                'String', num2str(deblank(cmd(3:end))));
+                'string', num2str(deblank(cmd(3:end))));
         case 'U'  %% unit
             set(findobj('Tag', 'unittxt'), ...
-                'String', num2str(deblank(cmd(3:end))));
+                'string', num2str(deblank(cmd(3:end))));
         %case 'T'  %% time tag
         %    set(findobj('Tag','tagtxt'),...
         %    'String',deblank(sprintf('%03d',str2num(cmd(3:end)))));
@@ -27,11 +29,7 @@ function sendtoImager(cmd)
             expt = get(findobj('Tag', 'expttxt'), 'String');
             datadir = get(findobj('Tag', 'datatxt'), 'String');
             tag = get(findobj('Tag', 'tagtxt'), 'String');
-            dd = [datadir filesep lower(animal) filesep 'u' unit '_' expt];
-            DataPath = [datadir filesep lower(animal)];
-            fname = sprintf('%s%su%s_%s', dd, filesep, unit, expt);
-            fname = [fname  '_' sprintf('t%03d', trial)];
-            GrabSaveLoop(fname)
+            GrabSaveLoop(pathData, prefixTrial)
         case 'C'
             % Stop video object and clean up
             if isvalid(daqOUTtrig)

@@ -1,19 +1,15 @@
 function saveSyncInfo(syncInfo)
-    global Mstate trialno DataPath
+    global trialno
+    global pathBase prefixDate
 
     eval(['syncInfo' num2str(trialno) '=syncInfo;'])
 
-    % Make sure destination directory exists and save the analyzer file
-    title = [Mstate.anim '_' sprintf('u%s', Mstate.unit) '_' Mstate.expt];
-    roots = parseString(DataPath, ';'); %parseString(Mstate.analyzerRoot,';');
-    for i = 1:length(roots)
-        dd = [roots{i} filesep]; %[roots{i} filesep Mstate.anim];
-        % Check if directory exists in case this is a new animal
-        if(~exist(dd, 'dir'))
-            mkdir(dd);
-        end
-        file_name = [dd filesep title '.analyzer'];
-        disp([mfilename ': Appending syncInfo to .analyzer file (' ...
-            file_name ').']);
-        save(file_name, ['syncInfo' num2str(trialno)], '-append');
+    if ~exist(pathBase, 'dir')
+        mkdir(pathBase);
+        disp([mfilename ': Base path did not exist. Created [' pathBase '].']);
     end
+    file_name = fullfile(pathBase, [prefixDate '_ExperimentParameters.mat']);
+    save(file_name, ['syncInfo' num2str(trialno)], '-append');
+    disp([mfilename ': Appended syncInfo to experiment parameters ' ...
+        ' file [' file_name '].']);
+    clear file_name

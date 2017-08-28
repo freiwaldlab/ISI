@@ -1,4 +1,4 @@
-function GrabSaveLoop(fname)
+function GrabSaveLoop(pathData, prefixTrial)
     global imagerhandles frameN Tens FrameTimes
     global daqOUTtrig daqOUTIOI
     h = imagerhandles;
@@ -16,15 +16,6 @@ function GrabSaveLoop(fname)
         disp([mfilename ': Camera logging mode set to ' ...
             h.video.LoggingMode]);
     end
-
-    %%% TODO XXX *** 2p testing
-    % global daqOUT2p
-    % outputSingleScan(daqOUT2p, 1);
-    % ttltime = 10/1000; %time in ms
-    % tic;
-    % while toc < ttltime
-    % end
-    % outputSingleScan(daqOUT2p, 0);
     
     % Start camera (frames will not be acquired until separately triggered)
     % Send pulse to timing DAQ indicate that acquisition is beginning
@@ -71,10 +62,10 @@ function GrabSaveLoop(fname)
                 fn = frameR(n);
                 im = Tens(:,:,fn);
                 tm = FrameTimes(fn);
-                fnamedum = [fname '_f' ...
-                    sprintf('%0*.0f', numel(num2str(frameN)), fn) '_data'];
-                %save(fnamedum, 'im', '-v6');
-                save(fnamedum, 'im', 'tm', '-v6');
+                save_path = fullfile(pathData, [prefixTrial '_f' ...
+                    sprintf('%0*.0f', numel(num2str(frameN)), fn)]);
+                %save(save_path, 'im', '-v6');
+                save(save_path, 'im', 'tm', '-v6');
             end
             totalsaveT = toc(tsave);
             clear n im tm tsave
@@ -113,20 +104,6 @@ function GrabSaveLoop(fname)
         ' sec.']);
     % Send pulse to timing DAQ to indicate that acquisition is complete
     outputSingleScan(daqOUTIOI, 0);
-
-    % % Save all frames into one file
-    % tsave = tic;
-    % fnamedum = [fname '_all_data'];
-    % temp.data = Tens;
-    % temp.times = FrameTimes;
-    % save(fnamedum, '-v6', '-struct', 'temp');
-    % totalsaveT = toc(tsave);
-    % clear n im tsave
-    % if debugToggle
-    %     disp([mfilename ' DEBUG: Save time for all '...
-    %         'frames was ' num2str(totalsaveT) ' sec.']);
-    % end
-    % clear temp
     
     clearvars -global Tens FrameTimes
     imagerhandles = h;

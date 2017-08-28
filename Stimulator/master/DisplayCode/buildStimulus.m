@@ -1,6 +1,7 @@
 function buildStimulus(cond, trial)
 % Sends loop information and buffers
-    global DcomState looperInfo Mstate DataPath
+    global DcomState looperInfo Mstate
+    global pathBase prefixDate prefixTrial
 
     mod = getmoduleID;
     msg = ['B;' mod ';' num2str(trial)];
@@ -65,7 +66,8 @@ function buildStimulus(cond, trial)
                 msg = updateMsg(pval_Fmla, psymbol_Fmla, msg);
             end
         end
-    else % Blank condition
+    else
+    % Blank condition
         disp([mfilename ': Blank trial.'])
         msg = sprintf('%s;%s=%.4f', msg, 'contrast', 0);
     end
@@ -77,18 +79,19 @@ function buildStimulus(cond, trial)
             imPath = getParamVal('image_path');
         end
         if exist(imPath, 'dir')
-            cpdir = strcat(DataPath, filesep, 'stimuli_t', ...
-                sprintf('%02d', trial));
-            [cpstatus,cpmsg] = copyfile(imPath, cpdir);
-            if cpstatus
-                disp([mfilename ': ImageBlock stimulus images copied to ' ...
-                    'data directory.']);
+            cpath = fullfile(pathBase, [prefixDate '_' prefixTrial '_stim']);
+            [cpstat,cpmsg] = copyfile(imPath, cpath);
+            if cpstat
+                disp([mfilename ': ImageBlock stimulus images copied [' ...
+                    cpath '].']);
             else
                 error([mfilename ': ImageBlock stimulus ', ...
                     'directory could not be copied (' cpmsg ')'])
             end
+            clear cpath cpstat cpmsg
         else
-            error([mfilename ': image_path not found.']);
+            error([mfilename ': Stimulus image path not found [' ...
+                imPath '].']);
         end
     end
     

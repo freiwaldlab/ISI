@@ -1,24 +1,18 @@
 function saveExptParams
-    global Mstate Pstate Lstate looperInfo DataPath
+    global Mstate Pstate Lstate looperInfo
+    global pathBase prefixDate
 
-    % Populate Analyzer construct with settings
     Analyzer.M = Mstate;
     Analyzer.P = Pstate;
     Analyzer.L = Lstate;
     Analyzer.loops = looperInfo;
 
-    % Make sure destination directory exists and save the analyzer file
-    title = [Mstate.anim '_' sprintf('u%s', Mstate.unit) '_' Mstate.expt];
-    roots = parseString(DataPath, ';'); %parseString(Mstate.analyzerRoot,';');
-    disp([mfilename ' DEBUG: Saving analyzer file to main ' ...
-        'experiment directory rather than analyzerRoot.']);
-    for i = 1:length(roots)
-        dd = [roots{i} filesep]; %[roots{i} filesep Mstate.anim];
-        % Check if directory exists in case this is a new animal
-        if(~exist(dd, 'dir'))
-            mkdir(dd);
-        end
-        file_name = [dd filesep title '.analyzer'];
-        disp([mfilename ': Saving analyzer file (' file_name ').']);
-        save(file_name, 'Analyzer')
+    if ~exist(pathBase, 'dir')
+        mkdir(pathBase);
+        disp([mfilename ': Base path did not exist. Created [' ...
+            pathBase '].']);
     end
+    file_name = fullfile(pathBase, [prefixDate '_ExperimentParameters.mat']);
+    disp([mfilename ': Saved experiment parameters [' file_name '].']);
+    save(file_name, 'Analyzer');
+    clear file_name

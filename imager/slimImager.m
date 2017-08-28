@@ -51,7 +51,7 @@ function slimImager_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to slimImager (see VARARGIN)
-global imagerhandles imagerWinOffYpx DataPath
+global imagerhandles imagerWinOffYpx
 
 % Data directory, unit, and tag settings
 handles.datatxt = 'D:\';
@@ -64,7 +64,6 @@ unit = get(findobj('Tag', 'unittxt'), 'string');
 expt = get(findobj('Tag', 'expttxt'), 'string');
 datadir = get(findobj('Tag', 'datatxt'), 'string');
 tag = get(findobj('Tag', 'tagtxt'), 'string');
-DataPath = [datadir filesep lower(animal)];
 
 % Get screen information for window positioning
 scpx = get(0, 'ScreenSize');
@@ -244,12 +243,13 @@ imagerhandles = handles;
 
 % --- Executes on button press in captureImage.
 function captureImage_Callback(hObject, eventdata, handles)
-    global imagerhandles DataPath
+    global imagerhandles pathBase
     handles = imagerhandles;
     
-    if ~exist(DataPath, 'dir')
-        warning([mfilename ': Data path did not exist, made directory.']);
-        mkdir(DataPath);
+    if ~exist(pathBase, 'dir')
+        mkdir(pathBase);
+        warning([mfilename ': Base path did not exist. Created [' ...
+            pathBase '].']);
     end
     
     if isfield(handles, 'video')
@@ -276,7 +276,8 @@ function captureImage_Callback(hObject, eventdata, handles)
         box(handles.jetAxes, 'on');
         
         pfix = [datestr(now, 'yymmdd') 'd' datestr(now, 'HHMMSS') 't'];
-        capfname = strcat(DataPath, filesep, pfix, '_capture.png');
+        capfname = strcat(pathBase, filesep, pfix, '_capture.png');
+        clear pfix
         imwrite(I, capfname);
         disp([mfilename ': Saved image (' capfname ').']);
     else
@@ -380,7 +381,7 @@ function datatxt_Callback(hObject, eventdata, handles)
 % hObject    handle to datatxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global imagerhandles DataPath
+global imagerhandles pathBase
 dir = get(findobj('Tag', 'datatxt'), 'string');
 set(findobj('Tag', 'datatxt'), 'string', dir);
 %trial = str2double(cmd(3:end));
@@ -389,7 +390,7 @@ unit = get(findobj('Tag', 'unittxt'), 'string');
 expt = get(findobj('Tag', 'expttxt'), 'string');
 datadir = get(findobj('Tag', 'datatxt'), 'string');
 tag = get(findobj('Tag', 'tagtxt'), 'string');
-DataPath = [datadir filesep lower(animal)];
+pathBase = [datadir filesep deblank(animal)];
 imagerhandles = handles;
 
 
@@ -408,7 +409,7 @@ function directory_Callback(hObject, eventdata, handles)
 % hObject    handle to directory (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-    global imagerhandles DataPath
+    global imagerhandles pathBase
     dir = uigetdir(get(findobj('Tag', 'datatxt'), 'string'), ...
         'Select Data Path');
     if dir ~= 0
@@ -419,7 +420,7 @@ function directory_Callback(hObject, eventdata, handles)
         expt = get(findobj('Tag', 'expttxt'), 'string');
         datadir = get(findobj('Tag', 'datatxt'), 'string');
         tag = get(findobj('Tag', 'tagtxt'), 'string');
-        DataPath = [datadir filesep lower(animal)];
+        pathBase = [datadir filesep deblank(animal)];
     end
     imagerhandles = handles;
 
