@@ -1,13 +1,11 @@
 function saveLog_rain(x, varargin)
-global Mstate
+global Mstate pathData
 
-root = 'C:\Dropbox\ExperimentLogs\';
 expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [root expt '.mat'];
+fname = [pathData expt '.mat'];
 frate = Mstate.refresh_rate;
 
 if isempty(varargin)  %from 'make' (happens on first trial only)
-    domains = x; 
     if ~exist(fname)
         save(fname, 'domains', 'frate', '-v6');
     end
@@ -15,3 +13,6 @@ else %from 'play'
     eval(['rseed' num2str(varargin{1}) '=x;' ]);
     eval(['save ' fname ' rseed' num2str(varargin{1}) ' -v6 -append']);
 end
+
+size(x)
+warning([mfilename ': Fix saveLog_rain directory handling!']);

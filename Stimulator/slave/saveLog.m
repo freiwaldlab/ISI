@@ -1,21 +1,20 @@
 function saveLog(x, varargin)
-    global Mstate loopTrial %DataPath
+    global Mstate loopTrial pathData
 %An important thing to note on the way this is saved:  Since domains are
 %only saved once, I can't put variables in the looper that
 %would change this.  Also, rseeds are saved on top of each other. The
 %sequences would also change if other parameters change, such as nori.
 
-root = 'C:\Dropbox\ExperimentLogs\';
 expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [root expt '.mat'];
+fname = [pathData expt '.mat'];
 frate = Mstate.refresh_rate;
 
 if isempty(varargin)  %from 'make'  (happens on first trial only)... save domains and frame rate
     domains = x; 
-    save(fname, 'domains', 'frate', '-v6');
+    %save(fname, 'domains', 'frate', '-v6');
 else %from 'play'... save sequence as 'rseedn'
     eval(['rseed' num2str(varargin{1}) '=x;' ]);
-    eval(['save ' fname ' rseed' num2str(varargin{1}) ' -v6 -append']);
+    %eval(['save ' fname ' rseed' num2str(varargin{1}) ' -v6 -append']);
 end
 
 %%%The following version would save the domains on each trial (but I haven't tested it).
@@ -24,8 +23,10 @@ end
 
 if isempty(varargin)  %from 'make'  (happens on first trial only)... save domains and frame rate
     eval(['domains' num2str(loopTrial) '= x']);     
-    eval(['save ' fname 'domains' num2str(loopTrial) ' -v6 -append']);
+    %eval(['save ' fname 'domains' num2str(loopTrial) ' -v6 -append']);
 else %from 'play'... save sequence as 'rseedn'
     eval(['rseed' num2str(varargin{1}) '=x;' ]);
-    eval(['save ' fname ' rseed' num2str(varargin{1}) ' -v6 -append']);
+    %eval(['save ' fname ' rseed' num2str(varargin{1}) ' -v6 -append']);
 end
+
+warning([mfilename ': Fix saveLog directory handling!']);

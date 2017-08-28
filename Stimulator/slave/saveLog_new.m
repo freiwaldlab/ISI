@@ -1,9 +1,8 @@
 function saveLog_new(domains, seqs)
-global Mstate loopTrial
+global Mstate loopTrial pathData
 
-root = 'C:\Dropbox\ExperimentLogs\';
 expt = [Mstate.anim '_' Mstate.unit '_' Mstate.expt];
-fname = [root expt '.mat'];
+fname = [pathData expt '.mat'];
 frate = Mstate.refresh_rate;
 basename = ['randlog_T' num2str(loopTrial)];
 
@@ -16,3 +15,5 @@ if loopTrial == 1
 else
     save(fname, ['randlog_T' num2str(loopTrial)], '-v6', '-append');
 end
+
+warning([mfilename ': Fix saveLog_new directory handling!']);
