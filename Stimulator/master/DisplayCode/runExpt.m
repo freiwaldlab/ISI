@@ -89,7 +89,7 @@ if Mstate.running && (trialno <= nt)
         analogIN.stop;
         delete(lhIn);
         fclose(fid1);
-        disp([mfilename ': Reading log file (' fileLog ').']);
+        disp([mfilename ': Reading log file [' fileLog '].']);
         fid2 = fopen(fileLog, 'r');
         % analogINdata is a 6 x samples matrix where...
         %   (1,:) is the time each sample is taken from start

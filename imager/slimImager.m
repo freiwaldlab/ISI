@@ -279,7 +279,7 @@ function captureImage_Callback(hObject, eventdata, handles)
         capfname = strcat(pathBase, filesep, pfix, '_capture.png');
         clear pfix
         imwrite(I, capfname);
-        disp([mfilename ': Saved image (' capfname ').']);
+        disp([mfilename ': Saved image [' capfname '].']);
     else
         error([mfilename ': Could not capture image.']);
     end
