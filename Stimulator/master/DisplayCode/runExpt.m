@@ -160,9 +160,7 @@ if Mstate.running && (trialno <= nt)
     end
     
     trialno = trialno + 1;
-    if ISIbit
-        runExpt
-    end
+    runExpt
 else
     Mstate.running = 0;
     set(GUIhandles.main.runbutton, 'string', 'Run')
