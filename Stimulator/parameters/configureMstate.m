@@ -9,7 +9,7 @@ function configureMstate
     % This should match the default value in Display
     Mstate.monitor = 'VPX';
     % Set distance of animal from screen (in cm)
-    Mstate.screenDist = 57;
+    Mstate.screenDist = 30.5;
     % Set size of the screen sync (in cm)
     Mstate.syncSize = 2.0;
 
