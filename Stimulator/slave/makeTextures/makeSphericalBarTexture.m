@@ -7,8 +7,11 @@ function makeSphericalBarTexture
     window = screenPTR;
 
     screenRes = Screen('Resolution', screenNum);
-    resXpxpercm = screenRes.width / Mstate.screenXcm;
-    resYpxpercm = screenRes.height / Mstate.screenYcm;
+
+%     Mstate.screenXcm = 52.07;
+%     Mstate.screenYcm = 29.21;
+%     Mstate.screenXpx = 1920;
+%     Mstate.screenYpx = 1080;
     
     white = WhiteIndex(window);
     black = BlackIndex(window);
@@ -20,22 +23,23 @@ function makeSphericalBarTexture
     flick_rate = P.FlickerRate;
     bar_ori = P.BarOrient;
 
-    screenDcm = Mstate.screenDist; %in cm, needs to be converted to pixels
-    w = Mstate.screenXcm; %width of monitor
-    h = Mstate.screenYcm; %height of monitor
-    cx = P.eyeXLocation; %eye x location, cm
-    cy = P.eyeYLocation; %eye y location, cm
+    screenDcm = Mstate.screenDist;
+    w = Mstate.screenXcm;
+    h = Mstate.screenYcm;
+
+    cx = P.eyeXLocation;
+    cy = P.eyeYLocation;
     
-    zdistTop = hypot(screenDcm, h - cy); %distance from eye to top of screen
-    zdistBottom = hypot(screenDcm, cy); %distance from eye to bottom of screen
+    % Distance from eye to top r bottom of screen
+    zdistTop = hypot(screenDcm, h - cy);
+    zdistBottom = hypot(screenDcm, cy);
     
     scale = P.ScreenScaleFactor;
-    pxXmax = screenRes.width / scale;
-    pxYmax = screenRes.height / scale;
+    pxXmax = Mstate.screenXpx / scale;
+    pxYmax = Mstate.screenYpx / scale;
     resXpxpercm = round(pxXmax / w);
     resYpxpercm = round(pxYmax / h);
-    
-    %internal conversions?
+
     top = h - cy;
     %bottom = -cy;
     %right = cx;
