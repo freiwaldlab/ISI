@@ -24,8 +24,6 @@ function sendtoImager(cmd)
             preallocateTensor
         case 'S'  %% start sampling...
             animal = get(findobj('Tag', 'animaltxt'), 'string');
-            %unit = get(findobj('Tag', 'unittxt'), 'string');
-            %expt = get(findobj('Tag', 'expttxt'), 'string');
             datadir = get(findobj('Tag', 'datatxt'), 'string');
             tag = get(findobj('Tag', 'tagtxt'), 'string');
             trial = str2double(cmd(3:end));
