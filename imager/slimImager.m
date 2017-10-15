@@ -51,19 +51,16 @@ function slimImager_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to slimImager (see VARARGIN)
-global imagerhandles imagerWinOffYpx
+global imagerhandles imagerWinOffYpx prefixDate
 
 % Data directory, unit, and tag settings
 handles.datatxt = 'D:\';
-%handles.unit = 'u000_000';
 handles.time_tag = 0;
 set(findobj('Tag', 'datatxt'), 'string', handles.datatxt);
-animal = get(findobj('Tag', 'animaltxt'), 'string');
-%unit = get(findobj('Tag', 'unittxt'), 'string');
-%expt = get(findobj('Tag', 'expttxt'), 'string');
-datadir = get(findobj('Tag', 'datatxt'), 'string');
-tag = get(findobj('Tag', 'tagtxt'), 'string');
-%trial = str2double(cmd(3:end));
+animal = get(findobj('Tag', 'animaltxt'), 'string')
+datadir = get(findobj('Tag', 'datatxt'), 'string')
+tag = get(findobj('Tag', 'tagtxt'), 'string')
+pathBase = [datadir filesep prefixDate '_' deblank(animal)]
 
 % Get screen information for window positioning
 scpx = get(0, 'ScreenSize');
@@ -75,7 +72,7 @@ setpixelposition(siw, [scpx(1) ...
     sipx(3) sipx(4)]);
 
 % Turn off UI buttons that are not accessible
-set(handles.startAcquisition, 'Enable', 'off');
+%set(handles.startAcquisition, 'Enable', 'off');
 set(handles.captureImage, 'Enable', 'off');
 
 % Remove tickmarks and labels that are inserted when using IMAGE
@@ -171,7 +168,7 @@ handles = imagerhandles;
 if strcmp(get(handles.cameraToggle, 'string'), 'Start Camera')
     % Camera is off. Change button string and start camera.
     set(handles.cameraToggle, 'string', 'Stop Camera');
-    set(handles.startAcquisition, 'Enable', 'on');
+    %set(handles.startAcquisition, 'Enable', 'on');
     set(handles.captureImage, 'Enable', 'on');
     if isfield(handles, 'video')
         if isvalid(handles.video)
@@ -215,7 +212,7 @@ if strcmp(get(handles.cameraToggle, 'string'), 'Start Camera')
 else
     % Camera is on. Stop camera and change button string.
     set(handles.cameraToggle, 'string', 'Start Camera');
-    set(handles.startAcquisition, 'Enable', 'off');
+    %set(handles.startAcquisition, 'Enable', 'off');
     set(handles.captureImage, 'Enable', 'off');
     % Delete any preview image acquisition objects
     if isvalid(daqOUTtrig)
@@ -243,7 +240,7 @@ imagerhandles = handles;
 
 % --- Executes on button press in captureImage.
 function captureImage_Callback(hObject, eventdata, handles)
-    global imagerhandles pathBase
+    global imagerhandles pathBase prefixDate
     handles = imagerhandles;
     
     if ~exist(pathBase, 'dir')
@@ -336,52 +333,52 @@ function cameraAxes_CreateFcn(hObject, eventdata, handles)
 
 
 % --- Executes on button press in startAcquisition.
-function startAcquisition_Callback(hObject, eventdata, handles)
-% hObject    handle to startAcquisition (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% Start/Stop acquisition
-if strcmp(get(handles.startAcquisition, 'String'), 'Start Acquisition')
-      % Camera is not acquiring. Change button string and start acquisition.
-      set(handles.startAcquisition, 'string', 'Stop Acquisition');
-      trigger(handles.video);
-else
-      % Camera is acquiring. Stop acquisition, save video data,
-      % and change button string.
-      if isfield(handles, 'video')
-          if isvalid(handles.video)
-              disp([mfilename 'FIX ME FIX ME FIX ME Saving captured video...']);
-              %videodata = fliplr(getdata(handles.video));
-              %videodata = flipud(getdata(handles.video));
-              videodata = rot90(getdata(handles.video), 2);
-              %videodata = getdata(handles.video);
-              save('testvideo.mat', 'videodata');
-              disp('Video saved to file ''testvideo.mat''');
-          end
-      end
-      set(handles.startAcquisition, 'string', 'Start Acquisition');
-end
+% function startAcquisition_Callback(hObject, eventdata, handles)
+% % hObject    handle to startAcquisition (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% % Start/Stop acquisition
+% if strcmp(get(handles.startAcquisition, 'String'), 'Start Acquisition')
+%       % Camera is not acquiring. Change button string and start acquisition.
+%       set(handles.startAcquisition, 'string', 'Stop Acquisition');
+%       trigger(handles.video);
+% else
+%       % Camera is acquiring. Stop acquisition, save video data,
+%       % and change button string.
+%       if isfield(handles, 'video')
+%           if isvalid(handles.video)
+%               disp([mfilename 'FIX ME FIX ME FIX ME Saving captured video...']);
+%               %videodata = fliplr(getdata(handles.video));
+%               %videodata = flipud(getdata(handles.video));
+%               videodata = rot90(getdata(handles.video), 2);
+%               %videodata = getdata(handles.video);
+%               save('testvideo.mat', 'videodata');
+%               disp('Video saved to file ''testvideo.mat''');
+%           end
+%       end
+%       set(handles.startAcquisition, 'string', 'Start Acquisition');
+% end
 
 
-% --- Executes on button press in illuminationEnable.
-function illuminationEnable_Callback(hObject, eventdata, handles)
-% hObject    handle to illuminationEnable (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% % --- Executes on button press in illuminationEnable.
+% function illuminationEnable_Callback(hObject, eventdata, handles)
+% % hObject    handle to illuminationEnable (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
 
 
-% --- Executes on button press in illuminationROI.
-function illuminationROI_Callback(hObject, eventdata, handles)
-% hObject    handle to illuminationROI (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% % --- Executes on button press in illuminationROI.
+% function illuminationROI_Callback(hObject, eventdata, handles)
+% % hObject    handle to illuminationROI (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
 
 
 function datatxt_Callback(hObject, eventdata, handles)
 % hObject    handle to datatxt (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global imagerhandles pathBase
+global imagerhandles pathBase prefixDate
 dir = get(findobj('Tag', 'datatxt'), 'string');
 set(findobj('Tag', 'datatxt'), 'string', dir);
 animal = get(findobj('Tag', 'animaltxt'), 'string');
@@ -390,7 +387,7 @@ animal = get(findobj('Tag', 'animaltxt'), 'string');
 datadir = get(findobj('Tag', 'datatxt'), 'string');
 tag = get(findobj('Tag', 'tagtxt'), 'string');
 %trial = str2double(cmd(3:end));
-pathBase = [datadir filesep deblank(animal)];
+pathBase = [datadir filesep prefixDate '_' deblank(animal)];
 imagerhandles = handles;
 
 
@@ -409,7 +406,7 @@ function directory_Callback(hObject, eventdata, handles)
 % hObject    handle to directory (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-    global imagerhandles pathBase
+    global imagerhandles pathBase prefixDate
     dir = uigetdir(get(findobj('Tag', 'datatxt'), 'string'), ...
         'Select Data Path');
     if dir ~= 0
@@ -420,7 +417,7 @@ function directory_Callback(hObject, eventdata, handles)
         datadir = get(findobj('Tag', 'datatxt'), 'string');
         tag = get(findobj('Tag', 'tagtxt'), 'string');
         %trial = str2double(cmd(3:end));
-        pathBase = [datadir filesep deblank(animal)];
+        pathBase = [datadir filesep prefixDate '_' deblank(animal)];
     end
     imagerhandles = handles;
 
