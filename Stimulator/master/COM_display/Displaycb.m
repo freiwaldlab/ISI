@@ -12,7 +12,7 @@ function Displaycb(obj, event)
 
     % Remove terminator and display
     inString = inString(1:end-1);
-    fprintf('COM from slave: \n%s\n', inString);
+    fprintf('COM from slave: %s\n', inString);
 
     % If ImageBlock texture made, set total time based on number of images.
     if (strfind(inString, 'MT;IB') == 1)
