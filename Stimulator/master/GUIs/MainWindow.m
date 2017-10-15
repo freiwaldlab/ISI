@@ -48,38 +48,29 @@ function MainWindow_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to MainWindow (see VARARGIN)
 
-% Choose default command line output for MainWindow
 handles.output = hObject;
-
-% Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes MainWindow wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
-
-global GUIhandles Mstate %shutterState
+global GUIhandles Mstate daqOUTLED
 Mstate.running = 0;
 
 % Set GUI fields to the default Mstate values
 set(handles.intrinsicTog, 'value', 1);
 set(handles.intrinsicflag, 'value', 1)
 set(handles.twophotonTog, 'value', 0);
-set(handles.twophotonflag, 'value', 0)
-set(handles.screendistance, 'string', num2str(Mstate.screenDist))
-%set(handles.analyzerRoots, 'string', Mstate.analyzerRoot)
+set(handles.twophotonflag, 'value', 0);
+set(handles.screendistance, 'string', num2str(Mstate.screenDist));
 set(handles.animal, 'string', deblank(Mstate.anim));
-%set(handles.unitcb, 'string', Mstate.unit)
-%set(handles.exptcb, 'string', Mstate.expt)
-set(handles.hemisphere, 'string', Mstate.hemi)
-set(handles.screendistance, 'string', Mstate.screenDist)
-set(handles.monitor, 'string', Mstate.monitor)
-set(handles.stimulusIDP, 'string', Mstate.stimulusIDP)
-
+set(handles.hemisphere, 'string', Mstate.hemi);
+set(handles.screendistance, 'string', Mstate.screenDist);
+set(handles.monitor, 'string', Mstate.monitor);
+set(handles.stimulusIDP, 'string', Mstate.stimulusIDP);
+outputSingleScan(daqOUTLED, 0)
+set(handles.LEDtogglebutton, 'string', 'LED off')
+set(handles.runbutton, 'string', 'Run');
+set(handles.showTrial, 'string', '');
 GUIhandles.main = handles;
-
-% Currently, no eye shutter is supposed.
-% shutterState.use=0;
-% shutterState.ini=0;
+updateExptName
 
 
 % --- Outputs from this function are returned to the command line.
@@ -99,16 +90,9 @@ function animal_Callback(hObject, eventdata, handles)
 % hObject    handle to animal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global Mstate
+    global Mstate
     set(handles.animal, 'string', deblank(get(handles.animal, 'string')));
     Mstate.anim = deblank(get(handles.animal, 'string'));
-    % % Backwards compatibility
-    %Mstate.unit = '000';
-    %Mstate.expt = '000';
-    %set(handles.exptcb, 'string', '000')
-    %set(handles.unitcb, 'string', '000')
-    %anaroot = get(handles.analyzerRoots, 'string');
-    %Mstate.analyzerRoot = anaroot;
     updateExptName
 
 
@@ -216,7 +200,7 @@ if ~Mstate.running
     Mstate.running = 1;
     set(handles.runbutton, 'string', 'Abort');
     updateLstate
-    updateMstate    
+    updateMstate
     
     % Creates 'looperInfo'. Must be done before saving the analyzer file.
     makeLoop
@@ -462,16 +446,16 @@ function LEDtogglebutton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Hint: get(hObject,'Value') returns toggle state of LEDtogglebutton
-global GUIhandles daqOUTLED
-flag = get(handles.LEDtogglebutton, 'value');
-set(GUIhandles.main.LEDtogglebutton, 'value', flag)
-if flag
-    outputSingleScan(daqOUTLED, 1)
-    set(GUIhandles.main.LEDtogglebutton, 'string', 'LED on')
-else
-    outputSingleScan(daqOUTLED, 0)
-    set(GUIhandles.main.LEDtogglebutton, 'string', 'LED off')
-end
+    global GUIhandles daqOUTLED
+    flag = get(handles.LEDtogglebutton, 'value');
+    set(GUIhandles.main.LEDtogglebutton, 'value', flag)
+    if flag
+        outputSingleScan(daqOUTLED, 1)
+        set(GUIhandles.main.LEDtogglebutton, 'string', 'LED on')
+    else
+        outputSingleScan(daqOUTLED, 0)
+        set(GUIhandles.main.LEDtogglebutton, 'string', 'LED off')
+    end
 
 
 % % --- Executes on button press in streamFlag.
