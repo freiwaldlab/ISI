@@ -1,4 +1,4 @@
-function makeFourierPhaseMaps(root, subj, expt, scale, rotate, gcampFlag)
+function makeFourierPhaseMaps(root, subj, datestr, timestr, scale, rotate, gcampFlag)
 % modified for Freiwald lab
 % original author: Onyekachi 'Kachi' Odoemene, last update 2016-08
 % based on online analysis of the Fourier phase map from Ian Nauhaus
@@ -19,19 +19,30 @@ function makeFourierPhaseMaps(root, subj, expt, scale, rotate, gcampFlag)
 %example usage:
 %   maps = makeFourierPhaseMaps('k32','25-June-2015','000',2,5,0,1);
 
-% Setup
-subj = 'zz9';
-expt = 'u000_014';
-scale = 1;
-root = 'H:\intrinsic';
+%% Setup
+% datestr = '171005';
+% timestr = '200835';
+% subj = 'blockhead';
+% scale = 1;
+% root = 'D:\';
 
-data_path = fullfile(root, subj, expt);
-if ~isdir(data_path)
-    error([mfilename ': Could not find data directory.']);
+if ~regexp(datestr, '^\d{6}')
+    error([mfilename ': Input experiment date string format not '
+        'recognized (expected YYMMDD).']);
 end
-map_path = fullfile('H:\intrinsic', subj, expt, 'FourierMaps');
+if ~regexp(timestr, '^\d{6}')
+    error([mfilename ': Input experiment time string format not '
+        'recognized (expected YYMMDD).']);
+end
+main_path = fullfile(root, [datestr 'd_' subj]);
+if ~isdir(main_path)
+    error([mfilename ': Data directory does not exist.']);
+end
+map_path = fullfile(main_path, 'maps');
 if ~isdir(map_path)
     mkdir(map_path)
+    disp([mfilename ': Created ''maps'' output directory ['
+        map_path '].']);
 end
 scale_default = 1;
 if ~exist('scale', 'var')
@@ -46,10 +57,19 @@ if ~exist('gcampFlag', 'var')
 end
 max_intens = 2^16 - 1;
 
-%set(0, 'DefaultFigureWindowStyle', 'docked')
-
-% Import experiment details
-info_file = fullfile(data_path, ls(fullfile(data_path, '*.analyzer')));
+%% Import experiment details
+info_file_ptrn = [datestr 'd' timestr 't_(\D{2})_ExperimentParameters.mat'];
+tempfiles = dir(main_path);
+files = tempfiles(~[tempfiles.isdir]);
+match_files = files(cellfun(@(x) ...
+    ~isempty(regexp(x, info_file_ptrn, 'once')), {files.name}));
+info_file = fullfile(match_files(1).folder, match_files(1).name);
+stim_code = regexprep(info_file, ['.*' info_file_ptrn], '$1');
+if numel(match_files) ~= 1
+    warning([mfilename ': More than one experiment parameter file matched '
+        'this date and time. Using only the first [' info_file '].']);
+end
+clear info_file_ptrn tempfiles files match_files
 load(deblank(info_file), '-mat');
 clear info_file
 if ~exist('Analyzer', 'var')
@@ -61,10 +81,13 @@ end
 I.NumConds = numel(Analyzer.loops.conds);
 reps = numel(Analyzer.loops.conds{1}.repeats);
 for c = 1:I.NumConds
+    if any(strcmpi(Analyzer.loops.conds{c}.symbol(:), 'blank'))
+        continue
+    end
     if numel(Analyzer.loops.conds{c}.repeats) == reps
         continue
     else
-        error([mfilename ': Number of repeats varies across conditions.']);
+        warning([mfilename ': Number of repeats varies across conditions.']);
     end
 end
 I.NumReps = reps;
@@ -82,7 +105,7 @@ for c = 1:I.NumConds
         I.CondParams(c,:) = v;
     end
     I.Repeats = cell2mat(I.Conditions{1,c}.repeats);
-    I.CondTrials{c} = struct2array(I.Repeats);
+    I.CondTrials{c} = cell2mat(struct2cell(I.Repeats));
     clear v
 end
 clear c
@@ -93,40 +116,209 @@ for p = 1:length(Analyzer.P.param)
 end
 clear p n v
 
-tempfiles = dir(data_path);
-files = tempfiles(~[tempfiles.isdir]);
-data_files = files(cellfun(@(x) ...
-    ~isempty(regexp(x, '.*_Intrinsic\.mat', 'once')), {files.name}));
-data_files = {data_files.name};
-clear tempfiles files
-if numel(data_files) < I.NumTrials
-    error([mfilename ': Fewer data files than trials.']);
+trial_ptrn = [datestr 'd' timestr 't_' stim_code '_t(\d+)_data'];
+tempdirs = dir(main_path);
+dirs = tempdirs([tempdirs.isdir]);
+match_dirs = dirs(cellfun(@(x) ...
+    ~isempty(regexp(x, trial_ptrn, 'once')), {dirs.name}));
+match_dirs = sort({match_dirs.name})';
+trial_path = cell(numel(match_dirs), 1);
+for p = 1:numel(trial_path)
+    trial_path(p) = fullfile(main_path, match_dirs(p));
 end
-fr = nan(1, 4);
-nf = nan(1, 4);
-for d = 1:numel(data_files)
-    mv = who('-file', fullfile(data_path, data_files{d}));
-    m = matfile(fullfile(data_path, data_files{d}));
-    if ismember('NumFrames', mv)
-        nf(d) = m.NumFrames;
-    elseif ismember('Frames', mv)
-        nf(d) = m.Frames;
-    else
-        warning([mfilename ': Could not import number of frames.']);
+clear tempdirs dirs match_dirs p 
+if numel(trial_path) < I.NumTrials
+    error([mfilename ': There are fewer trial data directories than '
+        'trials. Some data is missing.']);
+end
+
+%% Check data for all trials
+nf = nan(numel(trial_path), 1);
+fr = nan(numel(trial_path), 1);
+I.PreStimTimes = nan(numel(trial_path), 2);
+I.PostStimTimes = nan(numel(trial_path), 2);
+I.TrialFrameTimes = cell(numel(trial_path), 1);
+I.TrialFrameRate = cell(numel(trial_path), 1);
+I.TrialPreStimFrames = cell(numel(trial_path), 1);
+I.TrialPostStimFrames = cell(numel(trial_path), 1);
+for tp = 1:numel(trial_path)
+    trialStr = regexprep(trial_path{tp}, '.*_(t\d+)_.*', '$1');
+    trialFullStr = [datestr 'd' timestr 't_' stim_code '_' trialStr];
+    disp([mfilename ': Checking ' trialFullStr ' data...']);
+    log_name = [trialFullStr '.log'];
+    log_path = fullfile(main_path, log_name);
+    if ~exist(log_path, 'file')
+        error([mfilename ': Could not find trial ' trialStr ...
+            ' log file [' log_path '].']);
     end
-    % Calculate frame rate as the mean difference in all frame timestamps
-    fr(d) = round((1 ./ mean(diff(m.FrameTimes))), 2);
+    log_file = fopen(log_path, 'r');
+    [log_data,~] = fread(log_file, [6,inf], 'double');
+    % log_data is a 6 x samples matrix where...
+    %   (1,:) is the time each sample is taken from start
+    %   (2,:) is the voltage on analog input 0: photodiode from display
+    %   (3,:) is the voltage on analog input 1: strobe from camera
+    %   (4,:) is the voltage on analog input 2: trigger copy
+    %   (5,:) is the voltage on analog input 3: audio copy
+    %   (6,:) is the voltage on analog input 4: start/stop ttl copy
+    fclose(log_file);
+    clear log_name log_path log_file
+    samples = length(log_data);
+    time_sec = log_data(1,:)';
+    Fs = 1000;  % sampling frequency in Hz % analogIN.Rate
+    % Normalize photodiode signal
+    photodiode = log_data(2,:)';
+    pd_high = max(photodiode);
+    pd_low = median(photodiode);  % median to avoid negative transients
+    pd_thresh = (pd_high + pd_low) / 2;
+    photodiode = sign(photodiode - pd_thresh);
+    photodiode(photodiode == 0) = 1;
+    photodiode = (photodiode - min(photodiode)) / ...
+        (max(photodiode) - min(photodiode));
+    % Filter out down states caused by monitor refresh
+    %Mstate.refresh_rate
+    delta = 120 / Fs;  % window of one monitor refresh period
+    pd_hightimes = time_sec(photodiode == 1);
+    highidx = find(photodiode == 1);
+    for idx = 1:length(highidx)-1
+        if (pd_hightimes(idx+1) - pd_hightimes(idx)) <= delta
+            photodiode(highidx(idx):highidx(idx+1)) = 1;
+        end
+    end
+    clear idx highidx delta Fs pd_hightimes
+    pd_high = max(photodiode);
+    pd_low = min(photodiode);
+    pd_thresh = (pd_high + pd_low) / 2;
+    pd_ups = nan(samples, 1);
+    pd_dns = nan(samples, 1);
+    pd_last = pd_low;
+    for trial = 1:samples
+        if (photodiode(trial) < 1)
+            if (pd_last == pd_high)
+                pd_dns(trial) = 1;
+            else
+                pd_dns(trial) = 0;
+            end
+            pd_ups(trial) = 0;
+            pd_last = pd_low;
+        elseif (photodiode(trial) > pd_thresh)
+            if (pd_last == pd_low)
+                pd_ups(trial) = 1;
+            else
+                pd_ups(trial) = 0;
+            end
+            pd_dns(trial) = 0;
+            pd_last = pd_high;
+        else
+            pd_dns(trial) = 0;
+            pd_ups(trial) = 0;
+            pd_last = pd_low;
+        end
+    end
+    clear t
+    clear pd_high pd_low pd_thresh pd_last
+    uptimes = time_sec(pd_ups==1);
+    dntimes = time_sec(pd_dns==1);
+    clear pd_ups pd_dns
+    I.TrialPreStimTimes(tp, 1) = uptimes(1);
+    I.TrialPreStimTimes(tp, 2) = dntimes(1);
+    I.TrialPostStimTimes(tp, 1) = uptimes(end);
+    I.TrialPostStimTimes(tp, 2) = dntimes(end);
+    clear uptimes dntimes
+    
+    % Normalize camera strobe
+    strobe = log_data(3,:)';
+    strb_high = max(strobe);
+    strb_low = min(strobe);
+    strobe(strobe < 0) = 0;
+    strb_thresh = (strb_high + strb_low) / 2;
+    strobe = sign(strobe - strb_thresh);
+    strobe(strobe == 0) = 1;
+    strobe = (strobe - min(strobe)) / ...
+        (max(strobe) - min(strobe));
+    strb_high = max(strobe);
+    strb_low = min(strobe);
+    strb_thresh = (strb_high + strb_low) / 2;
+    frame_fin = nan(samples, 1);
+    strb_last = strb_low;
+    for t = 1:samples
+        if (strobe(t) < 1)
+            if (strb_last == strb_high)
+                frame_fin(t) = 1;
+            else
+                frame_fin(t) = 0;
+            end
+            strb_last = strb_low;
+        elseif (strobe(t) > strb_thresh)
+            frame_fin(t) = 0;
+            strb_last = strb_high;
+        else
+            frame_fin(t) = 0;
+            strb_last = strb_low;
+        end
+    end
+    clear t
+    clear strb_high strb_low strb_thresh strb_last
+
+    I.TrialFrameTimes{tp} = time_sec(frame_fin==1);
+    I.TrialFrameRate{tp} = round((1 ./ mean(diff(time_sec(frame_fin==1)))), 2);
+    I.TrialPreStimFrames{tp} = sum(I.TrialFrameTimes{tp} <= I.TrialPreStimTimes(tp,2));
+    I.TrialPostStimFrames{tp} = sum(I.TrialFrameTimes{tp} >= I.TrialPostStimTimes(tp,1));
+    
+    %figure(1); clf;
+    %hold on;
+    %plot(time_sec, photodiode, 'm'); % photodiode filtered
+    %plot(time_sec, 0.20*frame_fin, 'r'); % camera strobe filtered
+    %plot(m.PreStimTimes, [0.8 0.8], 'y');
+    %plot(m.PostStimTimes, [0.8 0.8], 'y');
+    %hold off;
+    %xlim([0 time_sec(samples)]);
+    %xlabel('Time');
+    %ylim([-0.1 1.1]);
+    %ylabel('Signal');
+    clear log_data samples photodiode frame_fin strobe time_sec
+
+    data_list = dir(trial_path{tp});
+    file_list = data_list(~[data_list.isdir]);
+    im_match_str = [trialStr '_f(\d+).*'];
+    im_files = struct2cell(file_list(cellfun(@(x) ...
+        ~isempty(regexp(x, im_match_str, 'once')), {file_list.name})));
+    clear log_match_str im_match_str
+    im_names = im_files(1,:);
+    nf(tp) = length(im_names);
+    %frt = nan(nf(tp), 1);
+    %for f = 1:nf(tp)
+    %    % Extract frame timing information from camera relative time values
+    %    frame_file = fullfile(trial_path{tp}, im_names{f});
+    %    % MATfile approach seems slower than direct loading
+    %    load(frame_file, 'tm');
+    %    %m = matfile(frame_file, 'Writable', false);
+    %    %tm = m.tm;
+    %    if exist('tm', 'var')
+    %        frt(f) = squeeze(tm);
+    %    else
+    %        warning([mfilename ': Could not find frame time for ' ...
+    %            num2str(f) ' [' frame_file '].']);
+    %    end
+    %    clear tm m frame_file
+    %end
+    % % Calculate frame rate as the mean difference in all frame timestamps
+    %fr(tp) = round((1 ./ mean(diff(frt))), 2);
 end
-clear d
+clear tp data_list file_list match_str im_files im_names frameN frt f
+clear trialFullStr
 if ~all(nf == nf(1))
-    warning([mfilename ': Number of frames is not the same for all trials.']);
+    warning([mfilename ': Number of frames is not the same for all ' ...
+        'trials. Using the minimum across trials.']);
 end
-if ~all(fr == fr(1))
-    warning([mfilename ': Frame rate is not the same for all trials.']);
+I.NumFrames = min(nf);
+clear nf
+e = 0.05;
+I.FrameRate = mean([I.TrialFrameRate{:}]);
+if any(diff([I.TrialFrameRate{:}]) > e)
+    warning([mfilename ': Frame rate is not the same for all trials.' ...
+        'Using mean.']);
 end
-I.NumFrames = mean(nf);
-I.FrameRate = mean(fr);
-clear fr nf m mv
+clear fr nf e
 
 %% Compute Fourier maps
 
@@ -136,8 +328,25 @@ I.meanFourierMagMaps = cell(I.NumConds, 1);
 
 fignum = 0;
 for condNum = 1:I.NumConds
-    disp([mfilename ': Processing condition ' num2str(condNum) ', ' ...
-        I.CondParamNames{condNum,1} '=' num2str(I.CondParams(condNum,1))]);
+    condTitle = [];
+    for i = 1:size(I.CondParamNames, 2)
+        condTitle = [condTitle I.CondParamNames(condNum,i) ...
+            num2str(I.CondParams(condNum,i))];
+        if i < size(I.CondParamNames, 2)
+            condTitle = [condTitle '_'];
+        end
+    end
+    clear i
+    condTitle = cell2mat(condTitle);
+    condTitle = deblank(condTitle);
+    if ~any(strcmpi(I.CondParamNames(condNum,:), 'blank'))
+        disp([mfilename ': Processing condition ' num2str(condNum) ', ' ...
+            condTitle '...']);
+    else
+        disp([mfilename ': Skipping blank condition ' num2str(condNum) '...']);
+        continue
+    end
+    
     % Each trial is saved as a sequence of images.
     % For example, 32 trials for the imaging session and 4 conditions turns
     % out to be 8 trials per condition.
@@ -146,51 +355,30 @@ for condNum = 1:I.NumConds
     % To solve this, loop through each condtion to find the trial numbers 
     % that correspond to each condition.
     timer = tic;
-    condTrials = I.CondTrials{condNum};
+    condTrials = I.CondTrials(condNum);
+    %for repIdx = 1:numel(
     for trialIdx = 1:numel(condTrials)
-        trialNum = condTrials(trialIdx);
-        trialStr = sprintf('t%02d', trialNum);
-        disp([mfilename ': Processing trial ' trialStr]);
-        try
-            % Load data file(s) corresponding to trial
-            trialFile = fullfile(data_path, data_files{trialNum});
-            trialData = matfile(trialFile, 'Writable', false);
-            %trial_data = load(deblank(trial_file));
-        catch err
-            % Warn if data file(s) cannot be found, but continue processing
-            warning([mfilename ': Could not load file. Experiment may ' ...
-                'have been interrupted.']);
-            continue
-        end
-        trailVars = who('-file', trialFile);
-        if ismember('NumFrames', trailVars)
-            trialFrameNum = trialData.NumFrames;
-        elseif ismember('Frames', trailVars)
-            trialFrameNum = trialData.Frames;
-        else
-            warning([mfilename ': Could not import number of frames.']);
-        end
-        clear trailVars
-        
-        % Find frame files
-        trial_path = fullfile(data_path, [trialStr '_data']);
-        data_list = dir(trial_path);
+        trialStr = regexprep(trial_path{condTrials{trialIdx}}, '.*_(t\d+)_.*', '$1');
+        trialFullStr = [datestr 'd' timestr 't_' stim_code '_' trialStr];
+        disp([mfilename ': Processing trial ' trialFullStr '...']);
+        data_list = dir(trial_path{condTrials{trialIdx}});
         file_list = data_list(~[data_list.isdir]);
-        match_str = strcat('.*_', trialStr, '_f(\d+)_data\.mat');
+        match_str = [trialStr '_f(\d+).*'];
         im_files = struct2cell(file_list(cellfun(@(x) ...
             ~isempty(regexp(x, match_str, 'once')), {file_list.name})));
         im_names = im_files(1,:);
         
         % Index trial epochs (predelay, stim_time, and postdelay)
-        %preFrameIdx = 1:trialData.PreStimFrames;
-        stimFrameIdx = (trialData.PreStimFrames + 1):(trialFrameNum - trialData.PostStimFrames);
-        %postFrameIdx = (trialFrameNum - trialData.PostStimFrames + 1):trialFrameNum;
+        %preFrameIdx = 1:I.TrialPreStimFrames{trialIdx};
+        stimFrameIdx = (I.TrialPreStimFrames{trialIdx} + 1):(I.NumFrames - I.TrialPostStimFrames{trialIdx});
+        %postFrameIdx = (I.NumFrames - I.TrialPostStimFrames{trialIdx} + 1):I.NumFrames;
         
-        load(fullfile(trial_path, im_names{1}), 'im');
+        load(fullfile(trial_path{condTrials{trialIdx}}, im_names{1}), 'im');
         [imHpx,imWpx] = size(im);
         
-        frameTimes = trialData.FrameTimes(stimFrameIdx,1);
-        frameTimes = frameTimes - frameTimes(1);
+        frameTimes = I.TrialFrameTimes{trialIdx};
+        stimFrameTimes = frameTimes(stimFrameIdx);
+        stimFrameTimes = stimFrameTimes - stimFrameTimes(1);
 
         % Compute the discrete Fourier transform (i.e. component) for each 
         % frame the Fourier transform at k cycles of a sequence x[n] is
@@ -206,7 +394,7 @@ for condNum = 1:I.NumConds
         %        (i.e. k = however many cycles of your stimulus was
         %         presented within the total number of frames)
         %   w is the angular frequency = (2*pi*k)/N
-        n = frameTimes;
+        n = stimFrameTimes;
         k = I.Params.NumCycles;
         N = I.Params.stim_time;
         w = (2*pi * k * n) ./ N;
@@ -216,7 +404,7 @@ for condNum = 1:I.NumConds
         for f = 1:length(stimFrameIdx)
             %frame = double(trialFrames(:,:,stimFrameIdx(f)));
             fidx = stimFrameIdx(f);
-            load(fullfile(trial_path, im_names{fidx}), 'im');
+            load(fullfile(trial_path{condTrials{trialIdx}}, im_names{fidx}), 'im');
             if exist('im', 'var')
                 if (scale == scale_default) && (rotate == rotate_default)
                     frame = double(squeeze(im));
@@ -293,19 +481,12 @@ for condNum = 1:I.NumConds
     % Normalize magnitude map
     condMagMap = (condMagMap - min(condMagMap(:))) ./ range(condMagMap(:));
     
-    condTitle = [];
-    for i = 1:size(I.CondParamNames, 2)
-        condTitle = [condTitle I.CondParamNames(condNum,i) ': ' ...
-            num2str(I.CondParams(condNum,i))];
-    end
-    condTitle = cell2mat(condTitle);
-    condTitle = deblank(condTitle);
-    
     % Plot mean phase map
-    figure(fignum + 1);
+    fignum = fignum + 1;
+    figure(fignum); clf;
     subplot(2,1,1); axis equal;
     imshow(rot90(condPhaseMap, -1), []); colorbar; colormap(parula);
-    title(condTitle);
+    title(condTitle, 'Interpreter', 'none');
     subplot(2,1,2); axis equal;
     imshow(rot90(condMagMap, -1), stretchlim(condMagMap)'); 
     colorbar; colormap(parula);
@@ -318,18 +499,17 @@ for condNum = 1:I.NumConds
         (max(condPhaseMap(:)) - min(condPhaseMap(:)));
     phaseMapIdx = gray2ind(imadjust(condPhaseMapDisp), bit);
     phaseMapRGB = ind2rgb(phaseMapIdx, parula(bit));
-    figFilename = strcat(subj, '_', expt, '_', condTitle);
+    figFilename = strcat(trialFullStr, '_', condTitle);
     figFilename(~((figFilename ~= ':') & (figFilename ~= ';'))) = '_';
     figFilename(figFilename == ' ') = '';
     
-    imwrite(rot90(phaseMapRGB, -1), ...
+    imwrite(fliplr(rot90(phaseMapRGB, -1)), ...
         (fullfile(map_path, [figFilename '.png'])));
 
     I.ConditionTitles{condNum} = condTitle;
     % Store maps
-    I.meanFourierPhaseMaps{condNum} = condPhaseMap; 
+    I.meanFourierPhaseMaps{condNum} = condPhaseMap;
     I.meanFourierMagMaps{condNum} = condMagMap;
-    
     toc(timer)
 end
 
@@ -354,11 +534,9 @@ if isfield(I.Params, 'BarDirection')
     % BarDirection == 0, right-to-left or bottom-to-top 
     % BarDirection == 1, left-to-right or top-to-bottom
     barDirParamCol = find(strcmp('BarDirection', I.CondParamNames));
-    disp([mfilename ' WARNING: TODO *** CHECK FOR TWO SEPARATE DIRECTIONS'])
-    pause
-    elevInds = find(I.CondParams(barDirParamCol) == 1)
+    elevInds = find(I.CondParams(barDirParamCol) == 1);
     % Cancel hemodynamic delay by subtracting phase map for reverse direction
-    I.meanFourierPhaseMaps
+    %I.meanFourierPhaseMaps
     elevPhaseMap = I.meanFourierPhaseMaps{elevInds(1)} - ...
         I.meanFourierPhaseMaps{elevInds(2)};
     % Scale
@@ -373,21 +551,23 @@ if isfield(I.Params, 'BarDirection')
     I.elevMagMap = elevMagMap;
 
     % Plot elevation map
-    figure(fignum + 1); clf;
+    fignum = fignum + 1;
+    figure(fignum); clf;
     subplot(2,1,1);
-    imshow(rot90(elevPhaseMapScaled, -1), []);
+    imshow(fliplr(rot90(elevPhaseMapScaled, -1)), []);
     colorbar; colormap(parula);
     title('elevation retinotopy')
     subplot(2,1,2);
-    imshow(rot90(elevMagMap, -1), stretchlim(elevMagMap));
+    imshow(fliplr(rot90(elevMagMap, -1)), stretchlim(elevMagMap));
     colorbar; colormap(parula);
-    figFilename = 'retinotopy_elevation_map';
+    figFilename = [trialFullStr '_map_retinotopy_elevation'];
     elevMapIdx = gray2ind(imadjust(elevPhaseMap), bit);
     elevMapRGB = ind2rgb(elevMapIdx, parula(bit));
-    imwrite(rot90(elevMapRGB, -1), fullfile(map_path, [figFilename '.png']));
+    imwrite(fliplr(rot90(elevMapRGB, -1)), fullfile(map_path, ...
+        [figFilename '.png']));
    
     % Plot azimuth map
-    azimInds = find(I.CondParams(barDirParamCol) == 0);
+    azimInds = find(I.CondParams(barDirParamCol) == -1);
     azimPhaseMap = I.meanFourierPhaseMaps{azimInds(1)} - ...
         I.meanFourierPhaseMaps{azimInds(2)};
     azimPhaseMap = (azimPhaseMap - min(azimPhaseMap(:))) ./ ...
@@ -399,21 +579,25 @@ if isfield(I.Params, 'BarDirection')
     I.azimPhaseMap = azimPhaseMap;
     I.azimMagMap = azimMagMap;
     
-    figure(fignum + 1); clf;
+    fignum = fignum + 1;
+    figure(fignum); clf;
     subplot(2,1,1);
-    imshow(rot90(azimPhaseMapScaled, -1), []);
+    imshow(fliplr(rot90(azimPhaseMapScaled, -1)), []);
     colorbar; colormap(parula);
     title('horizontal (azimuth) retinotopy')
     subplot(2,1,2);
-    imshow(rot90(azimMagMap, -1), stretchlim(azimMagMap));
+    imshow(fliplr(rot90(azimMagMap, -1)), stretchlim(azimMagMap));
     colorbar; colormap(parula);
-    figFilename = 'retinotopy_azimuth_map';   
+    figFilename = [trialFullStr 'map_retinotopy_azimuth'];   
     azimMapIdx = gray2ind(imadjust(azimPhaseMap), bit);
     azimMapRGB = ind2rgb(azimMapIdx, parula(bit));
-    imwrite(rot90(azimMapRGB, -1), fullfile(map_path, [figFilename '.png']));
+    imwrite(fliplr(rot90(azimMapRGB, -1)), fullfile(map_path, ...
+        [figFilename '.png']));
     
-    save(fullfile(map_path, 'retinotopy_azimuth_map.mat'), 'azimPhaseMapScaled');
-    save(fullfile(map_path, 'retinotopy_elevation_map.mat'), 'elevPhaseMapScaled');
+    save(fullfile(map_path, [trialFullStr '_map_retinotopy_azimuth.mat']), ...
+        'azimPhaseMapScaled');
+    save(fullfile(map_path, [trialFullStr '_map_retinotopy_elevation.mat']), ...
+        'elevPhaseMapScaled');
     
     %% (optionally) Compute visual field sign map from Callaway lab visual
     %  area segmentation paper
@@ -439,7 +623,8 @@ if isfield(I.Params, 'BarDirection')
     % Smooth before thresholding
     visFieldSignMap = spatialFilterGaussian(visFieldSignMap, 5);
     
-    figure(fignum + 1); clf;
+    fignum = fignum + 1;
+    figure(fignum); clf;
     imagesc(xdom, ydom, visFieldSignMap, [-1 1]);
     axis image; axis off; colorbar;
     title('sin(angle(elev)-angle(azim))')
