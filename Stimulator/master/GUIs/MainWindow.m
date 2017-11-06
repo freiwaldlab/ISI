@@ -218,8 +218,7 @@ if ~Mstate.running
     %end
     
     if ISIbit
-        analogIN.stop; 
-        
+        analogIN.stop;
         if isvalid(daqOUTtrig)
             disp([mfilename ': daqOUTtrig exists, stopping before running.']);
             stop(daqOUTtrig);
@@ -255,36 +254,10 @@ if ~Mstate.running
         sendtoImager('C')
     end
 else
-    set(handles.runbutton, 'string', 'Run')    
+    Mstate.running = 0;
+    warning([mfilename ': Aborting run after trial completes.']);
+    set(handles.runbutton, 'string', 'Run');
 end
-
-
-% % --- Executes on button press in unitcb.
-% function unitcb_Callback(hObject, eventdata, handles)
-% % hObject    handle to unitcb (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% global Mstate
-% newunit = sprintf('%03d', str2double(Mstate.unit));
-% Mstate.unit = newunit;
-% set(handles.unitcb, 'string', newunit)
-% newexpt = '000';
-% Mstate.expt = newexpt;
-% set(handles.exptcb, 'string', newexpt)
-% updateExptName
-
-
-% % --- Executes on button press in exptcb.
-% function exptcb_Callback(hObject, eventdata, handles)
-% % hObject    handle to exptcb (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% global Mstate
-% newexpt = sprintf('%03d', str2double(Mstate.expt));
-% Mstate.expt = newexpt;
-% set(handles.exptcb, 'string', newexpt)
-% % Send expt info to acquisition
-% updateExptName
 
 
 % --- Executes on button press in closeDisplay.
@@ -294,25 +267,6 @@ function closeDisplay_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global DcomState
 fwrite(DcomState.serialPortHandle, 'C;~')
-
-
-% function analyzerRoots_Callback(hObject, eventdata, handles)
-% % hObject    handle to analyzerRoots (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% 
-% %This is not actually necessary since updateMstate is always called prior
-% %to showing stimuli...
-% Mstate.analyzerRoot = get(handles.analyzerRoots, 'string');
-% % --- Executes during object creation, after setting all properties.
-% function analyzerRoots_CreateFcn(hObject, eventdata, handles)
-% % hObject    handle to analyzerRoots (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    empty - handles not created until after all CreateFcns called
-% 
-% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-%     set(hObject,'BackgroundColor','white');
-% end
 
 
 % % --- Executes on button press in REflag.
@@ -456,18 +410,3 @@ function LEDtogglebutton_Callback(hObject, eventdata, handles)
         outputSingleScan(daqOUTLED, 0)
         set(GUIhandles.main.LEDtogglebutton, 'string', 'LED off')
     end
-
-
-% % --- Executes on button press in streamFlag.
-% function streamFlag_Callback(hObject, eventdata, handles)
-% % hObject    handle to streamFlag (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% global GUIhandles
-% flag = get(handles.streamFlag,'value');
-% set(GUIhandles.main.streamFlag,'value',flag)
-% if flag
-%     set(handles.analysisFlag,'value',0);
-%     set(GUIhandles.main.analysisFlag,'value',0)
-% end
-
