@@ -2,7 +2,7 @@ function runExpt
 global GUIhandles Mstate
 global trialno trialInfo
 global pathBase pathData
-global syncInfo analogIN analogINdata daqOUT2p
+global analogIN analogINdata daqOUT2p %syncInfo
 global prefixDate prefixTrial
 
 modID = getmoduleID;
@@ -17,7 +17,7 @@ ISIbit = get(GUIhandles.main.intrinsicflag, 'value');
 if Mstate.running && (trialno <= nt)
     prefixTrial = sprintf('t%0*.0f', numel(num2str(nt)), trialno);
     set(GUIhandles.main.showTrial, 'string', ...
-        ['Trial ' prefixTrial ' of ' ...
+        ['Trial ' prefixTrial '/' ...
         sprintf('t%0*.0f', numel(num2str(nt)), nt)]);
     drawnow
 
@@ -53,10 +53,11 @@ if Mstate.running && (trialno <= nt)
         lhIn = addlistener(analogIN, ...
             'DataAvailable', @(src, event)logData(src, event, fid1));
         analogIN.startBackground;
-        pause(0.2)
+        pause(0.25)
         disp([mfilename ': Log file opened [' fileLog '].']);
     end
-    
+
+    % Start sampling
     if twoPbit
         high = 1;
         low = 0;
@@ -68,10 +69,10 @@ if Mstate.running && (trialno <= nt)
         outputSingleScan(daqOUT2p, low);
         clear ttlTmsec high low
     end
+    startStimulus
     if ISIbit
         sendtoImager(sprintf(['S %d' 13], trialno))
     end
-    startStimulus
     
     if strcmpi(getmoduleID, 'IB')
         if ~isempty(trialInfo)
@@ -84,7 +85,7 @@ if Mstate.running && (trialno <= nt)
     if ISIbit
         % For some reason, pausing is necessary here for log file to save
         % properly before listener and file closing
-        pause(0.2)
+        pause(0.25)
         analogIN.stop;
         delete(lhIn);
         fclose(fid1);
@@ -126,29 +127,32 @@ if Mstate.running && (trialno <= nt)
             end
         end
         
-        figure; clf;
-        hold on;
-        %plot(timevals, analogINdata(1,1:1:samples)', 'k') % time
-        plot(timevals, stimsq, 'r') % photodiode filtered
-        plot(timevals, analogINdata(2,:)', 'm') % photodiode raw
-        plot(timevals, analogINdata(6,:)', 'k') % start/stop ttl camera
-        plot(timevals, analogINdata(4,:)', 'b') % trigger
-        plot(timevals, analogINdata(3,:)', ':b') % strobe
-        plot(timevals, analogINdata(5,:)', 'g') % audio
-        %plot(timevals, high * ones(samples, 1), 'k') % photodiode high
-        %plot(timevals, thresh * ones(samples, 1), 'y') % photodiode thresh
-        %plot(timevals, low * ones(samples, 1), 'k') % photodiode low
-        hold off;
-        legend('StimFilt', 'StimRaw', 'ISIttl', ...
-            'CamTrig', 'CamStrb', 'Audio');
-        xlim([0 timevals(samples)]);
-        xlabel('Time');
-        ylabel('Voltage');
+        plot_inputs = 0;
+        if plot_inputs
+            figure; clf;
+            hold on;
+            %plot(timevals, analogINdata(1,1:1:samples)', 'k') % time
+            plot(timevals, stimsq, 'r') % photodiode filtered
+            plot(timevals, analogINdata(2,:)', 'm') % photodiode raw
+            plot(timevals, analogINdata(6,:)', 'k') % start/stop ttl camera
+            plot(timevals, analogINdata(4,:)', 'b') % trigger
+            plot(timevals, analogINdata(3,:)', ':b') % strobe
+            plot(timevals, analogINdata(5,:)', 'g') % audio
+            %plot(timevals, high * ones(samples, 1), 'k') % photodiode high
+            %plot(timevals, thresh * ones(samples, 1), 'y') % photodiode thresh
+            %plot(timevals, low * ones(samples, 1), 'k') % photodiode low
+            hold off;
+            legend('StimFilt', 'StimRaw', 'ISIttl', ...
+                'CamTrig', 'CamStrb', 'Audio');
+            xlim([0 timevals(samples)]);
+            xlabel('Time');
+            ylabel('Voltage');
+        end
 
-        [syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
-            getSyncTimes;
-        syncInfo.dSyncswave = [];
-        saveSyncInfo(syncInfo)
+        %[syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
+        %    getSyncTimes;
+        %syncInfo.dSyncswave = [];
+        %saveSyncInfo(syncInfo)
         
         %[looperInfo.conds{c}.repeats{r}.dispSyncs ...
         %    looperInfo.conds{c}.repeats{r}.acqSyncs ...
@@ -159,7 +163,7 @@ if Mstate.running && (trialno <= nt)
     end
     
     if twoPbit
-       pause(0.2)
+       pause(0.25)
     end
     
     trialno = trialno + 1;
@@ -171,4 +175,14 @@ else
     if get(GUIhandles.main.intrinsicflag, 'value')
         saveOnlineAnalysis
     end
+    
+    if trialno >= nt
+        set(GUIhandles.main.showTrial, 'string', 'Finished.');
+    else
+        set(GUIhandles.main.showTrial, 'string', ...
+            ['Aborted (' prefixTrial ').']);
+    end
+    drawnow
+    
+    return
 end
