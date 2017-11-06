@@ -51,8 +51,6 @@ function GrabSaveLoop(pathData, prefixTrial)
         [frames, framesTrel, ~] = getdata(h.video, frameRnum);
         Tens(:,:,frameR) = rot90(permute(squeeze(frames), [2 1 3]), 2);
         FrameTimes(frameR) = framesTrel;
-        %Tens(:,:,frameR) = permute(squeeze(getdata(h.video, frameRnum)), ...
-        %    [2 1 3]);
         timelastframe = now;
         % Save frames to disk
         if saveToggle
