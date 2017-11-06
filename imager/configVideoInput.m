@@ -22,9 +22,13 @@ function handout = configVideoInput(handin, trigtype)
     handout.src.PacketSize = 9000;
     handout.src.PacketDelay = 1400;
     handout.src.Strobe1Polarity = 'High';
+    % In Blackfly mode0, the shutter setting determines the exposure value
     handout.src.Shutter = 50;
     handout.src.Strobe1 = 'On';
     handout.src.Strobe1Delay = 0;
+    % Fix gain to max so no automatic adjustments are made
+    handout.src.Gain = 29.9964;
+    %handout.src.ExposureMode = 'Manual';
     handout.src.Strobe1Duration = handout.src.Shutter;
     FPS = floor(handout.src.FrameRate);
     Mstate.FrameRate = FPS;
