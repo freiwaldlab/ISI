@@ -15,7 +15,7 @@ function waitforDisplayResp
     while n == 0
         n = get(comhandle, 'BytesAvailable');
     end
-    pause(.5) %Hack to finish the read
+    pause(0.25) %Hack to finish the read
 
     n = get(comhandle, 'BytesAvailable');
     if n > 0
