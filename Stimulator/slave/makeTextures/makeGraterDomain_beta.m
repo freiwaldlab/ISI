@@ -1,6 +1,7 @@
-function [sdom, tdom, x_ecc, y_ecc] = makeGraterDomain_beta(xN, yN, ori, s_freq, t_period, altazimuth)
-global Mstate
+function [sdom, tdom, x_ecc, y_ecc] = makeGraterDomain_beta(xN, yN, ori, s_freq, ~, altazimuth)
+global Mstate screenNum
 P = getParamStruct;
+screenRes = Screen('Resolution', screenNum);
 
 switch altazimuth
     case 'altitude'
@@ -74,6 +75,17 @@ switch altazimuth
         end
         sdom = (x_ecc * cos(ori * pi / 180)) - (y_ecc * sin(ori * pi / 180));    %deg
 end
+
+cyc_per_deg = P.s_freq;
+monitor_fr_per_sec = screenRes.hz;
+disp([mfilename ' DEBUG: screenRes.hz = ' num2str(screenRes.hz)]);
+deg_per_sec = P.t_speed;
+cyc_per_sec = cyc_per_deg * deg_per_sec;
+fr_per_cyc = monitor_fr_per_sec / cyc_per_sec;
+t_period = round(fr_per_cyc);
+
+disp([mfilename ': Converted t_speed value (' num2str(deg_per_sec) ')' ...
+    ' to frames (' num2str(t_period) ').']);
 
 sdom = sdom * s_freq * 2 * pi; %radians
 tdom = single(linspace(0, 2 * pi, t_period + 1));

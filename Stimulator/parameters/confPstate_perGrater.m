@@ -34,7 +34,8 @@ function confPstate_perGrater
     Pstate.param{sh(Pstate.param)+1} = {'s_phase', 'float', 0.0, 0, 'deg'};
     Pstate.param{sh(Pstate.param)+1} = {'t_profile', 'string', 'sin', 0, ''};
     Pstate.param{sh(Pstate.param)+1} = {'t_duty', 'float', 0.5, 0, ''};
-    Pstate.param{sh(Pstate.param)+1} = {'t_period', 'int', 20, 0, 'frames'};
+    Pstate.param{sh(Pstate.param)+1} = {'t_period', 'int', 0, 0, 'fr, ignored!'};
+    Pstate.param{sh(Pstate.param)+1} = {'t_speed', 'int', 2, 0, 'deg/sec'};
     Pstate.param{sh(Pstate.param)+1} = {'t_phase', 'float', 0.0, 0, 'deg'};
     Pstate.param{sh(Pstate.param)+1} = {'noise_bit', 'int', 0, 0, ''};
     Pstate.param{sh(Pstate.param)+1} = {'noise_amp', 'float', 100, 0, '%'};

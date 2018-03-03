@@ -38,7 +38,14 @@ end
 xran = [P.x_pos-floor(xN/2)+1  P.x_pos+ceil(xN/2)];
 yran = [P.y_pos-floor(yN/2)+1  P.y_pos+ceil(yN/2)];
 
-cycles = P.stim_time/(P.t_period/screenRes.hz);
+cyc_per_deg = P.s_freq;
+monitor_fr_per_sec = screenRes.hz;
+%disp([mfilename ' DEBUG: screenRes.hz = ' num2str(screenRes.hz)]);
+deg_per_sec = P.t_speed;
+cyc_per_sec = cyc_per_deg * deg_per_sec;
+fr_per_cyc = monitor_fr_per_sec / cyc_per_sec;
+t_period = round(fr_per_cyc);
+cycles = P.stim_time/(t_period/screenRes.hz);
 Nlast = round(TDim(3)*(cycles-floor(cycles)));  %number of frames on last cycle
 
 nDisp = TDim(3) * ones(1, floor(cycles));  %vector of the number of frames for N-1 cycles
