@@ -69,7 +69,8 @@ function buildStimulus(cond, trial)
     else
     % Blank condition
         disp([mfilename ': Blank trial.'])
-        msg = sprintf('%s;%s=%.4f', msg, 'contrast', 0);
+        %disp([mfilename ' DEBUG: msg send for blank was ']);
+        %msg = sprintf('%s;%s=%.4f', msg, 'contrast', 0);
     end
     
     if strcmpi(mod, 'IB')
