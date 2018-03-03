@@ -51,7 +51,7 @@ function MainWindow_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 guidata(hObject, handles);
 
-global GUIhandles Mstate daqOUTLED
+global GUIhandles Mstate daqOUTLED %pathBase
 Mstate.running = 0;
 
 % Set GUI fields to the default Mstate values
@@ -61,6 +61,11 @@ set(handles.twophotonTog, 'value', 0);
 set(handles.twophotonflag, 'value', 0);
 set(handles.screendistance, 'string', num2str(Mstate.screenDist));
 set(handles.animal, 'string', deblank(Mstate.anim));
+%disp([mfilename ': animal ' Mstate.anim]);
+datepf = [datestr(now, 'yymmdd') 'd'];
+tag = [datepf '_' deblank(get(handles.animal, 'string'))];
+set(handles.tag, 'string', deblank(tag));
+%disp([mfilename ': tag ' tag]);
 set(handles.hemisphere, 'string', Mstate.hemi);
 set(handles.screendistance, 'string', Mstate.screenDist);
 set(handles.monitor, 'string', Mstate.monitor);
@@ -93,12 +98,33 @@ function animal_Callback(hObject, eventdata, handles)
     global Mstate
     set(handles.animal, 'string', deblank(get(handles.animal, 'string')));
     Mstate.anim = deblank(get(handles.animal, 'string'));
+    datepf = [datestr(now, 'yymmdd') 'd'];
+    tag = [datepf '_' Mstate.anim];
+    set(handles.tag, 'string', tag);
     updateExptName
 
 
 % --- Executes during object creation, after setting all properties.
 function animal_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to animal (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function tag_Callback(hObject, eventdata, handles)
+% hObject    handle to tag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    global Mstate
+    set(handles.tag, 'string', deblank(get(handles.tag, 'string')));
+    Mstate.animtag = deblank(get(handles.tag, 'string'));
+    updateExptName
+
+function tag_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to tag (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -410,3 +436,26 @@ function LEDtogglebutton_Callback(hObject, eventdata, handles)
         outputSingleScan(daqOUTLED, 0)
         set(GUIhandles.main.LEDtogglebutton, 'string', 'LED off')
     end
+
+
+
+function datadir_Callback(hObject, eventdata, handles)
+% hObject    handle to datadir (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of datadir as text
+%        str2double(get(hObject,'String')) returns contents of datadir as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function datadir_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to datadir (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

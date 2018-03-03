@@ -1,6 +1,6 @@
 function sendtoImager(cmd)
     global imagerhandles
-    global pathData prefixTrial
+    global pathData prefixTrial pathBase
     global daqOUTtrig daqOUTlist
     ih = imagerhandles;
     
@@ -8,25 +8,25 @@ function sendtoImager(cmd)
         case 'A'  %% animal
             set(findobj('Tag', 'animaltxt'), ...
                 'string', deblank(cmd(3:end)));
-        %case 'E' %% expt
-        %    set(findobj('Tag', 'expttxt'),...
-        %        'string', num2str(deblank(cmd(3:end))));
-        %case 'U'  %% unit
-        %    set(findobj('Tag', 'unittxt'), ...
-        %        'string', num2str(deblank(cmd(3:end))));
-        %case 'T'  %% time tag
-        %    set(findobj('Tag','tagtxt'),...
-        %    'String',deblank(sprintf('%03d',str2num(cmd(3:end)))));
+            set(findobj('Tag', 'pathtxt'), 'string', pathBase);
+        case 'G'  %% tag
+           set(findobj('Tag','tagtxt'), ...
+               'string', deblank(cmd(3:end)));
+           set(findobj('Tag', 'pathtxt'), 'string', pathBase);
+        case 'D'  %% datadir
+           set(findobj('Tag','datadirtxt'), ...
+               'string', deblank(cmd(3:end)));
+           set(findobj('Tag', 'pathtxt'), 'string', pathBase);
         case 'M'  %% set mode
             m = str2double(cmd(3:end-1));
         case 'I'  %% total_time
             set(findobj('Tag', 'timetxt'), 'String', deblank(cmd(3:end)));
             preallocateTensor
         case 'S'  %% start sampling...
-            animal = get(findobj('Tag', 'animaltxt'), 'string');
-            datadir = get(findobj('Tag', 'datatxt'), 'string');
-            tag = get(findobj('Tag', 'tagtxt'), 'string');
-            trial = str2double(cmd(3:end));
+            %animal = get(findobj('Tag', 'animaltxt'), 'string');
+            %datadir = get(findobj('Tag', 'datadirtxt'), 'string');
+            %tag = get(findobj('Tag', 'tagtxt'), 'string');
+            %trial = str2double(cmd(3:end));
             GrabSaveLoop(pathData, prefixTrial)
         case 'C'
             % Stop video object and clean up
