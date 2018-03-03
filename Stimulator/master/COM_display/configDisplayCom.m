@@ -16,11 +16,13 @@ function configDisplayCom
     % Open communication with slave
     DcomState.serialPortHandle = udp(Mstate.stimulusIDP, ...
         'RemotePort', 8866, 'LocalPort', 8844);
-    set(DcomState.serialPortHandle, 'OutputBufferSize', 1024);
-    set(DcomState.serialPortHandle, 'InputBufferSize', 1024);
+    set(DcomState.serialPortHandle, 'OutputBufferSize', 8192);
+    %set(DcomState.serialPortHandle, 'OutputBufferSize', 1024);
+    set(DcomState.serialPortHandle, 'InputBufferSize', 8192);
+    %set(DcomState.serialPortHandle, 'InputBufferSize', 1024);
     set(DcomState.serialPortHandle, 'DataGramTerminateMode', 'Off');
 
-    % Establish serial port event callback criterion  
+    % Establish serial port event callback criterion
     DcomState.serialPortHandle.BytesAvailableFcnMode = 'Terminator';
     % Magic number to identify request from Stimulus ('c' as a string)
     DcomState.serialPortHandle.Terminator = '~';
