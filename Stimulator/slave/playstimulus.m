@@ -2,11 +2,11 @@ function playstimulus(modID)
     HideCursor
     switch modID
         case 'PG'  %Periodic Grater
-            if getParamVal('mouse_bit')
-                playmanualgrater
-            else
-                playgrating_periodic
-            end
+            %if getParamVal('mouse_bit')
+            %    playmanualgrater
+            %else
+            playgrating_periodic
+            %end
         case 'FG'  %Flash Grater
             if getParamVal('FourierBit')
                 playgrating_flashHartley
