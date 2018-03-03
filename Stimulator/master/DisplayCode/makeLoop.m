@@ -105,11 +105,8 @@ looperInfo.formula = get(GUIhandles.looper.formula, 'string');
 
 
 function [c, r] = getcr(t,looperInfo,nc)
-
 %need to input nc so that it is always the number of conditions w/o blanks
-
 nr = length(looperInfo.conds{1}.repeats);
-
 for c = 1:nc
     for r = 1:nr
         if t == looperInfo.conds{c}.repeats{r}.trialno
