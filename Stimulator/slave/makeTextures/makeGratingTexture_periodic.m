@@ -10,9 +10,9 @@ function makeGratingTexture_periodic
     
     disp([mfilename ': screenXcm ' num2str(Mstate.screenXcm)]);
     disp([mfilename ': screenYcm ' num2str(Mstate.screenYcm)]);
-    screenRes = Screen('Resolution', screenNum)
-    resXpxpercm = screenRes.width / Mstate.screenXcm
-    resYpxpercm = screenRes.height / Mstate.screenYcm
+    screenRes = Screen('Resolution', screenNum);
+    resXpxpercm = screenRes.width / Mstate.screenXcm;
+    resYpxpercm = screenRes.height / Mstate.screenYcm;
 
     if strcmp(P.altazimuth, 'none')
         % Assumes curved screen (projects flat)
@@ -29,8 +29,8 @@ function makeGratingTexture_periodic
     end
     
     % Downsample for the zoom
-    stimWpx = round(stimWpx / P.x_zoom)
-    stimHpx = round(stimHpx / P.y_zoom)
+    stimWpx = round(stimWpx / P.x_zoom);
+    stimHpx = round(stimHpx / P.y_zoom);
     
     % Create mask
     xdom = linspace(-P.x_size/2, P.x_size/2, stimWpx);
@@ -79,6 +79,9 @@ function makeGratingTexture_periodic
                 Im = Im - (2 * noiseIm);
                 Im(Im(:) < -1) = -1;
             end
+            %disp([mfilename ' DEBUG: Im size ' num2str(size(Im,1)) ...
+            %    'x'  num2str(size(Im,2)) ', mask size ' ...
+            %    num2str(size(mask,1)) 'x' num2str(size(mask,2))]);
             ImRGB = ImtoRGB(Im,P.colormod,P,mask);
             Gtxtr(i) = Screen('MakeTexture', window, ImRGB);
         end
@@ -95,6 +98,9 @@ function makeGratingTexture_periodic
             if P.plaid_bit
                 Im = Im + (amp2(i) * temp2);
             end
+            %disp([mfilename ' DEBUG: Im size ' num2str(size(Im,1)) ...
+            %    'x'  num2str(size(Im,2)) ', mask size ' ...
+            %    num2str(size(mask,1)) 'x' num2str(size(mask,2))]);
             ImRGB = ImtoRGB(Im, P.colormod, P, mask);
             Gtxtr(i) = Screen('MakeTexture', window, ImRGB);
         end
