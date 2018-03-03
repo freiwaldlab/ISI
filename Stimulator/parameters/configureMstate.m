@@ -1,9 +1,8 @@
 function configureMstate
     global Mstate
 
-    Mstate.anim = 'mittens';
-    %Mstate.unit = '000';
-    %Mstate.expt = '000';
+    Mstate.anim = 'animal';
+    Mstate.animtag = 'YYMMDD_animal';
     Mstate.hemi = 'left';
     
     % This should match the default value in Display
@@ -17,7 +16,7 @@ function configureMstate
     Mstate.analyzerRoot = 'D:\';
 
     % Set slave computer IP for communication
-    Mstate.stimulusIDP = '192.168.1.101'; %'129.85.181.189';
+    Mstate.stimulusIDP = '192.168.1.205';
     
     % Set running state
     Mstate.running = 0;
