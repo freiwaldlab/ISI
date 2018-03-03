@@ -37,4 +37,3 @@ function Displaycb(obj, event)
        ~get(GUIhandles.main.intrinsicflag, 'value'))
         runExperiment    
     end
-  
