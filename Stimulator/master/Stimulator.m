@@ -47,5 +47,5 @@ function Stimulator
     imagerWinOffYpx = winHpx + (2 * offy);
     
     % Open slimImager at the same time
-    updateExptName
     slimImager
+    updateExptName
