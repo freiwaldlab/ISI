@@ -2,7 +2,7 @@ function runExpt
 global GUIhandles Mstate
 global trialno trialInfo
 global pathBase pathData
-global analogIN analogINdata daqOUT2p %syncInfo
+global analogIN analogINdata daqOUT2p daqCOUNT %syncInfo
 global prefixDate prefixTrial
 
 modID = getmoduleID;
@@ -20,18 +20,19 @@ if Mstate.running && (trialno <= nt)
         ['Trial ' prefixTrial '/' ...
         sprintf('t%0*.0f', numel(num2str(nt)), nt)]);
     drawnow
-
+    
     [c,~] = getcondrep(trialno);
     
     %if twoPbit
     %    update2Ptrial(trialno)
     %end
-
+    
     buildStimulus(c, trialno)
     waitforDisplayResp
+    exec_timer = tic;
     
     if ISIbit
-        % Each ImageBlock trial can have different total durations 
+        % Each ImageBlock trial can have different total durations
         % and acquired frames
         P = getParamStruct;
         if strcmpi(modID, 'IB')
@@ -56,8 +57,8 @@ if Mstate.running && (trialno <= nt)
         pause(0.25)
         disp([mfilename ': Log file opened [' fileLog '].']);
     end
-
-    % Start sampling
+    
+    % Start 2p sampling
     if twoPbit
         high = 1;
         low = 0;
@@ -68,8 +69,25 @@ if Mstate.running && (trialno <= nt)
         end
         outputSingleScan(daqOUT2p, low);
         clear ttlTmsec high low
+        %pause(0.5)
     end
+    
     startStimulus
+
+    % Wait for 2p sampling to finish
+    if twoPbit
+        lhtwoP = addlistener(daqCOUNT, ...
+            'DataAvailable', @twoPFinishedRecordingTrigger);
+        daqCOUNT.startBackground;
+        while daqCOUNT.IsRunning
+            pause(0.1)
+            %fprintf('While loop: Scans acquired = %d\n', daqCOUNT.ScansAcquired)
+        end
+        stop(daqCOUNT);
+        delete(lhtwoP);
+        pause(0.5);
+    end
+   
     if ISIbit
         sendtoImager(sprintf(['S %d' 13], trialno))
     end
@@ -105,7 +123,7 @@ if Mstate.running && (trialno <= nt)
         timevals = analogINdata(1,:)';
         Fs = analogIN.Rate;  % 1000;  % sampling frequency in Hz; set in configSyncInput
         stimsync = analogINdata(2,:)';
-
+        
         % Normalize photodiode signal
         high = max(stimsync);
         low = median(stimsync);  % median to avoid negative transients
@@ -148,7 +166,7 @@ if Mstate.running && (trialno <= nt)
             xlabel('Time');
             ylabel('Voltage');
         end
-
+        
         %[syncInfo.dispSyncs, syncInfo.acqSyncs, syncInfo.dSyncswave] = ...
         %    getSyncTimes;
         %syncInfo.dSyncswave = [];
@@ -162,14 +180,31 @@ if Mstate.running && (trialno <= nt)
         %onlineAnalysis(c, r, syncInfo)
     end
     
+    exec_time = toc(exec_timer);
     if twoPbit
-       pause(0.25)
+        %pause(1)
+        P = getParamStruct;
+        if strcmpi(modID, 'IB')
+            tag_time = str2double(get(findobj('tag', 'timetxt'), 'string'));
+            total_time = P.predelay + P.postdelay + tag_time;
+        else
+            total_time = P.predelay + P.postdelay + P.stim_time;
+        end
+        %pause_time = total_time - exec_time;
+        disp([mfilename ': Code execution in 2p mode took ' num2str(exec_time) ...
+            ' while stimulus presentation should take ' num2str(total_time) ...
+            'sec.']); %'.  Pausing ' num2str(pause_time) 'sec.']);
+        %pause(pause_time);
     end
     
     trialno = trialno + 1;
     runExpt
 else
     Mstate.running = 0;
+    stop(daqCOUNT);
+    %if event.hasListener(daqCOUNT, 'DataAvailable')
+    %    delete(lhtwoP);
+    %end
     set(GUIhandles.main.runbutton, 'string', 'Run')
     
     if get(GUIhandles.main.intrinsicflag, 'value')

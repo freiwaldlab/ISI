@@ -1,11 +1,13 @@
 function configSyncInput
-    global analogIN daqOUTLED daqOUT2p daqOUTtrig daqOUTIOI
+    global analogIN daqOUTLED daqOUT2p daqOUTtrig daqOUTIOI daqCOUNT %mmf
 
     % Check to be sure a DAQ board exists before trying to interact with it
     analogIN_devid = [];
     analogIN_desc = 'USB-6000';
     daqOUT_devid = [];
     daqOUT_desc = 'USB-6001';
+    daqCOUNT_devid = [];
+    daqCOUNT_desc = 'USB-6008';
     devs = daq.getDevices;
     for dn = 1:length(devs)
         if strcmp(devs(dn).Vendor.ID, 'ni') && ...
@@ -15,6 +17,10 @@ function configSyncInput
         if strcmp(devs(dn).Vendor.ID, 'ni') && ...
                 ~isempty(strfind(devs(dn).Description, daqOUT_desc))
             daqOUT_devid = devs(dn).ID;
+        end
+        if strcmp(devs(dn).Vendor.ID, 'ni') && ...
+                ~isempty(strfind(devs(dn).Description, daqCOUNT_desc))
+            daqCOUNT_devid = devs(dn).ID;
         end
     end
     % Establish connection with DAQ board
@@ -33,7 +39,6 @@ function configSyncInput
         daqOUT2p = daq.createSession('ni');
         daqOUTIOI = daq.createSession('ni');
         daqOUTtrig = daq.createSession('ni');
-        % % % SET UP DAQ OUT
         addDigitalChannel(daqOUTLED, daqOUT_devid, 'Port0/Line0', 'OutputOnly');
         addDigitalChannel(daqOUT2p, daqOUT_devid, 'Port0/Line1', 'OutputOnly');
         addDigitalChannel(daqOUTIOI, daqOUT_devid, 'Port0/Line2', 'OutputOnly'); %start/stop
@@ -47,10 +52,20 @@ function configSyncInput
         daqOUTtrig.Rate = 1000;
         disp([mfilename ': Configured DAQ output.']);
     end
+    if ~isempty(daqCOUNT_devid)
+        daqCOUNT = daq.createSession('ni');
+        addAnalogInputChannel(daqCOUNT, daqCOUNT_devid, 'ai0', 'Voltage'); 
+        daqCOUNT.Rate = 10000;
+        daqCOUNT.IsContinuous = true;
+        disp([mfilename ': Configured DAQ counter.']);
+    end
     if isempty(analogIN)
         error([mfilename ': Problem configuring NI DAQ IN device.']);
     end
     if isempty(daqOUTLED) || isempty(daqOUT2p) || isempty(daqOUTIOI) || ...
             isempty(daqOUTtrig)
         error([mfilename ': Problem configuring NI DAQ OUT device.']);
+    end
+    if isempty(daqCOUNT)
+        error([mfilename ': Problem configuring NI DAQ COUNTER device.']);
     end
