@@ -45,22 +45,21 @@ pixpercmY = pixpercmY/P.y_zoom;
 %create the mask
 xdom = linspace(-P.x_size/2,P.x_size/2,xN);
 ydom = linspace(-P.y_size/2,P.y_size/2,yN);
-[xdom ydom] = meshgrid(xdom,ydom);
+[xdom, ydom] = meshgrid(xdom,ydom);
 r = sqrt(xdom.^2 + ydom.^2);
-maskblob = P.background*ones(yN,xN,2);
-
-if strcmp(P.mask_type,'gauss')
-    mask = exp((-r.^2)/(2*P.mask_radius^2));
-else %disc is the default
+if strcmp(P.mask_type, 'disc')
     mask = zeros(size(r));
-    id = find(r<=P.mask_radius);
-    mask(id) = 1;
+    mask(r <= P.mask_radius) = 1;
+elseif strcmp(P.mask_type, 'gauss')
+    mask = exp((-r.^2)/(2*P.mask_radius^2));
+else 
+    mask = [];
 end
+mask = single(mask);
 
-maskblob(:,:,2) = 255*(1-mask);
-Masktxtr = Screen(screenPTR, 'MakeTexture', maskblob);
+%maskblob(:,:,2) = 255*(1-mask);
+%Masktxtr = Screen(screenPTR, 'MakeTexture', maskblob);
 %%%%%%%%%
-
 
 if ~P.FourierBit
     
@@ -86,12 +85,9 @@ if ~P.FourierBit
     
     colordom = getColorDomain(P.colorspace);
     probRatios = ones(length(oridom),length(sfdom),length(phasedom),length(colordom));
-    
-    
+
     for sfid = 1:length(sfdom)
-        
         %%%Get spatial profile%%%
-        
         xcycles = sfdom(sfid) * P.x_size;
         %thetax = linspace(0,2*pi*xcycles,xN+1);
         pixpercycle = round(xN/xcycles);
@@ -106,17 +102,13 @@ if ~P.FourierBit
         %thetax(Bads_x) = [];
         
         Im = cos(thetax);
-        
         switch P.s_profile
-            
             case 'sin'
                 Im = Im*P.contrast/100;
-                
             case 'square'
                 thresh = cos(P.s_duty*pi);
                 Im = sign(Im-thresh);
                 Im = Im*P.contrast/100;
-                
             case 'pulse'
                 thresh = cos(P.s_duty*pi);
                 Im = (sign(Im-thresh) + 1)/2;
@@ -124,56 +116,40 @@ if ~P.FourierBit
         end
         
         %%%Build textures (over time) differently for contrast reversing or drifting%%%
-        
         if ~P.separable %drifting
-            
-
             for colorID = 1:length(colordom)                
-                putinTexture(Im,colordom,sfid,1,colorID,P)                
+                putinTexture(Im,colordom,sfid,1,colorID,P,mask)                
             end
-            
             if P.blankProb > 0 && sfid == 1 %just do this once if blank is set    
-                putinTexture(Im*0,colordom,length(sfdom)+1,1,1,P) %these indices signify 'blank'               
+                putinTexture(Im*0,colordom,length(sfdom)+1,1,1,P,mask) %these indices signify 'blank'               
             end
-    
-            
         else  %contrast reversing (or flash)
-            
             tdom = single(linspace(0,2*pi,P.t_period+1));
             tdom = tdom(1:end-1);
             amp = sin(tdom);
             
             switch P.t_profile
-                
                 case 'square'
                     thresh = cos(P.t_duty*pi);
                     amp = sign(amp-thresh);
-                    
                 case 'pulse'
                     thresh = cos(P.t_duty*pi);
                     amp = (sign(amp-thresh) + 1)/2;
-                    
                 case 'none'
-                    
-                    amp = ones(1,length(amp)); %standard 'Ringach'
-                    
+                    amp = ones(1,length(amp)); %standard 'Ringach'   
             end
             
             for tid = 1:length(tdom)
-                
                 Im2 = amp(tid)*Im;
                 
                 for colorID = 1:length(colordom)
-                    putinTexture(Im2,colordom,sfid,tid,colorID,P)
+                    putinTexture(Im2,colordom,sfid,tid,colorID,P,mask)
                 end
                 
                 if P.blankProb > 0 && sfid == 1 %just do this once if blank is set
-                    putinTexture(Im*0,colordom,length(sfdom)+1,tid,1,P) %index 99 signifies 'blank'
+                    putinTexture(Im*0,colordom,length(sfdom)+1,tid,1,P,mask) %index 99 signifies 'blank'
                 end
-                
             end
-            
-            
         end
     end
     
@@ -205,11 +181,11 @@ else  %Fourier Basis
     ky = -yN/2:dk:yN/2-1;
     
     %Take only the first quadrant;
-    kx = kx(find(kx>=0)); 
-    ky = ky(find(ky>=0));    
-    [kxmat kymat] = meshgrid(kx,ky);
+    kx = kx(kx>=0); 
+    ky = ky(ky>=0);    
+    [kxmat, kymat] = meshgrid(kx,ky);
     
-    [nxmat nymat] = meshgrid(nx,ny);
+    [nxmat, nymat] = meshgrid(nx,ny);
     
     sfxdom = (kxmat/xN)*Fs_x;  %convert to cycles/deg to define subspace
     sfydom = (kymat/yN)*Fs_y;
@@ -223,7 +199,6 @@ else  %Fourier Basis
     probRatios = ones(length(kmatID),1,length(colordom)); %need to be integers
     
     for kID = 1:length(kmatID)
-        
         kx_o = kxmat(kmatID(kID));
         ky_o = kymat(kmatID(kID));
         
@@ -262,8 +237,10 @@ else  %Fourier Basis
                 end
                 %%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%
-                
-                Idraw = ImtoRGB(Im2*bwdom(bw)*P.contrast/100,colordom(colorID),P,[]);
+                disp([mfilename ' DEBUG: Im size ' num2str(size(Im,1)) ...
+                    'x'  num2str(size(Im,2)) ', mask size ' ...
+                    num2str(size(mask,1)) 'x' num2str(size(mask,2))]);
+                Idraw = ImtoRGB(Im2*bwdom(bw)*P.contrast/100,colordom(colorID),P,mask);
                 Gtxtr(kID,bw,colorID) = Screen(screenPTR, 'MakeTexture', Idraw);                
                 
             end
@@ -271,15 +248,12 @@ else  %Fourier Basis
         end
         
         if P.blankProb > 0 && kID == 1 %just do this once if blank is set
-            Idraw = ImtoRGB(Im*0,colordom(colorID),P,[]);
+            disp([mfilename ' DEBUG: Im size ' num2str(size(Im,1)) ...
+                'x'  num2str(size(Im,2)) ', mask size ' ...
+                num2str(size(mask,1)) 'x' num2str(size(mask,2))]);
+            Idraw = ImtoRGB(Im*0,colordom(colorID),P,mask);
             Gtxtr(length(kmatID)+1,1,1) = Screen(screenPTR, 'MakeTexture', Idraw);
         end
-
-%         prcdone = round(kID/length(kmatID)*100);
-%         newtext = ['Building: ' num2str(prcdone) '%'];
-%         Screen(screenPTR,'DrawText',newtext,40,200,0);
-%         Screen('Flip', screenPTR);
-        
     end
     
     
@@ -304,7 +278,7 @@ TDim(3) = length(Gtxtr(:));
 
 
 
-function putinTexture(Im,colordom,sfid,tid,colorID,P)
+function putinTexture(Im,colordom,sfid,tid,colorID,P,mask)
 
 global Gtxtr screenPTR
 
@@ -331,7 +305,9 @@ elseif strcmp(P.colorspace,'LMS')
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-Idraw = ImtoRGB(Im,colordom(colorID),P,[]);
+disp([mfilename ' DEBUG: Im size ' num2str(size(Im,1)) ...
+    'x'  num2str(size(Im,2)) ', mask size ' ...
+    num2str(size(mask,1)) 'x' num2str(size(mask,2))]);
+Idraw = ImtoRGB(Im,colordom(colorID),P,mask);
 Gtxtr(sfid,tid,colorID) = Screen(screenPTR, 'MakeTexture', Idraw);
 
