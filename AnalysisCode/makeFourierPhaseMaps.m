@@ -20,9 +20,9 @@ function makeFourierPhaseMaps(root, subj, datestr, timestr, scale, rotate, gcamp
 %   maps = makeFourierPhaseMaps('k32','25-June-2015','000',2,5,0,1);
 
 %% Setup
-% datestr = '171005';
-% timestr = '200835';
-% subj = 'blockhead';
+% datestr = '171017';
+% timestr = '203606';
+% subj = 'glowboxer';
 % scale = 1;
 % root = 'D:\';
 
@@ -104,9 +104,13 @@ for c = 1:I.NumConds
     if ~isempty(v)
         I.CondParams(c,:) = v;
     end
-    I.Repeats = cell2mat(I.Conditions{1,c}.repeats);
-    I.CondTrials{c} = cell2mat(struct2cell(I.Repeats));
-    clear v
+    I.Repeats = numel(squeeze(I.Conditions{1,c}.repeats));
+    ct_temp = NaN(1, I.Repeats);
+    for r = 1:I.Repeats
+        ct_temp(r) = squeeze(I.Conditions{1,c}.repeats{1,r}.trialno);
+    end
+    I.CondTrials{c} = ct_temp;
+    clear v ct_temp
 end
 clear c
 for p = 1:length(Analyzer.P.param)
@@ -264,6 +268,10 @@ for tp = 1:numel(trial_path)
     I.TrialPreStimFrames{tp} = sum(I.TrialFrameTimes{tp} <= I.TrialPreStimTimes(tp,2));
     I.TrialPostStimFrames{tp} = sum(I.TrialFrameTimes{tp} >= I.TrialPostStimTimes(tp,1));
     
+    disp([mfilename ':   Found ' num2str(I.TrialPreStimFrames{tp}) ...
+        ' pre-stim frames and ' num2str(I.TrialPostStimFrames{tp}) ...
+        ' post-stim frames.']);
+    
     %figure(1); clf;
     %hold on;
     %plot(time_sec, photodiode, 'm'); % photodiode filtered
@@ -285,24 +293,6 @@ for tp = 1:numel(trial_path)
     clear log_match_str im_match_str
     im_names = im_files(1,:);
     nf(tp) = length(im_names);
-    %frt = nan(nf(tp), 1);
-    %for f = 1:nf(tp)
-    %    % Extract frame timing information from camera relative time values
-    %    frame_file = fullfile(trial_path{tp}, im_names{f});
-    %    % MATfile approach seems slower than direct loading
-    %    load(frame_file, 'tm');
-    %    %m = matfile(frame_file, 'Writable', false);
-    %    %tm = m.tm;
-    %    if exist('tm', 'var')
-    %        frt(f) = squeeze(tm);
-    %    else
-    %        warning([mfilename ': Could not find frame time for ' ...
-    %            num2str(f) ' [' frame_file '].']);
-    %    end
-    %    clear tm m frame_file
-    %end
-    % % Calculate frame rate as the mean difference in all frame timestamps
-    %fr(tp) = round((1 ./ mean(diff(frt))), 2);
 end
 clear tp data_list file_list match_str im_files im_names frameN frt f
 clear trialFullStr
@@ -344,7 +334,7 @@ for condNum = 1:I.NumConds
             condTitle '...']);
     else
         disp([mfilename ': Skipping blank condition ' num2str(condNum) '...']);
-        continue
+         continue
     end
     
     % Each trial is saved as a sequence of images.
@@ -355,13 +345,13 @@ for condNum = 1:I.NumConds
     % To solve this, loop through each condtion to find the trial numbers 
     % that correspond to each condition.
     timer = tic;
-    condTrials = I.CondTrials(condNum);
+    condTrials = I.CondTrials{condNum};
     %for repIdx = 1:numel(
     for trialIdx = 1:numel(condTrials)
-        trialStr = regexprep(trial_path{condTrials{trialIdx}}, '.*_(t\d+)_.*', '$1');
+        trialStr = regexprep(trial_path{condTrials(trialIdx)}, '.*_(t\d+)_.*', '$1');
         trialFullStr = [datestr 'd' timestr 't_' stim_code '_' trialStr];
         disp([mfilename ': Processing trial ' trialFullStr '...']);
-        data_list = dir(trial_path{condTrials{trialIdx}});
+        data_list = dir(trial_path{condTrials(trialIdx)});
         file_list = data_list(~[data_list.isdir]);
         match_str = [trialStr '_f(\d+).*'];
         im_files = struct2cell(file_list(cellfun(@(x) ...
@@ -373,8 +363,9 @@ for condNum = 1:I.NumConds
         stimFrameIdx = (I.TrialPreStimFrames{trialIdx} + 1):(I.NumFrames - I.TrialPostStimFrames{trialIdx});
         %postFrameIdx = (I.NumFrames - I.TrialPostStimFrames{trialIdx} + 1):I.NumFrames;
         
-        load(fullfile(trial_path{condTrials{trialIdx}}, im_names{1}), 'im');
-        [imHpx,imWpx] = size(im);
+        load(fullfile(trial_path{condTrials(trialIdx)}, im_names{1}), 'im');
+        im = im'; % Overcome MATLAB y by x bullshit.
+        [imWpx,imHpx] = size(im);
         
         frameTimes = I.TrialFrameTimes{trialIdx};
         stimFrameTimes = frameTimes(stimFrameIdx);
@@ -399,13 +390,14 @@ for condNum = 1:I.NumConds
         N = I.Params.stim_time;
         w = (2*pi * k * n) ./ N;
      
-        firstTwoFrames = zeros(imHpx, imWpx, 2, 'double');
+        firstTwoFrames = zeros(imWpx, imHpx, 2, 'double');
         clear im tm
         for f = 1:length(stimFrameIdx)
             %frame = double(trialFrames(:,:,stimFrameIdx(f)));
             fidx = stimFrameIdx(f);
-            load(fullfile(trial_path{condTrials{trialIdx}}, im_names{fidx}), 'im');
+            load(fullfile(trial_path{condTrials(trialIdx)}, im_names{fidx}), 'im');
             if exist('im', 'var')
+                im = im'; % Overcome MATLAB y by x bullshit.
                 if (scale == scale_default) && (rotate == rotate_default)
                     frame = double(squeeze(im));
                 elseif (scale ~= scale_default) && (rotate ~= rotate_default)
@@ -420,9 +412,9 @@ for condNum = 1:I.NumConds
                     'frame ' num2str(f) '.']);
             end
             if f == 1
-                firstTwoFrames(:,:,1) = im;
+                firstTwoFrames(:,:,1) = frame;
             elseif f == 2
-                firstTwoFrames(:,:,2) = im;
+                firstTwoFrames(:,:,2) = frame;
             end
             if ~gcampFlag
                 % Inverts the pixel intensity for intrinsic data,
@@ -485,10 +477,12 @@ for condNum = 1:I.NumConds
     fignum = fignum + 1;
     figure(fignum); clf;
     subplot(2,1,1); axis equal;
-    imshow(rot90(condPhaseMap, -1), []); colorbar; colormap(parula);
+    %imshow(rot90(condPhaseMap, -1), []); colorbar; colormap(parula);
+    imshow(condPhaseMap, []); colorbar; colormap(parula);
     title(condTitle, 'Interpreter', 'none');
     subplot(2,1,2); axis equal;
-    imshow(rot90(condMagMap, -1), stretchlim(condMagMap)'); 
+    %imshow(rot90(condMagMap, -1), stretchlim(condMagMap)');
+    imshow(condMagMap, stretchlim(condMagMap)');
     colorbar; colormap(parula);
     
     % Convert to RGB image
@@ -503,8 +497,9 @@ for condNum = 1:I.NumConds
     figFilename(~((figFilename ~= ':') & (figFilename ~= ';'))) = '_';
     figFilename(figFilename == ' ') = '';
     
-    imwrite(fliplr(rot90(phaseMapRGB, -1)), ...
-        (fullfile(map_path, [figFilename '.png'])));
+    %imwrite(fliplr(rot90(phaseMapRGB, -1)), ...
+    %    (fullfile(map_path, [figFilename '.png'])));
+    imwrite(phaseMapRGB, fullfile(map_path, [figFilename '.png']));
 
     I.ConditionTitles{condNum} = condTitle;
     % Store maps
@@ -554,17 +549,20 @@ if isfield(I.Params, 'BarDirection')
     fignum = fignum + 1;
     figure(fignum); clf;
     subplot(2,1,1);
-    imshow(fliplr(rot90(elevPhaseMapScaled, -1)), []);
+    %imshow(fliplr(rot90(elevPhaseMapScaled, -1)), []);
+    imshow(elevPhaseMapScaled, []);
     colorbar; colormap(parula);
     title('elevation retinotopy')
     subplot(2,1,2);
-    imshow(fliplr(rot90(elevMagMap, -1)), stretchlim(elevMagMap));
+    %imshow(fliplr(rot90(elevMagMap, -1)), stretchlim(elevMagMap));
+    imshow(elevMagMap, stretchlim(elevMagMap));
     colorbar; colormap(parula);
     figFilename = [trialFullStr '_map_retinotopy_elevation'];
     elevMapIdx = gray2ind(imadjust(elevPhaseMap), bit);
     elevMapRGB = ind2rgb(elevMapIdx, parula(bit));
-    imwrite(fliplr(rot90(elevMapRGB, -1)), fullfile(map_path, ...
-        [figFilename '.png']));
+    %imwrite(fliplr(rot90(elevMapRGB, -1)), fullfile(map_path, ...
+    %    [figFilename '.png']));
+    imwrite(elevMapRGB, fullfile(map_path, [figFilename '.png']));
    
     % Plot azimuth map
     azimInds = find(I.CondParams(barDirParamCol) == -1);
@@ -582,18 +580,21 @@ if isfield(I.Params, 'BarDirection')
     fignum = fignum + 1;
     figure(fignum); clf;
     subplot(2,1,1);
-    imshow(fliplr(rot90(azimPhaseMapScaled, -1)), []);
+    %imshow(fliplr(rot90(azimPhaseMapScaled, -1)), []);
+    imshow(azimPhaseMapScaled, []);
     colorbar; colormap(parula);
-    title('horizontal (azimuth) retinotopy')
+    title('azimuth retinotopy')
     subplot(2,1,2);
-    imshow(fliplr(rot90(azimMagMap, -1)), stretchlim(azimMagMap));
+    %imshow(fliplr(rot90(azimMagMap, -1)), stretchlim(azimMagMap));
+    imshow(azimMagMap, stretchlim(azimMagMap));
     colorbar; colormap(parula);
-    figFilename = [trialFullStr 'map_retinotopy_azimuth'];   
+    figFilename = [trialFullStr '_map_retinotopy_azimuth'];   
     azimMapIdx = gray2ind(imadjust(azimPhaseMap), bit);
     azimMapRGB = ind2rgb(azimMapIdx, parula(bit));
-    imwrite(fliplr(rot90(azimMapRGB, -1)), fullfile(map_path, ...
-        [figFilename '.png']));
-    
+    %imwrite(fliplr(rot90(azimMapRGB, -1)), fullfile(map_path, ...
+    %    [figFilename '.png']));
+    imwrite(azimMapRGB, fullfile(map_path, [figFilename '.png']));
+
     save(fullfile(map_path, [trialFullStr '_map_retinotopy_azimuth.mat']), ...
         'azimPhaseMapScaled');
     save(fullfile(map_path, [trialFullStr '_map_retinotopy_elevation.mat']), ...
@@ -622,12 +623,12 @@ if isfield(I.Params, 'BarDirection')
     visFieldSignMap(id) = 0;
     % Smooth before thresholding
     visFieldSignMap = spatialFilterGaussian(visFieldSignMap, 5);
-    
+
     fignum = fignum + 1;
     figure(fignum); clf;
     imagesc(xdom, ydom, visFieldSignMap, [-1 1]);
     axis image; axis off; colorbar;
-    title('sin(angle(elev)-angle(azim))')
+    title('PhaseMap sin(angle(elev)-angle(azim))')
 end
 clear fignum
 
