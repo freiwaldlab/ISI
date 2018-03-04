@@ -78,17 +78,17 @@ if bflag
     for t = 1:nr*nc
         [c, r] = getcr(t, looperInfoDum, nc);
 
-        if rem(t, bPer) == 0 && t ~= 1
-            %disp([mfilename ' DEBUG: blankcounter incremented']);
+        if rem(t, bPer) == 0 % && t ~= 1
             blankcounter = blankcounter + 1;
             looperInfo.conds{nc+1}.repeats{blankcounter}.trialno = t + blankcounter - 1;
         end
         looperInfo.conds{c}.repeats{r}.trialno = looperInfo.conds{c}.repeats{r}.trialno + blankcounter;
     end
 end
+disp([mfilename ': ' num2str(blankcounter) ' blank presentations.']);
 
 % If the total number of trials is less than the blank period,
-% then no blanks are shown.
+% then no blanks are presented.
 if blankcounter > 0
     for p = 1:Nparam
         looperInfo.conds{nc+1}.symbol{p} = 'blank';

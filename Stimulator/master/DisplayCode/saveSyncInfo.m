@@ -8,7 +8,8 @@ function saveSyncInfo(syncInfo)
         mkdir(pathBase);
         disp([mfilename ': Base path did not exist. Created [' pathBase '].']);
     end
-    file_name = fullfile(pathBase, [prefixDate '_ExperimentParameters.mat']);
+    file_name = fullfile(pathBase, prefixDate, ...
+        [prefixDate '_ExperimentParameters.mat']);
     save(file_name, ['syncInfo' num2str(trialno)], '-append');
     disp([mfilename ': Appended syncInfo to experiment parameters ' ...
         ' file [' file_name '].']);

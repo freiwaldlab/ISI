@@ -80,7 +80,7 @@ function buildStimulus(cond, trial)
             imPath = getParamVal('image_path');
         end
         if exist(imPath, 'dir')
-            cpath = fullfile(pathBase, [prefixDate '_' prefixTrial '_stim']);
+            cpath = fullfile(pathBase, prefixDate, prefixTrial, 'stim');
             [cpstat,cpmsg] = copyfile(imPath, cpath);
             if cpstat
                 disp([mfilename ': ImageBlock stimulus images copied [' ...

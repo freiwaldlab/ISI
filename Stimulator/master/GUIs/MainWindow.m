@@ -198,8 +198,20 @@ end
 % Run experiment
 if ~Mstate.running
     trialno = 1;
-    prefixDate = [datestr(now, 'yymmdd') 'd' datestr(now, 'HHMMSS') 't_' modID];
-    
+    if ISIbit
+        mstr = 'IOI';
+    elseif twoPbit
+        mstr = '2pI';
+    end
+    prefixDate = [datestr(now, 'yymmdd') 'd' datestr(now, 'HHMMSS') ...
+        't_' mstr '_' modID];
+    pathRun = fullfile(pathBase, prefixDate);
+    if ~exist(pathRun, 'dir')
+        mkdir(pathRun);
+        disp([mfilename ': Run path did not exist. ' ...
+            'Created [' pathRun '].']);
+    end
+
     % If module is of 'mapper' type, send and play but don't run
     if strcmpi(getmoduleID, 'MP')
         Mstate.running = 0;
@@ -215,8 +227,8 @@ if ~Mstate.running
         return
     end
     % Check if an analyzer file already exists
-    
-    file_name = fullfile(pathBase, [prefixDate '_ExperimentParameters.mat']);
+    file_name = fullfile(pathBase, prefixDate, ...
+        [prefixDate '_ExperimentParameters.mat']);
     if exist(file_name, 'file') == 2
         error([mfilename ': Experiment parameter file already ' ...
             'exists [ ' file_name '].']);

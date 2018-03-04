@@ -42,21 +42,28 @@ if Mstate.running && (trialno <= nt)
             total_time = P.predelay + P.postdelay + P.stim_time;
         end
         sendtoImager(sprintf(['I %2.3f' 13], total_time))
-        
-        pathData = fullfile(pathBase, [prefixDate '_' prefixTrial '_data']);
-        if ~exist(pathData, 'dir')
-            mkdir(pathData);
-            disp([mfilename ': Data path did not exist. ' ...
-                'Created [' pathData '].']);
-        end
-        fileLog = fullfile(pathBase, [prefixDate '_' prefixTrial '.log']);
-        fid1 = fopen(fileLog, 'w');
-        lhIn = addlistener(analogIN, ...
-            'DataAvailable', @(src, event)logData(src, event, fid1));
-        analogIN.startBackground;
-        pause(0.25)
-        disp([mfilename ': Log file opened [' fileLog '].']);
     end
+    
+    pathTrial = fullfile(pathBase, prefixDate, prefixTrial);
+    if ~exist(pathTrial, 'dir')
+        mkdir(pathTrial);
+        disp([mfilename ': Trial path did not exist. ' ...
+            'Created [' pathTrial '].']);
+    end
+    pathData = fullfile(pathBase, prefixDate, prefixTrial, 'data');
+    if ~exist(pathData, 'dir')
+        mkdir(pathData);
+        disp([mfilename ': Data path did not exist. ' ...
+            'Created [' pathData '].']);
+    end
+    fileLog = fullfile(pathBase, prefixDate, prefixTrial, ...
+        [prefixTrial '.log']);
+    fid1 = fopen(fileLog, 'w');
+    lhIn = addlistener(analogIN, ...
+        'DataAvailable', @(src, event)logData(src, event, fid1));
+    analogIN.startBackground;
+    pause(0.25)
+    disp([mfilename ': Log file opened [' fileLog '].']);
     
     % Start 2p sampling
     if twoPbit
@@ -178,6 +185,22 @@ if Mstate.running && (trialno <= nt)
         
         %Compute F1
         %onlineAnalysis(c, r, syncInfo)
+    elseif twoPbit
+        pause(0.25)
+        analogIN.stop;
+        delete(lhIn);
+        fclose(fid1);
+        disp([mfilename ': Reading log file [' fileLog '].']);
+        fid2 = fopen(fileLog, 'r');
+        % analogINdata is a 6 x samples matrix where...
+        %   (1,:) is the time each sample is taken from start
+        %   (2,:) is the voltage on analog input 0: photodiode from display
+        %   (3,:) is the voltage on analog input 1: strobe from camera
+        %   (4,:) is the voltage on analog input 2: trigger copy
+        %   (5,:) is the voltage on analog input 3: audio copy
+        %   (6,:) is the voltage on analog input 4: start/stop ttl copy
+        [analogINdata,~] = fread(fid2, [6,inf], 'double');
+        fclose(fid2);
     end
     
     exec_time = toc(exec_timer);

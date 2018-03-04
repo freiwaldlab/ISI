@@ -12,7 +12,8 @@ function saveExptParams
         disp([mfilename ': Base path did not exist. Created [' ...
             pathBase '].']);
     end
-    file_name = fullfile(pathBase, [prefixDate '_ExperimentParameters.mat']);
+    file_name = fullfile(pathBase, prefixDate, ...
+        [prefixDate '_ExperimentParameters.mat']);
     disp([mfilename ': Saved experiment parameters [' file_name '].']);
     save(file_name, 'Analyzer');
     clear file_name

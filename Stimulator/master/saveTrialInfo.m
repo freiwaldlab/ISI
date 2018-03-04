@@ -8,7 +8,8 @@ function saveTrialInfo(trialInfo)
         mkdir(pathBase);
         disp([mfilename ': Base path did not exist. Created [' pathBase '].']);
     end
-    file_name = fullfile(pathBase, [prefixDate '_ExperimentParameters.mat']);
+    file_name = fullfile(pathBase, prefixDate, ...
+        [prefixDate '_ExperimentParameters.mat']);
     save(file_name, ['trialInfo' num2str(trialno)], '-append');
     disp([mfilename ': Appended trialInfo to experiment parameters ' ...
         ' file [' file_name '].']);
