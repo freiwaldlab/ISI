@@ -3,6 +3,8 @@ function updateLstate
 
     Lstate.reps = str2double(get(GUIhandles.looper.repeats, 'string'));
     Lstate.rand = get(GUIhandles.looper.randomflag, 'value');
+    Lstate.blanktog = get(GUIhandles.looper.blankflag, 'value');
+    Lstate.blankper = str2double(get(GUIhandles.looper.blankPeriod, 'string'));
 
     Ldum{1} = {[get(GUIhandles.looper.symbol1, 'string')] ...
         [get(GUIhandles.looper.valvec1, 'string')]};
@@ -11,7 +13,7 @@ function updateLstate
     Ldum{3} = {[get(GUIhandles.looper.symbol3, 'string')] ...
         [get(GUIhandles.looper.valvec3, 'string')]};
 
-    % Purge any blank settings
+    % Purge any empty settings
     Lstate.param = cell(1, 1);
     k = 1;
     for i = 1:length(Ldum)
