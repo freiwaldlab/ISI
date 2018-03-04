@@ -182,7 +182,7 @@ function runbutton_Callback(hObject, eventdata, handles)
 global Mstate imagerhandles GUIhandles trialno analogIN
 global pathBase
 global daqOUTtrig daqOUTlist DcomState
-clearvars -global prefixDate prefixTrial
+%clearvars -global prefixDate prefixTrial
 global prefixDate
 
 modID = getmoduleID;
@@ -197,6 +197,9 @@ end
 
 % Run experiment
 if ~Mstate.running
+    trialno = 1;
+    prefixDate = [datestr(now, 'yymmdd') 'd' datestr(now, 'HHMMSS') 't_' modID];
+    
     % If module is of 'mapper' type, send and play but don't run
     if strcmpi(getmoduleID, 'MP')
         Mstate.running = 0;
@@ -211,9 +214,8 @@ if ~Mstate.running
         startStimulus
         return
     end
-
     % Check if an analyzer file already exists
-    prefixDate = [datestr(now, 'yymmdd') 'd' datestr(now, 'HHMMSS') 't_' modID];
+    
     file_name = fullfile(pathBase, [prefixDate '_ExperimentParameters.mat']);
     if exist(file_name, 'file') == 2
         error([mfilename ': Experiment parameter file already ' ...
@@ -272,7 +274,6 @@ if ~Mstate.running
         end
     end
 
-    trialno = 1;
     runExpt 
     
     if ISIbit

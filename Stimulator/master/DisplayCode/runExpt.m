@@ -17,7 +17,7 @@ ISIbit = get(GUIhandles.main.intrinsicflag, 'value');
 if Mstate.running && (trialno <= nt)
     prefixTrial = sprintf('t%0*.0f', numel(num2str(nt)), trialno);
     set(GUIhandles.main.showTrial, 'string', ...
-        ['Trial ' prefixTrial '/' ...
+        ['Trial ' prefixTrial ' / ' ...
         sprintf('t%0*.0f', numel(num2str(nt)), nt)]);
     drawnow
     
@@ -211,11 +211,16 @@ else
         saveOnlineAnalysis
     end
     
+    nt = getnotrials;
     if trialno >= nt
         set(GUIhandles.main.showTrial, 'string', 'Finished.');
-    else
+    elseif (trialno - 1) == 0
         set(GUIhandles.main.showTrial, 'string', ...
-            ['Aborted (' prefixTrial ').']);
+            'Aborted, no run.');
+    else
+        prefixTrial = sprintf('t%0*.0f', numel(num2str(nt)), trialno-1);
+        set(GUIhandles.main.showTrial, 'string', ...
+            ['Aborted, ' prefixTrial ' last.']);
     end
     drawnow
     
