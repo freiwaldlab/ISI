@@ -91,7 +91,7 @@ function playimageblock
            [stimPiece syncPiece], [stimPos syncPos], [P.ori 0]);
         Screen('Flip', window);
         WaitSecs(P.image_duration);
-        Screen('DrawTexture', window, syncHigh, syncPiece, syncPos);
+        Screen('DrawTexture', window, syncLow, syncPiece, syncPos);
         Screen('Flip', window);
         % Wait for specified inter-image interval unless this is the 
         % last image
