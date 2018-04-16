@@ -15,7 +15,8 @@ function configureMstate
     % Set path for saving experimental parameters
     Mstate.analyzerRoot = 'D:\';
 
-    % Set slave computer IP for communication
+    % Set computer IPs for communication
+    Mstate.masterIDP = '192.168.1.201';
     Mstate.stimulusIDP = '192.168.1.205';
     
     % Set running state

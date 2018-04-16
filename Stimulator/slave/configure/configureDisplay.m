@@ -17,7 +17,7 @@ function configureDisplay(varargin)
     configurePstate('IB')
     configureMstate
 
-    configCom(varargin)
+    configCom
 
     % Commented 170109 mmf, no slave Daq or shutter
     %configSync;
