@@ -1,18 +1,24 @@
 function preallocateTensor
-    global imagerhandles FPS Tens FrameTimes IMGSIZE frameN daqOUTtrig
+    global imagerhandles GUIhandles FPS Tens FrameTimes IMGSIZE
+    global frameN daqOUTtrig
     h = imagerhandles;
     
     % Set whether debugging output should be displayed
     %debugToggle = 1;
-    
+
     total_time = str2double(get(findobj('Tag', 'timetxt'), 'String'));
     frameN = ceil(total_time * FPS);
 
-    % Pre-allocate storage of imaging data          
-    Xpx = IMGSIZE(1);
-    Ypx = IMGSIZE(2);
-    Tens = zeros(Xpx, Ypx, frameN, 'uint16');
-    FrameTimes = nan(frameN, 1);
+    % Pre-allocate storage of imaging data 
+    if ~get(GUIhandles.main.twophotonflag, 'value')
+        Xpx = IMGSIZE(1);
+        Ypx = IMGSIZE(2);
+        Tens = zeros(Xpx, Ypx, frameN, 'uint16');
+        FrameTimes = nan(frameN, 1);
+    else
+        imagerhandles = h;
+        return
+    end
     
     if isvalid(daqOUTtrig)
         stop(daqOUTtrig);
