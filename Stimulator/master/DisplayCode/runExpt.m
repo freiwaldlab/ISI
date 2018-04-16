@@ -4,8 +4,12 @@ global trialno trialInfo
 global pathBase pathData
 global analogIN analogINdata daqOUT2p daqCOUNT %syncInfo
 global prefixDate prefixTrial
+global DcomState
+global nextStimState
+nextStimState = 'paused';
 
 modID = getmoduleID;
+P = getParamStruct;
 if Mstate.running
     nt = getnotrials;
 end
@@ -13,8 +17,8 @@ end
 % Determine what to run from GUI toggles
 twoPbit = get(GUIhandles.main.twophotonflag, 'value');
 ISIbit = get(GUIhandles.main.intrinsicflag, 'value');
-
 if Mstate.running && (trialno <= nt)
+    nextStimState = 'paused';
     prefixTrial = sprintf('t%0*.0f', numel(num2str(nt)), trialno);
     set(GUIhandles.main.showTrial, 'string', ...
         ['Trial ' prefixTrial ' / ' ...
@@ -23,19 +27,14 @@ if Mstate.running && (trialno <= nt)
     
     [c,~] = getcondrep(trialno);
     
-    %if twoPbit
-    %    update2Ptrial(trialno)
-    %end
-    
     buildStimulus(c, trialno)
     waitforDisplayResp
     exec_timer = tic;
     
     if ISIbit
-        % Each ImageBlock trial can have different total durations
+        % Each image based trial can have different total durations
         % and acquired frames
-        P = getParamStruct;
-        if strcmpi(modID, 'IB')
+        if strcmpi(modID, 'IB') || strcmpi(modID, 'IR')
             tag_time = str2double(get(findobj('tag', 'timetxt'), 'string'));
             total_time = P.predelay + P.postdelay + tag_time;
         else
@@ -66,7 +65,7 @@ if Mstate.running && (trialno <= nt)
     disp([mfilename ': Log file opened [' fileLog '].']);
     
     % Start 2p sampling
-    if twoPbit
+    if twoPbit && ~strcmpi(getmoduleID, 'IR')
         high = 1;
         low = 0;
         outputSingleScan(daqOUT2p, high);
@@ -81,8 +80,52 @@ if Mstate.running && (trialno <= nt)
     
     startStimulus
 
+    if twoPbit && strcmpi(getmoduleID, 'IR')
+        if strcmpi(nextStimState, 'paused') || ...
+                strcmpi(nextStimState, 'finished')
+            %disp([mfilename ': ' nextStimState])
+        end
+        while ~strcmpi(nextStimState, 'finished')
+            if strcmpi(nextStimState, 'paused')
+                msg = 'goplay~';
+                fwrite(DcomState.serialPortHandle, msg);
+                %disp([mfilename ': ' nextStimState]);
+                stim_start_time = tic;
+                while ~strcmpi(nextStimState, 'playing')
+                    pause(0.05)
+                end
+                stim_start_delay = toc(stim_start_time);
+                disp([mfilename ': stim start delay ' num2str(stim_start_delay) 'sec']);
+                high = 1;
+                low = 0;
+                outputSingleScan(daqOUT2p, high);
+                ttlTmsec = 50 / 1000;
+                tic;
+                while toc < ttlTmsec
+                end
+                outputSingleScan(daqOUT2p, low);
+                TTLtimer2p = tic;
+                clear ttlTmsec high low
+            elseif strcmpi(nextStimState, 'playing')
+                nextStimState = 'paused';
+                lhtwoP = addlistener(daqCOUNT, ...
+                    'DataAvailable', @twoPFinishedRecordingTrigger);
+                daqCOUNT.startBackground;
+                TTLtime2p = toc(TTLtimer2p);
+                disp([mfilename ': 2p start delay ' num2str(TTLtime2p) 'sec']);
+                while daqCOUNT.IsRunning
+                    pause(0.01)
+                    %fprintf('%s: 2p wait loop, scans acquired = %d\n', ...
+                    %    mfilename, daqCOUNT.ScansAcquired)
+                end
+                stop(daqCOUNT);
+                delete(lhtwoP);
+            end
+        end
+    end
+    
     % Wait for 2p sampling to finish
-    if twoPbit
+    if twoPbit && ~strcmpi(getmoduleID, 'IR')
         lhtwoP = addlistener(daqCOUNT, ...
             'DataAvailable', @twoPFinishedRecordingTrigger);
         daqCOUNT.startBackground;
@@ -104,6 +147,13 @@ if Mstate.running && (trialno <= nt)
             saveTrialInfo(trialInfo)
         else
             error([mfilename ': Failed to retrieve ImageBlock trialInfo.']);
+        end
+    end
+    if strcmpi(getmoduleID, 'IR')
+        if ~isempty(trialInfo)
+            saveTrialInfo(trialInfo)
+        else
+            error([mfilename ': Failed to retrieve ImageRandomizer trialInfo.']);
         end
     end
     
@@ -206,7 +256,7 @@ if Mstate.running && (trialno <= nt)
     exec_time = toc(exec_timer);
     if twoPbit
         %pause(1)
-        P = getParamStruct;
+        
         if strcmpi(modID, 'IB')
             tag_time = str2double(get(findobj('tag', 'timetxt'), 'string'));
             total_time = P.predelay + P.postdelay + tag_time;
@@ -228,6 +278,11 @@ else
     %if event.hasListener(daqCOUNT, 'DataAvailable')
     %    delete(lhtwoP);
     %end
+    if twoPbit && strcmpi(getmoduleID, 'IR')
+        nextStimState = 'finished';
+        msg = 'gohome~';
+        fwrite(DcomState.serialPortHandle, msg);
+    end
     set(GUIhandles.main.runbutton, 'string', 'Run')
     
     if get(GUIhandles.main.intrinsicflag, 'value')

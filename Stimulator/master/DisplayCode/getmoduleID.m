@@ -19,4 +19,6 @@ function modID = getmoduleID
             modID = 'IB';
         case 8  % Spherical Bar
             modID = 'SB';
+        case 9  % Image Randomizer
+            modID = 'IR';
     end

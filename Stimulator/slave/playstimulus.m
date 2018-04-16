@@ -23,6 +23,8 @@ function playstimulus(modID)
             playcohmotion
         case 'IB'  % Image Block
             playimageblock
+        case 'IR'  % Image Randomizer
+            playimagerandomizer
         case 'SB'  % Spherical Bar
             playSphericalBar
         otherwise

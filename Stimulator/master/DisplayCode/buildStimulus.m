@@ -73,7 +73,7 @@ function buildStimulus(cond, trial)
         %msg = sprintf('%s;%s=%.4f', msg, 'contrast', 0);
     end
     
-    if strcmpi(mod, 'IB')
+    if strcmpi(mod, 'IB') || strcmpi(mod, 'IR')
         if exist('image_path', 'var')
             imPath = image_path;
         else
@@ -83,10 +83,10 @@ function buildStimulus(cond, trial)
             cpath = fullfile(pathBase, prefixDate, prefixTrial, 'stim');
             [cpstat,cpmsg] = copyfile(imPath, cpath);
             if cpstat
-                disp([mfilename ': ImageBlock stimulus images copied [' ...
+                disp([mfilename ': Stimulus images copied [' ...
                     cpath '].']);
             else
-                error([mfilename ': ImageBlock stimulus ', ...
+                error([mfilename ': Stimulus image ', ...
                     'directory could not be copied (' cpmsg ')'])
             end
             clear cpath cpstat cpmsg

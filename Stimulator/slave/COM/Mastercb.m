@@ -2,10 +2,10 @@ function Mastercb(obj, event)
 % master callback function
 global comState screenPTR loopTrial
 global Mstate
+%global nextPlay
 
 try
     n = get(comState.serialPortHandle, 'BytesAvailable');
-
     if n > 0
         inString = fread(comState.serialPortHandle, n);
         inString = char(inString');
@@ -15,10 +15,20 @@ try
     
     % Remove terminator and display
     inString = inString(1:end-1);
-    fprintf('COM: received from master "%s"\n', inString);
+    if ~strcmp(inString, 'goplay')
+        disp(['COM received from master: ' inString]);
+    %else
+    %    disp(['COM received goplay from master: ' inString]);
+    % Now handled directly in playimagerandomizer because the callback was
+    % not properly operating in this context.
+    end
     
     delims = find(inString == ';');
-    msgID = inString(1:delims(1)-1);  %Tells what button was pressed at master
+    if ~isempty(delims)
+        msgID = inString(1:delims(1)-1);  %Tells what button was pressed at master
+    else
+        return
+    end
     if strcmp(msgID,'M') || strcmp(msgID,'C') || strcmp(msgID,'S')
         paramstring = inString(delims(1):end); %list of parameters and their values
     elseif strcmp(msgID,'B')        
@@ -79,7 +89,7 @@ try
         case 'C'  % Close display.
             Screen('Close')
             Screen('CloseAll');
-            Priority(0);         
+            Priority(0);
         case 'Q'  % Used by calibration.m at the Master (not part of 'Stimulator')
             paramstring = paramstring(2:end);            
             RGB = [str2double(paramstring(1:3)) str2double(paramstring(4:6)) ...

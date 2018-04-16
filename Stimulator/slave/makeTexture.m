@@ -22,6 +22,8 @@ function makeTexture(modID)
             makeCohMotion
         case 'IB'  % Image Block
             stimTime = makeImageBlockTexture;
+        case 'IR'  % Image Randomizer
+            stimTime = makeImageRandomizerTexture;
         case 'SB'  % Spherical Bar
             makeSphericalBarTexture
         otherwise

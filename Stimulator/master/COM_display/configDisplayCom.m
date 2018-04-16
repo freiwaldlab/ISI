@@ -20,13 +20,13 @@ function configDisplayCom
     %set(DcomState.serialPortHandle, 'OutputBufferSize', 1024);
     set(DcomState.serialPortHandle, 'InputBufferSize', 8192);
     %set(DcomState.serialPortHandle, 'InputBufferSize', 1024);
-    set(DcomState.serialPortHandle, 'DataGramTerminateMode', 'Off');
+    %set(DcomState.serialPortHandle, 'DataGramTerminateMode', 'Off');
 
     % Establish serial port event callback criterion
+    DcomState.serialPortHandle.BytesAvailableFcn = @Displaycb;
     DcomState.serialPortHandle.BytesAvailableFcnMode = 'Terminator';
     % Magic number to identify request from Stimulus ('c' as a string)
     DcomState.serialPortHandle.Terminator = '~';
-    DcomState.serialPortHandle.BytesAvailableFcn = @Displaycb;  
 
     % Open and check status 
     fopen(DcomState.serialPortHandle);

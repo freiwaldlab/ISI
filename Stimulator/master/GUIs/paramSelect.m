@@ -71,6 +71,7 @@ modStrings{5} = 'Manual Mapper';
 modStrings{6} = 'Coherent Motion';
 modStrings{7} = 'Image Block';
 modStrings{8} = 'Spherical Bar';
+modStrings{9} = 'Image Randomizer';
 
 % Populate pop-up menu with module names
 set(handles.module, 'string', modStrings)

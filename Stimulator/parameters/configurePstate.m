@@ -14,6 +14,8 @@ function configurePstate(modID)
             confPstate_cohMotion
         case 'IB'
             confPstate_ImageBlock
+        case 'IR'
+            confPstate_ImageRandomizer
         case 'SB'
             confPstate_SphericalBar
     end
